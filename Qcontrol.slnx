@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/BuildingBlock/">
+    <Project Path="BuildingBlock.Api/BuildingBlock.Api.csproj" />
+    <Project Path="BuildingBlock.Application/BuildingBlock.Application.csproj" />
+    <Project Path="BuildingBlock.Domain/BuildingBlock.Domain.csproj" />
+    <Project Path="BuildingBlock.Infrastracture/BuildingBlock.Infrastracture.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Qcontrol.Api/Qcontrol.Api.csproj" DisplayName="QControl.Api" Id="83e9e935-f060-4ec4-a5bf-e70ed407aaae" />
+    <Project Path="Qcontrol.Application/Qcontrol.Application.csproj" DisplayName="QControl.Application" Id="2dcef47e-2bd7-4fd1-bf59-d6215bd4dfc0" />
+    <Project Path="Qcontrol.Domain/Qcontrol.Domain.csproj" DisplayName="QControl.Domain" Id="109342c2-b9f3-4eef-91d4-3e422531bcc5" />
+    <Project Path="Qcontrol.Infrastructure/Qcontrol.Infrastructure.csproj" DisplayName="QControl.infrastructure" Id="b254a3a8-5fb3-4915-ac98-b9b90970b5e0" />
+  </Folder>
+</Solution>
