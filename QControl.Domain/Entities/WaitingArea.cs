@@ -55,12 +55,14 @@ public sealed class WaitingArea : AggregateRoot<int>
     }
 
     public void Update(
+        int branchId,
         int number,
         string? audioDevice,
         string? controlDevice,
         string? descriptiveName,
         Guid lastModifiedByApplicationUserId)
     {
+        BranchId = branchId;
         Number = number;
         AudioDevice = NormalizeOptional(audioDevice);
         ControlDevice = NormalizeOptional(controlDevice);

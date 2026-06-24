@@ -177,6 +177,60 @@
   <data name="Branch_Pagination_PageSize_Max" xml:space="preserve">
     <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
   </data>
+  <data name="WaitingArea_Authentication_Required" xml:space="preserve">
+    <value>يجب تسجيل الدخول لتنفيذ العملية.</value>
+  </data>
+  <data name="WaitingArea_AudioDevice_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز جهاز الصوت 100 حرف.</value>
+  </data>
+  <data name="WaitingArea_Branch_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الفرع المحدد.</value>
+  </data>
+  <data name="WaitingArea_BranchId_Required" xml:space="preserve">
+    <value>معرف فرع صحيح مطلوب.</value>
+  </data>
+  <data name="WaitingArea_ControlDevice_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز جهاز التحكم 100 حرف.</value>
+  </data>
+  <data name="WaitingArea_Create_Success" xml:space="preserve">
+    <value>تم إنشاء منطقة الانتظار بنجاح.</value>
+  </data>
+  <data name="WaitingArea_Delete_HasWindows" xml:space="preserve">
+    <value>لا يمكن حذف منطقة الانتظار لوجود شبابيك مرتبطة بها.</value>
+  </data>
+  <data name="WaitingArea_Delete_Success" xml:space="preserve">
+    <value>تم حذف منطقة الانتظار بنجاح.</value>
+  </data>
+  <data name="WaitingArea_DescriptiveName_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الاسم الوصفي 100 حرف.</value>
+  </data>
+  <data name="WaitingArea_Id_Mismatch" xml:space="preserve">
+    <value>يجب أن يطابق معرف منطقة الانتظار في المسار معرفها في الطلب.</value>
+  </data>
+  <data name="WaitingArea_Id_Required" xml:space="preserve">
+    <value>معرف منطقة انتظار صحيح مطلوب.</value>
+  </data>
+  <data name="WaitingArea_NotFound" xml:space="preserve">
+    <value>تعذر العثور على منطقة الانتظار.</value>
+  </data>
+  <data name="WaitingArea_Number_AlreadyExistsInBranch" xml:space="preserve">
+    <value>توجد منطقة انتظار أخرى في هذا الفرع تستخدم الرقم نفسه.</value>
+  </data>
+  <data name="WaitingArea_Number_Required" xml:space="preserve">
+    <value>يجب أن يكون رقم منطقة الانتظار أكبر من صفر.</value>
+  </data>
+  <data name="WaitingArea_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="WaitingArea_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="WaitingArea_Pagination_PageSize_Max" xml:space="preserve">
+    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+  </data>
+  <data name="WaitingArea_Update_Success" xml:space="preserve">
+    <value>تم تحديث منطقة الانتظار بنجاح.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>تعذر العثور على ملف المستخدم.</value>
   </data>
