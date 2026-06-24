@@ -49,6 +49,21 @@ internal static class SeedConstants
         public const string BranchesDelete =
             "Branches.Delete";
 
+        public const string WaitingAreasViewAll =
+            "WaitingAreas.ViewAll";
+
+        public const string WaitingAreasViewDetails =
+            "WaitingAreas.ViewDetails";
+
+        public const string WaitingAreasCreate =
+            "WaitingAreas.Create";
+
+        public const string WaitingAreasUpdate =
+            "WaitingAreas.Update";
+
+        public const string WaitingAreasDelete =
+            "WaitingAreas.Delete";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -115,6 +130,26 @@ internal static class SeedConstants
             public static readonly Guid GlobalConfigurationsDelete =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000010");
+
+            public static readonly Guid WaitingAreasViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000011");
+
+            public static readonly Guid WaitingAreasViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000012");
+
+            public static readonly Guid WaitingAreasCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000013");
+
+            public static readonly Guid WaitingAreasUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000014");
+
+            public static readonly Guid WaitingAreasDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000015");
         }
     }
 
@@ -152,6 +187,26 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.BranchesDelete,
                     PermissionNames.BranchesDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasViewAll,
+                    PermissionNames.WaitingAreasViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasViewDetails,
+                    PermissionNames.WaitingAreasViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasCreate,
+                    PermissionNames.WaitingAreasCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasUpdate,
+                    PermissionNames.WaitingAreasUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasDelete,
+                    PermissionNames.WaitingAreasDelete),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

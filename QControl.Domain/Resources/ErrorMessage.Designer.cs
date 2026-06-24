@@ -239,6 +239,168 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("Branch_Pagination_PageSize_Max", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Authentication is required..
+        /// </summary>
+        public static string WaitingArea_Authentication_Required {
+            get {
+                return ResourceManager.GetString("WaitingArea_Authentication_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The audio device must not exceed 100 characters..
+        /// </summary>
+        public static string WaitingArea_AudioDevice_MaxLength {
+            get {
+                return ResourceManager.GetString("WaitingArea_AudioDevice_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The selected branch could not be found..
+        /// </summary>
+        public static string WaitingArea_Branch_NotFound {
+            get {
+                return ResourceManager.GetString("WaitingArea_Branch_NotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A valid branch id is required..
+        /// </summary>
+        public static string WaitingArea_BranchId_Required {
+            get {
+                return ResourceManager.GetString("WaitingArea_BranchId_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The control device must not exceed 100 characters..
+        /// </summary>
+        public static string WaitingArea_ControlDevice_MaxLength {
+            get {
+                return ResourceManager.GetString("WaitingArea_ControlDevice_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area was created successfully..
+        /// </summary>
+        public static string WaitingArea_Create_Success {
+            get {
+                return ResourceManager.GetString("WaitingArea_Create_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area cannot be deleted because it contains windows..
+        /// </summary>
+        public static string WaitingArea_Delete_HasWindows {
+            get {
+                return ResourceManager.GetString("WaitingArea_Delete_HasWindows", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area was deleted successfully..
+        /// </summary>
+        public static string WaitingArea_Delete_Success {
+            get {
+                return ResourceManager.GetString("WaitingArea_Delete_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The descriptive name must not exceed 100 characters..
+        /// </summary>
+        public static string WaitingArea_DescriptiveName_MaxLength {
+            get {
+                return ResourceManager.GetString("WaitingArea_DescriptiveName_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The route waiting area id must match the request waiting area id..
+        /// </summary>
+        public static string WaitingArea_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("WaitingArea_Id_Mismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A valid waiting area id is required..
+        /// </summary>
+        public static string WaitingArea_Id_Required {
+            get {
+                return ResourceManager.GetString("WaitingArea_Id_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area could not be found..
+        /// </summary>
+        public static string WaitingArea_NotFound {
+            get {
+                return ResourceManager.GetString("WaitingArea_NotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Another waiting area in this branch already uses this number..
+        /// </summary>
+        public static string WaitingArea_Number_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("WaitingArea_Number_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area number must be greater than zero..
+        /// </summary>
+        public static string WaitingArea_Number_Required {
+            get {
+                return ResourceManager.GetString("WaitingArea_Number_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page number must be at least 1..
+        /// </summary>
+        public static string WaitingArea_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("WaitingArea_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must be at least 1..
+        /// </summary>
+        public static string WaitingArea_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("WaitingArea_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must not exceed 100..
+        /// </summary>
+        public static string WaitingArea_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("WaitingArea_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The waiting area was updated successfully..
+        /// </summary>
+        public static string WaitingArea_Update_Success {
+            get {
+                return ResourceManager.GetString("WaitingArea_Update_Success", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
