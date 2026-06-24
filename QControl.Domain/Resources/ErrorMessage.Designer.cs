@@ -61,6 +61,186 @@ namespace Qcontrol.Domain.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The address must not exceed 500 characters..
+        /// </summary>
+        public static string Branch_Address_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_Address_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Arabic branch name must not exceed 100 characters..
+        /// </summary>
+        public static string Branch_ArabicName_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_ArabicName_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The area must not exceed 100 characters..
+        /// </summary>
+        public static string Branch_Area_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_Area_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Authentication is required..
+        /// </summary>
+        public static string Branch_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Branch_Authentication_Required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The city must not exceed 100 characters..
+        /// </summary>
+        public static string Branch_City_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_City_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The branch cannot be deleted because it has related waiting areas or displays..
+        /// </summary>
+        public static string Branch_Delete_HasRelatedData {
+            get {
+                return ResourceManager.GetString("Branch_Delete_HasRelatedData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The English branch name must not exceed 100 characters..
+        /// </summary>
+        public static string Branch_EnglishName_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_EnglishName_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The governorate must not exceed 100 characters..
+        /// </summary>
+        public static string Branch_Governorate_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_Governorate_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A valid branch id is required..
+        /// </summary>
+        public static string Branch_Id_Required {
+            get {
+                return ResourceManager.GetString("Branch_Id_Required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Another branch already uses this IP address..
+        /// </summary>
+        public static string Branch_IPAddress_AlreadyExists {
+            get {
+                return ResourceManager.GetString("Branch_IPAddress_AlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The branch IP address must be a valid IPv4 or IPv6 address..
+        /// </summary>
+        public static string Branch_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Branch_IPAddress_Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The branch IP address must not exceed 45 characters..
+        /// </summary>
+        public static string Branch_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The branch IP address is required..
+        /// </summary>
+        public static string Branch_IPAddress_Required {
+            get {
+                return ResourceManager.GetString("Branch_IPAddress_Required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The latitude must not exceed 50 characters..
+        /// </summary>
+        public static string Branch_Latitude_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_Latitude_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The longitude must not exceed 50 characters..
+        /// </summary>
+        public static string Branch_Longitude_MaxLength {
+            get {
+                return ResourceManager.GetString("Branch_Longitude_MaxLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to At least one branch name, Arabic or English, is required..
+        /// </summary>
+        public static string Branch_Name_Required {
+            get {
+                return ResourceManager.GetString("Branch_Name_Required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The branch could not be found..
+        /// </summary>
+        public static string Branch_NotFound {
+            get {
+                return ResourceManager.GetString("Branch_NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page number must be at least 1..
+        /// </summary>
+        public static string Branch_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Branch_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must be at least 1..
+        /// </summary>
+        public static string Branch_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Branch_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must not exceed 100..
+        /// </summary>
+        public static string Branch_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Branch_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
         /// </summary>
         public static string Login_ActorProfile_NotFound {
