@@ -401,6 +401,213 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("WaitingArea_Update_Success", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Authentication is required..
+        /// </summary>
+        public static string Window_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Window_Authentication_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window was created successfully..
+        /// </summary>
+        public static string Window_Create_Success {
+            get {
+                return ResourceManager.GetString("Window_Create_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window was deleted successfully..
+        /// </summary>
+        public static string Window_Delete_Success {
+            get {
+                return ResourceManager.GetString("Window_Delete_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window descriptive name must not exceed 100 characters..
+        /// </summary>
+        public static string Window_DescriptiveName_MaxLength {
+            get {
+                return ResourceManager.GetString("Window_DescriptiveName_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The route window id must match the request window id..
+        /// </summary>
+        public static string Window_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("Window_Id_Mismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A valid window id is required..
+        /// </summary>
+        public static string Window_Id_Required {
+            get {
+                return ResourceManager.GetString("Window_Id_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window IP address already exists in this waiting area..
+        /// </summary>
+        public static string Window_IPAddress_AlreadyExistsInWaitingArea {
+            get {
+                return ResourceManager.GetString("Window_IPAddress_AlreadyExistsInWaitingArea", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window IP address must be a valid IPv4 or IPv6 address..
+        /// </summary>
+        public static string Window_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Window_IPAddress_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window IP address must not exceed 45 characters..
+        /// </summary>
+        public static string Window_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Window_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window could not be found..
+        /// </summary>
+        public static string Window_NotFound {
+            get {
+                return ResourceManager.GetString("Window_NotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window number already exists in this waiting area..
+        /// </summary>
+        public static string Window_Number_AlreadyExistsInWaitingArea {
+            get {
+                return ResourceManager.GetString("Window_Number_AlreadyExistsInWaitingArea", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window number must not exceed 20 characters..
+        /// </summary>
+        public static string Window_Number_MaxLength {
+            get {
+                return ResourceManager.GetString("Window_Number_MaxLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window number is required..
+        /// </summary>
+        public static string Window_Number_Required {
+            get {
+                return ResourceManager.GetString("Window_Number_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page number must be at least 1..
+        /// </summary>
+        public static string Window_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Window_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must be at least 1..
+        /// </summary>
+        public static string Window_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Window_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Page size must not exceed 100..
+        /// </summary>
+        public static string Window_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Window_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window cannot be permanently deleted because related records exist..
+        /// </summary>
+        public static string Window_PermanentDelete_HasRelatedRecords {
+            get {
+                return ResourceManager.GetString("Window_PermanentDelete_HasRelatedRecords", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window must be soft deleted before permanent deletion..
+        /// </summary>
+        public static string Window_PermanentDelete_MustBeSoftDeleted {
+            get {
+                return ResourceManager.GetString("Window_PermanentDelete_MustBeSoftDeleted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window was permanently deleted successfully..
+        /// </summary>
+        public static string Window_PermanentDelete_Success {
+            get {
+                return ResourceManager.GetString("Window_PermanentDelete_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window cannot be updated because it is deleted..
+        /// </summary>
+        public static string Window_Update_Deleted {
+            get {
+                return ResourceManager.GetString("Window_Update_Deleted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window was updated successfully..
+        /// </summary>
+        public static string Window_Update_Success {
+            get {
+                return ResourceManager.GetString("Window_Update_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The selected waiting area could not be found..
+        /// </summary>
+        public static string Window_WaitingArea_NotFound {
+            get {
+                return ResourceManager.GetString("Window_WaitingArea_NotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A valid waiting area id is required..
+        /// </summary>
+        public static string Window_WaitingAreaId_Required {
+            get {
+                return ResourceManager.GetString("Window_WaitingAreaId_Required", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..

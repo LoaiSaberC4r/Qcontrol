@@ -231,6 +231,75 @@
   <data name="WaitingArea_Update_Success" xml:space="preserve">
     <value>تم تحديث منطقة الانتظار بنجاح.</value>
   </data>
+  <data name="Window_Authentication_Required" xml:space="preserve">
+    <value>يجب تسجيل الدخول لتنفيذ العملية.</value>
+  </data>
+  <data name="Window_Create_Success" xml:space="preserve">
+    <value>تم إنشاء الشباك بنجاح.</value>
+  </data>
+  <data name="Window_Delete_Success" xml:space="preserve">
+    <value>تم حذف الشباك بنجاح.</value>
+  </data>
+  <data name="Window_DescriptiveName_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الاسم الوصفي للشباك 100 حرف.</value>
+  </data>
+  <data name="Window_Id_Mismatch" xml:space="preserve">
+    <value>يجب أن يطابق معرف الشباك في المسار معرفه في الطلب.</value>
+  </data>
+  <data name="Window_Id_Required" xml:space="preserve">
+    <value>معرف شباك صحيح مطلوب.</value>
+  </data>
+  <data name="Window_IPAddress_AlreadyExistsInWaitingArea" xml:space="preserve">
+    <value>يوجد شباك آخر في منطقة الانتظار هذه يستخدم عنوان IP نفسه.</value>
+  </data>
+  <data name="Window_IPAddress_Invalid" xml:space="preserve">
+    <value>يجب أن يكون عنوان IP الخاص بالشباك عنوان IPv4 أو IPv6 صحيحًا.</value>
+  </data>
+  <data name="Window_IPAddress_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز عنوان IP الخاص بالشباك 45 حرفًا.</value>
+  </data>
+  <data name="Window_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الشباك.</value>
+  </data>
+  <data name="Window_Number_AlreadyExistsInWaitingArea" xml:space="preserve">
+    <value>يوجد شباك آخر في منطقة الانتظار هذه يستخدم الرقم نفسه.</value>
+  </data>
+  <data name="Window_Number_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز رقم الشباك 20 حرفًا.</value>
+  </data>
+  <data name="Window_Number_Required" xml:space="preserve">
+    <value>رقم الشباك مطلوب.</value>
+  </data>
+  <data name="Window_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="Window_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="Window_Pagination_PageSize_Max" xml:space="preserve">
+    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+  </data>
+  <data name="Window_PermanentDelete_HasRelatedRecords" xml:space="preserve">
+    <value>لا يمكن حذف الشباك نهائيًا لوجود سجلات مرتبطة به.</value>
+  </data>
+  <data name="Window_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
+    <value>يجب حذف الشباك حذفًا منطقيًا قبل حذفه نهائيًا.</value>
+  </data>
+  <data name="Window_PermanentDelete_Success" xml:space="preserve">
+    <value>تم حذف الشباك نهائيًا بنجاح.</value>
+  </data>
+  <data name="Window_Update_Deleted" xml:space="preserve">
+    <value>لا يمكن تحديث الشباك لأنه محذوف.</value>
+  </data>
+  <data name="Window_Update_Success" xml:space="preserve">
+    <value>تم تحديث الشباك بنجاح.</value>
+  </data>
+  <data name="Window_WaitingArea_NotFound" xml:space="preserve">
+    <value>تعذر العثور على منطقة الانتظار المحددة.</value>
+  </data>
+  <data name="Window_WaitingAreaId_Required" xml:space="preserve">
+    <value>معرف منطقة انتظار صحيح مطلوب.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>تعذر العثور على ملف المستخدم.</value>
   </data>
