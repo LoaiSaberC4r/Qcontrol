@@ -14,12 +14,20 @@ internal sealed class TerminalConfiguration
         builder.ToTable("Terminal", table =>
         {
             table.HasCheckConstraint(
-                "CK_Terminal_Number_Positive",
-                "[Number] > 0");
+                "CK_Terminal_Number_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
 
             table.HasCheckConstraint(
                 "CK_Terminal_IPAddress_NotBlank",
                 "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Terminal_SerialNo_NotBlank",
+                "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Terminal_Type_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
         });
 
         builder.HasKey(x => x.Id);
@@ -28,11 +36,13 @@ internal sealed class TerminalConfiguration
             .ValueGeneratedOnAdd();
 
         builder.Property(x => x.SerialNo)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Number)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(20)
+            .IsUnicode(false);
 
         builder.Property(x => x.IPAddress)
             .IsRequired()
@@ -43,8 +53,17 @@ internal sealed class TerminalConfiguration
             .IsRequired();
 
         builder.Property(x => x.Type)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
+        builder.Property(x => x.DeletedOnUtc)
+            .IsRequired(false);
+
+        builder.Property(x => x.RestoredOnUtc)
+            .IsRequired(false);
 
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
@@ -62,8 +81,7 @@ internal sealed class TerminalConfiguration
             .IsUnique();
 
         builder.HasIndex(x => x.SerialNo)
-            .IsUnique()
-            .HasFilter("[SerialNo] IS NOT NULL");
+            .IsUnique(false);
 
         builder.HasIndex(x => x.IPAddress);
 

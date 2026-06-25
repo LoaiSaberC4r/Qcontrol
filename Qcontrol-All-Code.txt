@@ -5503,6 +5503,38 @@ public sealed class UpdateBranchRequest
 
     public BranchLocationRequest? Location { get; init; }
 } 
+// ==================== E:\QControl\QControl.Api\Contracts\Terminals\CreateTerminalRequest.cs ==================== 
+namespace Qcontrol.Api.Contracts.Terminals;
+
+public sealed class CreateTerminalRequest
+{
+    public int WindowId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Api\Contracts\Terminals\UpdateTerminalRequest.cs ==================== 
+namespace Qcontrol.Api.Contracts.Terminals;
+
+public sealed class UpdateTerminalRequest
+{
+    public int Id { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
 // ==================== E:\QControl\QControl.Api\Contracts\WaitingAreas\CreateWaitingAreaRequest.cs ==================== 
 namespace Qcontrol.Api.Contracts.WaitingAreas;
 
@@ -5748,6 +5780,188 @@ public sealed class BranchesController : ControllerBase
         return result.ToIActionResult();
     }
 } 
+// ==================== E:\QControl\QControl.Api\Controllers\TerminalsController.cs ==================== 
+using BuildingBlock.Api;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Qcontrol.Api.Contracts.Terminals;
+using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+using Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+using QControl.Api.Attribute;
+
+namespace Qcontrol.Api.Controllers;
+
+[ApiController]
+[Route("api/terminals")]
+[Authorize]
+public sealed class TerminalsController : ControllerBase
+{
+    private readonly ISender sender;
+
+    public TerminalsController(ISender sender)
+    {
+        this.sender = sender
+            ?? throw new ArgumentNullException(nameof(sender));
+    }
+
+    [HttpGet]
+    [Permission("Terminals.ViewAll")]
+    public async Task<IActionResult> GetPaginated(
+        [FromQuery] GetTerminalsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetTerminalsQuery();
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("deleted")]
+    [Permission("Terminals.ViewDeleted")]
+    public async Task<IActionResult> GetDeleted(
+        [FromQuery] GetDeletedTerminalsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDeletedTerminalsQuery();
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{terminalId:int}")]
+    [Permission("Terminals.ViewDetails")]
+    public async Task<IActionResult> GetById(
+        int terminalId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetTerminalByIdQuery
+        {
+            Id = terminalId
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost]
+    [Permission("Terminals.Create")]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateTerminalRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateTerminalCommand
+        {
+            WindowId = request.WindowId,
+            Number = request.Number,
+            IPAddress = request.IPAddress,
+            SerialNo = request.SerialNo,
+            Type = request.Type
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPut("{terminalId:int}")]
+    [Permission("Terminals.Update")]
+    public async Task<IActionResult> Update(
+        int terminalId,
+        [FromBody] UpdateTerminalRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateTerminalCommand
+        {
+            Id = terminalId,
+            RequestId = request.Id,
+            Number = request.Number,
+            IPAddress = request.IPAddress,
+            SerialNo = request.SerialNo,
+            Type = request.Type
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{terminalId:int}")]
+    [Permission("Terminals.Delete")]
+    public async Task<IActionResult> Delete(
+        int terminalId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteTerminalCommand
+        {
+            Id = terminalId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{terminalId:int}/restore")]
+    [Permission("Terminals.Restore")]
+    public async Task<IActionResult> Restore(
+        int terminalId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RestoreTerminalCommand
+        {
+            Id = terminalId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{terminalId:int}/permanent")]
+    [Permission("Terminals.DeletePermanent")]
+    public async Task<IActionResult> DeletePermanently(
+        int terminalId,
+        CancellationToken cancellationToken)
+    {
+        var command = new PermanentDeleteTerminalCommand
+        {
+            Id = terminalId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Api\Controllers\WaitingAreasController.cs ==================== 
 using BuildingBlock.Api;
 using MediatR;
@@ -6111,6 +6325,16 @@ namespace QControl.Application.Abstraction.Presistence
     {
     }
 } 
+// ==================== E:\QControl\QControl.Application\Abstraction\Presistence\ITerminalPermanentDeleteRepository.cs ==================== 
+namespace QControl.Application.Abstraction.Presistence;
+
+public interface ITerminalPermanentDeleteRepository
+{
+    Task<int> DeletePermanentlyAsync(
+        int terminalId,
+        CancellationToken cancellationToken);
+}
+ 
 // ==================== E:\QControl\QControl.Application\Abstraction\Presistence\IUnitOfWork.cs ==================== 
 ﻿using System;
 using System.Collections.Generic;
@@ -6204,6 +6428,17 @@ namespace QControl.Application.Abstraction.Presistence
     public sealed class PlatformWriteReadMarker : IReadDbContextMarker
     { }
 } 
+// ==================== E:\QControl\QControl.Application\Abstraction\Presistence\TerminalPermanentDeleteConflictException.cs ==================== 
+namespace QControl.Application.Abstraction.Presistence;
+
+public sealed class TerminalPermanentDeleteConflictException : Exception
+{
+    public TerminalPermanentDeleteConflictException(Exception innerException)
+        : base("Terminal permanent delete failed because related data exists.", innerException)
+    {
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application\Abstraction\Presistence\WindowPermanentDeleteConflictException.cs ==================== 
 namespace QControl.Application.Abstraction.Presistence;
 
@@ -7898,6 +8133,1912 @@ public sealed record BranchLocationResponse
 
     public string? Latitude { get; init; }
 } 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\CreateTerminal\CreateTerminalCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+
+public sealed record CreateTerminalCommand
+    : ICommand<CreateTerminalResponse>
+{
+    public int WindowId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\CreateTerminal\CreateTerminalCommandHandler.cs ==================== 
+using System.Data;
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+
+internal sealed class CreateTerminalCommandHandler
+    : ICommandHandler<CreateTerminalCommand, CreateTerminalResponse>
+{
+    private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateTerminalCommandHandler(
+        IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _windowReadRepository = windowReadRepository
+            ?? throw new ArgumentNullException(nameof(windowReadRepository));
+
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<CreateTerminalResponse>> Handle(
+        CreateTerminalCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<CreateTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Create.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var normalizedNumber = request.Number.Trim();
+        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedSerialNo = request.SerialNo.Trim();
+        var normalizedType = request.Type.Trim();
+
+        await using var transaction =
+            await _unitOfWork.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        async Task<Result<CreateTerminalResponse>> RollbackFailure(
+            Error error)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Result<CreateTerminalResponse>.Fail(error);
+        }
+
+        var windowContext =
+            await _windowReadRepository.FirstOrDefaultAsync(
+                new GetTerminalWindowContextSpec(request.WindowId),
+                cancellationToken);
+
+        if (windowContext is null)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Create.WindowNotFound",
+                    Message: ErrorMessage.Terminal_Window_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        if (windowContext.WindowIsDeleted)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Create.WindowDeleted",
+                    Message: ErrorMessage.Terminal_Window_Deleted,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingNumberTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalNumberExistsSpec(
+                    request.WindowId,
+                    normalizedNumber),
+                cancellationToken);
+
+        if (existingNumberTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Create.NumberAlreadyExistsInWindow",
+                    Message:
+                        ErrorMessage.Terminal_Number_AlreadyExistsInWindow,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalIPAddressExistsInBranchSpec(
+                    windowContext.BranchId,
+                    normalizedIPAddress),
+                cancellationToken);
+
+        if (existingIPAddressTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code:
+                        "Terminals.Create.IPAddressAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Terminal_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalSerialNoExistsInBranchSpec(
+                    windowContext.BranchId,
+                    normalizedSerialNo),
+                cancellationToken);
+
+        if (existingSerialNoTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code:
+                        "Terminals.Create.SerialNoAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Terminal_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var terminal = Terminal.Create(
+            windowId: request.WindowId,
+            number: normalizedNumber,
+            ipAddress: normalizedIPAddress,
+            serialNo: normalizedSerialNo,
+            type: normalizedType,
+            createdByApplicationUserId: _currentUser.UserId.Value);
+
+        await _terminalWriteRepository.AddAsync(
+            terminal,
+            cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return Result<CreateTerminalResponse>.Ok(
+            new CreateTerminalResponse
+            {
+                Id = terminal.Id,
+                WindowId = terminal.WindowId,
+                Number = terminal.Number,
+                IPAddress = terminal.IPAddress,
+                SerialNo = terminal.SerialNo,
+                Type = terminal.Type,
+                CreatedByApplicationUserId =
+                    terminal.CreatedByApplicationUserId,
+                CreatedOnUtc = terminal.CreatedOnUtc,
+                Message = ErrorMessage.Terminal_Create_Success
+            });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\CreateTerminal\CreateTerminalCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Application.Features.Terminals.Shared;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+
+internal sealed class CreateTerminalCommandValidator
+    : AbstractValidator<CreateTerminalCommand>
+{
+    public CreateTerminalCommandValidator()
+    {
+        RuleFor(x => x.WindowId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_WindowId_Required);
+
+        RuleFor(x => x.Number)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_Number_Required)
+            .MaximumLength(20)
+            .WithMessage(ErrorMessage.Terminal_Number_MaxLength);
+
+        RuleFor(x => x.IPAddress)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_IPAddress_Required)
+            .MaximumLength(45)
+            .WithMessage(ErrorMessage.Terminal_IPAddress_MaxLength)
+            .Must(TerminalIPAddressValidation.BeValidIPv4)
+            .WithMessage(ErrorMessage.Terminal_IPAddress_Invalid);
+
+        RuleFor(x => x.SerialNo)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_SerialNo_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Terminal_SerialNo_MaxLength);
+
+        RuleFor(x => x.Type)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_Type_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Terminal_Type_MaxLength);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\CreateTerminal\CreateTerminalResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+
+public sealed record CreateTerminalResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public Guid CreatedByApplicationUserId { get; init; }
+
+    public DateTime CreatedOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\DeleteTerminal\DeleteTerminalCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+
+public sealed record DeleteTerminalCommand
+    : ICommand<DeleteTerminalResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\DeleteTerminal\DeleteTerminalCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+
+internal sealed class DeleteTerminalCommandHandler
+    : ICommandHandler<DeleteTerminalCommand, DeleteTerminalResponse>
+{
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteTerminalCommandHandler(
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<DeleteTerminalResponse>> Handle(
+        DeleteTerminalCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<DeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Delete.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var terminal =
+            await _terminalReadRepository.GetByIdTrackedAsync(
+                request.Id,
+                cancellationToken);
+
+        if (terminal is null)
+        {
+            return Result<DeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Delete.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        _terminalWriteRepository.Delete(terminal);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<DeleteTerminalResponse>.Ok(
+            new DeleteTerminalResponse
+            {
+                Id = terminal.Id,
+                Message = ErrorMessage.Terminal_Delete_Success
+            });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\DeleteTerminal\DeleteTerminalCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+
+internal sealed class DeleteTerminalCommandValidator
+    : AbstractValidator<DeleteTerminalCommand>
+{
+    public DeleteTerminalCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\DeleteTerminal\DeleteTerminalResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+
+public sealed record DeleteTerminalResponse
+{
+    public int Id { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\GetTerminalForPermanentDeleteSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+internal sealed class GetTerminalForPermanentDeleteSpec
+    : Specification<Terminal, PermanentDeleteTerminalCandidate>
+{
+    public GetTerminalForPermanentDeleteSpec(int terminalId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == terminalId);
+
+        Select(x => new PermanentDeleteTerminalCandidate
+        {
+            Id = x.Id,
+            IsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\PermanentDeleteTerminalCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+internal sealed record PermanentDeleteTerminalCandidate
+{
+    public int Id { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\PermanentDeleteTerminalCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+public sealed record PermanentDeleteTerminalCommand
+    : ICommand<PermanentDeleteTerminalResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\PermanentDeleteTerminalCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+internal sealed class PermanentDeleteTerminalCommandHandler
+    : ICommandHandler<PermanentDeleteTerminalCommand, PermanentDeleteTerminalResponse>
+{
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly ITerminalPermanentDeleteRepository _permanentDeleteRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public PermanentDeleteTerminalCommandHandler(
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        ITerminalPermanentDeleteRepository permanentDeleteRepository,
+        ICurrentUser currentUser)
+    {
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _permanentDeleteRepository = permanentDeleteRepository
+            ?? throw new ArgumentNullException(nameof(permanentDeleteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<PermanentDeleteTerminalResponse>> Handle(
+        PermanentDeleteTerminalCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<PermanentDeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.PermanentDelete.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var terminal =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new GetTerminalForPermanentDeleteSpec(request.Id),
+                cancellationToken);
+
+        if (terminal is null)
+        {
+            return Result<PermanentDeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.PermanentDelete.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        if (!terminal.IsDeleted)
+        {
+            return Result<PermanentDeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.PermanentDelete.MustBeSoftDeleted",
+                    Message:
+                        ErrorMessage
+                            .Terminal_PermanentDelete_MustBeSoftDeleted,
+                    Type: ErrorType.Conflict));
+        }
+
+        int deletedRows;
+        try
+        {
+            deletedRows =
+                await _permanentDeleteRepository.DeletePermanentlyAsync(
+                    request.Id,
+                    cancellationToken);
+        }
+        catch (TerminalPermanentDeleteConflictException)
+        {
+            return HasRelatedRecords();
+        }
+
+        if (deletedRows == 0)
+        {
+            return Result<PermanentDeleteTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.PermanentDelete.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        return Result<PermanentDeleteTerminalResponse>.Ok(
+            new PermanentDeleteTerminalResponse
+            {
+                Id = request.Id,
+                Message = ErrorMessage.Terminal_PermanentDelete_Success
+            });
+    }
+
+    private static Result<PermanentDeleteTerminalResponse> HasRelatedRecords()
+        => Result<PermanentDeleteTerminalResponse>.Fail(
+            new Error(
+                Code: "Terminals.PermanentDelete.HasRelatedRecords",
+                Message:
+                    ErrorMessage
+                        .Terminal_PermanentDelete_HasRelatedRecords,
+                Type: ErrorType.Conflict));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\PermanentDeleteTerminalCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+internal sealed class PermanentDeleteTerminalCommandValidator
+    : AbstractValidator<PermanentDeleteTerminalCommand>
+{
+    public PermanentDeleteTerminalCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\PermanentDeleteTerminal\PermanentDeleteTerminalResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+
+public sealed record PermanentDeleteTerminalResponse
+{
+    public int Id { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\RestoreTerminal\RestoreTerminalCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+
+public sealed record RestoreTerminalCommand
+    : ICommand<RestoreTerminalResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\RestoreTerminal\RestoreTerminalCommandHandler.cs ==================== 
+using System.Data;
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+
+internal sealed class RestoreTerminalCommandHandler
+    : ICommandHandler<RestoreTerminalCommand, RestoreTerminalResponse>
+{
+    private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public RestoreTerminalCommandHandler(
+        IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _windowReadRepository = windowReadRepository
+            ?? throw new ArgumentNullException(nameof(windowReadRepository));
+
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<RestoreTerminalResponse>> Handle(
+        RestoreTerminalCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<RestoreTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Restore.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        await using var transaction =
+            await _unitOfWork.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        async Task<Result<RestoreTerminalResponse>> RollbackFailure(
+            Error error)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Result<RestoreTerminalResponse>.Fail(error);
+        }
+
+        var terminal =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new GetTerminalIncludingDeletedSpec(request.Id),
+                cancellationToken);
+
+        if (terminal is null)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        if (!terminal.IsDeleted)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.AlreadyActive",
+                    Message: ErrorMessage.Terminal_AlreadyActive,
+                    Type: ErrorType.Conflict));
+        }
+
+        var windowContext =
+            await _windowReadRepository.FirstOrDefaultAsync(
+                new GetTerminalWindowContextSpec(terminal.WindowId),
+                cancellationToken);
+
+        if (windowContext is null)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.WindowNotFound",
+                    Message: ErrorMessage.Terminal_Window_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        if (windowContext.WindowIsDeleted)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.WindowDeleted",
+                    Message: ErrorMessage.Terminal_Restore_WindowDeleted,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingNumberTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalNumberExistsSpec(
+                    terminal.WindowId,
+                    terminal.Number,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingNumberTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.NumberConflict",
+                    Message:
+                        ErrorMessage.Terminal_Number_AlreadyExistsInWindow,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalIPAddressExistsInBranchSpec(
+                    windowContext.BranchId,
+                    terminal.IPAddress,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingIPAddressTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.IPAddressConflict",
+                    Message:
+                        ErrorMessage
+                            .Terminal_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalSerialNoExistsInBranchSpec(
+                    windowContext.BranchId,
+                    terminal.SerialNo,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingSerialNoTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Restore.SerialNoConflict",
+                    Message:
+                        ErrorMessage
+                            .Terminal_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        terminal.Restore();
+        _terminalWriteRepository.Update(terminal);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return Result<RestoreTerminalResponse>.Ok(
+            new RestoreTerminalResponse
+            {
+                Id = terminal.Id,
+                WindowId = terminal.WindowId,
+                Number = terminal.Number,
+                IPAddress = terminal.IPAddress,
+                SerialNo = terminal.SerialNo,
+                Type = terminal.Type,
+                RestoredOnUtc = terminal.RestoredOnUtc,
+                Message = ErrorMessage.Terminal_Restore_Success
+            });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\RestoreTerminal\RestoreTerminalCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+
+internal sealed class RestoreTerminalCommandValidator
+    : AbstractValidator<RestoreTerminalCommand>
+{
+    public RestoreTerminalCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\RestoreTerminal\RestoreTerminalResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+
+public sealed record RestoreTerminalResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime? RestoredOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\UpdateTerminal\UpdateTerminalCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+
+public sealed record UpdateTerminalCommand
+    : ICommand<UpdateTerminalResponse>
+{
+    public int Id { get; init; }
+
+    public int RequestId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\UpdateTerminal\UpdateTerminalCommandHandler.cs ==================== 
+using System.Data;
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+
+internal sealed class UpdateTerminalCommandHandler
+    : ICommandHandler<UpdateTerminalCommand, UpdateTerminalResponse>
+{
+    private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateTerminalCommandHandler(
+        IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _windowReadRepository = windowReadRepository
+            ?? throw new ArgumentNullException(nameof(windowReadRepository));
+
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<UpdateTerminalResponse>> Handle(
+        UpdateTerminalCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<UpdateTerminalResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Update.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var normalizedNumber = request.Number.Trim();
+        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedSerialNo = request.SerialNo.Trim();
+        var normalizedType = request.Type.Trim();
+
+        await using var transaction =
+            await _unitOfWork.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        async Task<Result<UpdateTerminalResponse>> RollbackFailure(
+            Error error)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Result<UpdateTerminalResponse>.Fail(error);
+        }
+
+        var terminal =
+            await _terminalReadRepository.GetByIdTrackedAsync(
+                request.Id,
+                cancellationToken);
+
+        if (terminal is null)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Update.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        var windowContext =
+            await _windowReadRepository.FirstOrDefaultAsync(
+                new GetTerminalWindowContextSpec(terminal.WindowId),
+                cancellationToken);
+
+        if (windowContext is null)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Update.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        var existingNumberTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalNumberExistsSpec(
+                    terminal.WindowId,
+                    normalizedNumber,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingNumberTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code: "Terminals.Update.NumberAlreadyExistsInWindow",
+                    Message:
+                        ErrorMessage.Terminal_Number_AlreadyExistsInWindow,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalIPAddressExistsInBranchSpec(
+                    windowContext.BranchId,
+                    normalizedIPAddress,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingIPAddressTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code:
+                        "Terminals.Update.IPAddressAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Terminal_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoTerminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new TerminalSerialNoExistsInBranchSpec(
+                    windowContext.BranchId,
+                    normalizedSerialNo,
+                    excludedTerminalId: terminal.Id),
+                cancellationToken);
+
+        if (existingSerialNoTerminalId > 0)
+        {
+            return await RollbackFailure(
+                new Error(
+                    Code:
+                        "Terminals.Update.SerialNoAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Terminal_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        terminal.Update(
+            number: normalizedNumber,
+            ipAddress: normalizedIPAddress,
+            serialNo: normalizedSerialNo,
+            type: normalizedType,
+            lastModifiedByApplicationUserId: _currentUser.UserId.Value);
+
+        _terminalWriteRepository.Update(terminal);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return Result<UpdateTerminalResponse>.Ok(
+            new UpdateTerminalResponse
+            {
+                Id = terminal.Id,
+                WindowId = terminal.WindowId,
+                Number = terminal.Number,
+                IPAddress = terminal.IPAddress,
+                SerialNo = terminal.SerialNo,
+                Type = terminal.Type,
+                LastModifiedByApplicationUserId =
+                    terminal.LastModifiedByApplicationUserId,
+                ModifiedOnUtc = terminal.ModifiedOnUtc,
+                Message = ErrorMessage.Terminal_Update_Success
+            });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\UpdateTerminal\UpdateTerminalCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Application.Features.Terminals.Shared;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+
+internal sealed class UpdateTerminalCommandValidator
+    : AbstractValidator<UpdateTerminalCommand>
+{
+    public UpdateTerminalCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+
+        RuleFor(x => x.RequestId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+
+        RuleFor(x => x)
+            .Must(x => x.Id == x.RequestId)
+            .WithMessage(ErrorMessage.Terminal_Id_Mismatch);
+
+        RuleFor(x => x.Number)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_Number_Required)
+            .MaximumLength(20)
+            .WithMessage(ErrorMessage.Terminal_Number_MaxLength);
+
+        RuleFor(x => x.IPAddress)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_IPAddress_Required)
+            .MaximumLength(45)
+            .WithMessage(ErrorMessage.Terminal_IPAddress_MaxLength)
+            .Must(TerminalIPAddressValidation.BeValidIPv4)
+            .WithMessage(ErrorMessage.Terminal_IPAddress_Invalid);
+
+        RuleFor(x => x.SerialNo)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_SerialNo_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Terminal_SerialNo_MaxLength);
+
+        RuleFor(x => x.Type)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Terminal_Type_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Terminal_Type_MaxLength);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Command\UpdateTerminal\UpdateTerminalResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+
+public sealed record UpdateTerminalResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public Guid? LastModifiedByApplicationUserId { get; init; }
+
+    public DateTime? ModifiedOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetDeletedTerminals\DeletedTerminalListItemResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+
+public sealed record DeletedTerminalListItemResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string WindowNumber { get; init; } = string.Empty;
+
+    public int WaitingAreaId { get; init; }
+
+    public int WaitingAreaNumber { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime? DeletedOnUtc { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetDeletedTerminals\GetDeletedTerminalsQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+
+public sealed class GetDeletedTerminalsQuery
+    : IQuery<Pagination<DeletedTerminalListItemResponse>>
+{
+    public int? WindowId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetDeletedTerminals\GetDeletedTerminalsQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+
+internal sealed class GetDeletedTerminalsQueryHandler
+    : IQueryHandler<GetDeletedTerminalsQuery, Pagination<DeletedTerminalListItemResponse>>
+{
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDeletedTerminalsQueryHandler(
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        ICurrentUser currentUser)
+    {
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<DeletedTerminalListItemResponse>>> Handle(
+        GetDeletedTerminalsQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<Pagination<DeletedTerminalListItemResponse>>.Fail(
+                new Error(
+                    Code: "Terminals.DeletedPagination.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetDeletedTerminalsSpec(request);
+
+        var (items, totalCount) =
+            await _terminalReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<DeletedTerminalListItemResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<DeletedTerminalListItemResponse>>.Ok(response);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetDeletedTerminals\GetDeletedTerminalsQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+
+internal sealed class GetDeletedTerminalsQueryValidator
+    : AbstractValidator<GetDeletedTerminalsQuery>
+{
+    public GetDeletedTerminalsQueryValidator()
+    {
+        RuleFor(x => x.WindowId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_WindowId_Required)
+            .When(x => x.WindowId.HasValue);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetDeletedTerminals\GetDeletedTerminalsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+
+internal sealed class GetDeletedTerminalsSpec
+    : Specification<Terminal, DeletedTerminalListItemResponse>
+{
+    public GetDeletedTerminalsSpec(GetDeletedTerminalsQuery query)
+    {
+        IgnoreGlobalFilters();
+        AddCriteria(x => x.IsDeleted);
+
+        if (query.WindowId.HasValue)
+        {
+            var windowId = query.WindowId.Value;
+            AddCriteria(x => x.WindowId == windowId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Number.Contains(searchText) ||
+                x.IPAddress.Contains(searchText) ||
+                x.SerialNo.Contains(searchText) ||
+                x.Type.Contains(searchText));
+        }
+
+        AddOrderBy(x => x.WindowId);
+        AddOrderBy(x => x.Number);
+        AddOrderBy(x => x.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        UseNoTracking();
+
+        Select(x => new DeletedTerminalListItemResponse
+        {
+            Id = x.Id,
+            WindowId = x.WindowId,
+            WindowNumber = x.Window.Number,
+            WaitingAreaId = x.Window.WaitingAreaId,
+            WaitingAreaNumber = x.Window.WaitingArea.Number,
+            BranchId = x.Window.WaitingArea.BranchId,
+            BranchArabicName = x.Window.WaitingArea.Branch.ArabicName,
+            BranchEnglishName = x.Window.WaitingArea.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type,
+            DeletedOnUtc = x.DeletedOnUtc
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminalById\GetTerminalByIdQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+
+public sealed record GetTerminalByIdQuery
+    : IQuery<TerminalDetailsResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminalById\GetTerminalByIdQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+
+internal sealed class GetTerminalByIdQueryHandler
+    : IQueryHandler<GetTerminalByIdQuery, TerminalDetailsResponse>
+{
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetTerminalByIdQueryHandler(
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        ICurrentUser currentUser)
+    {
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<TerminalDetailsResponse>> Handle(
+        GetTerminalByIdQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<TerminalDetailsResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Details.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var terminal =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new GetTerminalByIdSpec(request.Id),
+                cancellationToken);
+
+        if (terminal is null)
+        {
+            return Result<TerminalDetailsResponse>.Fail(
+                new Error(
+                    Code: "Terminals.Details.TerminalNotFound",
+                    Message: ErrorMessage.Terminal_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        return Result<TerminalDetailsResponse>.Ok(terminal);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminalById\GetTerminalByIdQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+
+internal sealed class GetTerminalByIdQueryValidator
+    : AbstractValidator<GetTerminalByIdQuery>
+{
+    public GetTerminalByIdQueryValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminalById\GetTerminalByIdSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+
+internal sealed class GetTerminalByIdSpec
+    : Specification<Terminal, TerminalDetailsResponse>
+{
+    public GetTerminalByIdSpec(int terminalId)
+    {
+        AddCriteria(x => x.Id == terminalId);
+        UseNoTracking();
+
+        Select(x => new TerminalDetailsResponse
+        {
+            Id = x.Id,
+            WindowId = x.WindowId,
+            WindowNumber = x.Window.Number,
+            WaitingAreaId = x.Window.WaitingAreaId,
+            WaitingAreaNumber = x.Window.WaitingArea.Number,
+            BranchId = x.Window.WaitingArea.BranchId,
+            BranchArabicName = x.Window.WaitingArea.Branch.ArabicName,
+            BranchEnglishName = x.Window.WaitingArea.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type,
+            CreatedOnUtc = x.CreatedOnUtc,
+            ModifiedOnUtc = x.ModifiedOnUtc
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminalById\TerminalDetailsResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+
+public sealed record TerminalDetailsResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string WindowNumber { get; init; } = string.Empty;
+
+    public int WaitingAreaId { get; init; }
+
+    public int WaitingAreaNumber { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime CreatedOnUtc { get; init; }
+
+    public DateTime? ModifiedOnUtc { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminals\GetTerminalsQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+public sealed class GetTerminalsQuery
+    : IQuery<Pagination<TerminalListItemResponse>>
+{
+    public int? WindowId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminals\GetTerminalsQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+internal sealed class GetTerminalsQueryHandler
+    : IQueryHandler<GetTerminalsQuery, Pagination<TerminalListItemResponse>>
+{
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetTerminalsQueryHandler(
+        IWriteReadRepository<Terminal> terminalReadRepository,
+        ICurrentUser currentUser)
+    {
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<TerminalListItemResponse>>> Handle(
+        GetTerminalsQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<Pagination<TerminalListItemResponse>>.Fail(
+                new Error(
+                    Code: "Terminals.Pagination.Unauthenticated",
+                    Message: ErrorMessage.Terminal_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetTerminalsSpec(request);
+
+        var (items, totalCount) =
+            await _terminalReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<TerminalListItemResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<TerminalListItemResponse>>.Ok(response);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminals\GetTerminalsQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+internal sealed class GetTerminalsQueryValidator
+    : AbstractValidator<GetTerminalsQuery>
+{
+    public GetTerminalsQueryValidator()
+    {
+        RuleFor(x => x.WindowId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Terminal_WindowId_Required)
+            .When(x => x.WindowId.HasValue);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.Terminal_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminals\GetTerminalsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+internal sealed class GetTerminalsSpec
+    : Specification<Terminal, TerminalListItemResponse>
+{
+    public GetTerminalsSpec(GetTerminalsQuery query)
+    {
+        if (query.WindowId.HasValue)
+        {
+            var windowId = query.WindowId.Value;
+            AddCriteria(x => x.WindowId == windowId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Number.Contains(searchText) ||
+                x.IPAddress.Contains(searchText) ||
+                x.SerialNo.Contains(searchText) ||
+                x.Type.Contains(searchText));
+        }
+
+        AddOrderBy(x => x.WindowId);
+        AddOrderBy(x => x.Number);
+        AddOrderBy(x => x.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        UseNoTracking();
+
+        Select(x => new TerminalListItemResponse
+        {
+            Id = x.Id,
+            WindowId = x.WindowId,
+            WindowNumber = x.Window.Number,
+            WaitingAreaId = x.Window.WaitingAreaId,
+            WaitingAreaNumber = x.Window.WaitingArea.Number,
+            BranchId = x.Window.WaitingArea.BranchId,
+            BranchArabicName = x.Window.WaitingArea.Branch.ArabicName,
+            BranchEnglishName = x.Window.WaitingArea.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Query\GetTerminals\TerminalListItemResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+public sealed record TerminalListItemResponse
+{
+    public int Id { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string WindowNumber { get; init; } = string.Empty;
+
+    public int WaitingAreaId { get; init; }
+
+    public int WaitingAreaNumber { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\AnyTerminalForWindowIncludingDeletedSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class AnyTerminalForWindowIncludingDeletedSpec
+    : Specification<Terminal, int>
+{
+    public AnyTerminalForWindowIncludingDeletedSpec(int windowId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.WindowId == windowId);
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\GetActiveTerminalsForWindowSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class GetActiveTerminalsForWindowSpec
+    : Specification<Terminal>
+{
+    public GetActiveTerminalsForWindowSpec(int windowId)
+    {
+        AddCriteria(x => x.WindowId == windowId);
+        AddOrderBy(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\GetTerminalIncludingDeletedSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class GetTerminalIncludingDeletedSpec
+    : Specification<Terminal>
+{
+    public GetTerminalIncludingDeletedSpec(
+        int terminalId,
+        bool useNoTracking = false)
+    {
+        IgnoreGlobalFilters();
+        AddCriteria(x => x.Id == terminalId);
+
+        if (useNoTracking)
+        {
+            UseNoTracking();
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\GetTerminalWindowContextSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class GetTerminalWindowContextSpec
+    : Specification<Window, TerminalWindowContext>
+{
+    public GetTerminalWindowContextSpec(int windowId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == windowId);
+
+        Select(x => new TerminalWindowContext
+        {
+            WindowId = x.Id,
+            WaitingAreaId = x.WaitingAreaId,
+            BranchId = x.WaitingArea.BranchId,
+            WindowNumber = x.Number,
+            WaitingAreaNumber = x.WaitingArea.Number,
+            WindowIsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\TerminalIPAddressExistsInBranchSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class TerminalIPAddressExistsInBranchSpec
+    : Specification<Terminal, int>
+{
+    public TerminalIPAddressExistsInBranchSpec(
+        int branchId,
+        string ipAddress,
+        int? excludedTerminalId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.Window.WaitingArea.BranchId == branchId &&
+            x.IPAddress == ipAddress);
+
+        if (excludedTerminalId.HasValue)
+        {
+            var terminalId = excludedTerminalId.Value;
+            AddCriteria(x => x.Id != terminalId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\TerminalIPAddressValidation.cs ==================== 
+using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal static class TerminalIPAddressValidation
+{
+    public static bool BeValidIPv4(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var ipAddress = value.Trim();
+
+        if (ipAddress.Contains(':'))
+        {
+            return false;
+        }
+
+        var parts = ipAddress.Split('.');
+
+        if (parts.Length != 4)
+        {
+            return false;
+        }
+
+        foreach (var part in parts)
+        {
+            if (!byte.TryParse(
+                    part,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out _))
+            {
+                return false;
+            }
+        }
+
+        return IPAddress.TryParse(ipAddress, out var parsed) &&
+            parsed.AddressFamily == AddressFamily.InterNetwork &&
+            parsed.ToString() == ipAddress;
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\TerminalNumberExistsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class TerminalNumberExistsSpec
+    : Specification<Terminal, int>
+{
+    public TerminalNumberExistsSpec(
+        int windowId,
+        string number,
+        int? excludedTerminalId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.WindowId == windowId &&
+            x.Number == number);
+
+        if (excludedTerminalId.HasValue)
+        {
+            var terminalId = excludedTerminalId.Value;
+            AddCriteria(x => x.Id != terminalId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\TerminalSerialNoExistsInBranchSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed class TerminalSerialNoExistsInBranchSpec
+    : Specification<Terminal, int>
+{
+    public TerminalSerialNoExistsInBranchSpec(
+        int branchId,
+        string serialNo,
+        int? excludedTerminalId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.Window.WaitingArea.BranchId == branchId &&
+            x.SerialNo == serialNo);
+
+        if (excludedTerminalId.HasValue)
+        {
+            var terminalId = excludedTerminalId.Value;
+            AddCriteria(x => x.Id != terminalId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Terminals\Shared\TerminalWindowContext.cs ==================== 
+namespace Qcontrol.Application.Features.Terminals.Shared;
+
+internal sealed record TerminalWindowContext
+{
+    public int WindowId { get; init; }
+
+    public int WaitingAreaId { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string WindowNumber { get; init; } = string.Empty;
+
+    public int WaitingAreaNumber { get; init; }
+
+    public bool WindowIsDeleted { get; init; }
+}
+ 
 // ==================== E:\QControl\QControl.Application\Features\WaitingAreas\Command\CreateWaitingArea\CreateWaitingAreaCommand.cs ==================== 
 using BuildingBlock.Application.Abstraction;
 
@@ -9040,6 +11181,7 @@ public sealed record DeleteWindowCommand
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Domain.Entities;
@@ -9050,21 +11192,31 @@ internal sealed class DeleteWindowCommandHandler
     : ICommandHandler<DeleteWindowCommand, DeleteWindowResponse>
 {
     private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
     private readonly IWriteRepository<Window> _windowWriteRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IUnitOfWork _unitOfWork;
 
     public DeleteWindowCommandHandler(
         IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<Terminal> terminalReadRepository,
         IWriteRepository<Window> windowWriteRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
         ICurrentUser currentUser,
         IUnitOfWork unitOfWork)
     {
         _windowReadRepository = windowReadRepository
             ?? throw new ArgumentNullException(nameof(windowReadRepository));
 
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
         _windowWriteRepository = windowWriteRepository
             ?? throw new ArgumentNullException(nameof(windowWriteRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
 
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
@@ -9101,6 +11253,12 @@ internal sealed class DeleteWindowCommandHandler
                     Type: ErrorType.NotFound));
         }
 
+        var activeTerminals =
+            await _terminalReadRepository.ListAsync(
+                new GetActiveTerminalsForWindowSpec(window.Id),
+                cancellationToken);
+
+        _terminalWriteRepository.DeleteRange(activeTerminals);
         _windowWriteRepository.Delete(window);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -9190,6 +11348,7 @@ public sealed record PermanentDeleteWindowCommand
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Domain.Entities;
@@ -9266,12 +11425,12 @@ internal sealed class PermanentDeleteWindowCommandHandler
                     Type: ErrorType.Conflict));
         }
 
-        var hasTerminal =
-            await _terminalReadRepository.AnyAsync(
-                x => x.WindowId == request.Id,
+        var terminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new AnyTerminalForWindowIncludingDeletedSpec(request.Id),
                 cancellationToken);
 
-        if (hasTerminal)
+        if (terminalId > 0)
         {
             return HasRelatedRecords();
         }
@@ -10514,6 +12673,854 @@ namespace QControl.Application.Shared.Validation
         //}
     }
 } 
+// ==================== E:\QControl\QControl.Application.Tests\Terminals\TerminalCommandHandlerTests.cs ==================== 
+using System.Data;
+using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.Terminals;
+
+public sealed class TerminalCommandHandlerTests
+{
+    [Fact]
+    public async Task Create_succeeds_trims_values_and_commits_serializable_transaction()
+    {
+        var window = Window(id: 1);
+        var terminals = new List<Terminal>();
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var handler = CreateHandler(
+            new List<Window> { window },
+            terminals,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new CreateTerminalCommand
+            {
+                WindowId = window.Id,
+                Number = " T-01 ",
+                IPAddress = " 192.168.1.20 ",
+                SerialNo = " ABC-100 ",
+                Type = " Operator Module "
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(terminals);
+        Assert.Equal("T-01", result.Value.Number);
+        Assert.Equal("192.168.1.20", result.Value.IPAddress);
+        Assert.Equal("ABC-100", result.Value.SerialNo);
+        Assert.Equal("Operator Module", result.Value.Type);
+        Assert.Equal(1, writeRepository.AddCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, unitOfWork.BeginTransactionCallCount);
+        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
+        Assert.Equal(1, unitOfWork.CommitTransactionCallCount);
+        Assert.Equal(0, unitOfWork.RollbackTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Create_rejects_deleted_window_and_rolls_back()
+    {
+        var window = Window(id: 1, isDeleted: true);
+        var terminals = new List<Terminal>();
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var handler = CreateHandler(
+            new List<Window> { window },
+            terminals,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            ValidCreate(window.Id),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Terminals.Create.WindowDeleted");
+        Assert.Empty(terminals);
+        Assert.Equal(0, writeRepository.AddCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Create_rejects_duplicate_number_in_same_window_including_deleted()
+    {
+        var window = Window(id: 1);
+        var deletedTerminal = Terminal(
+            id: 10,
+            window,
+            number: "T-01",
+            ipAddress: "192.168.1.30",
+            serialNo: "ABC-200",
+            isDeleted: true);
+        var terminals = new List<Terminal> { deletedTerminal };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = CreateHandler(
+            new List<Window> { window },
+            terminals,
+            new InMemoryWriteRepository<Terminal>(terminals),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            ValidCreate(window.Id) with { Number = "T-01" },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error =>
+                error.Code ==
+                "Terminals.Create.NumberAlreadyExistsInWindow");
+        Assert.Single(terminals);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Create_checks_ip_and_serial_uniqueness_inside_branch()
+    {
+        var branch1 = EntityTestFactory.Branch(1);
+        var branch2 = EntityTestFactory.Branch(2);
+        var area1 = WaitingArea(1, branch1);
+        var area2 = WaitingArea(2, branch1);
+        var area3 = WaitingArea(3, branch2);
+        var window1 = Window(1, area1);
+        var window2 = Window(2, area2);
+        var window3 = Window(3, area3);
+        var existing = Terminal(
+            10,
+            window1,
+            ipAddress: "192.168.1.20",
+            serialNo: "ABC-100");
+        var terminals = new List<Terminal> { existing };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = CreateHandler(
+            new List<Window> { window1, window2, window3 },
+            terminals,
+            new InMemoryWriteRepository<Terminal>(terminals),
+            unitOfWork);
+
+        var duplicateIp = await handler.Handle(
+            ValidCreate(window2.Id) with
+            {
+                Number = "T-02",
+                IPAddress = "192.168.1.20",
+                SerialNo = "ABC-200"
+            },
+            CancellationToken.None);
+        var duplicateSerial = await handler.Handle(
+            ValidCreate(window2.Id) with
+            {
+                Number = "T-03",
+                IPAddress = "192.168.1.21",
+                SerialNo = "ABC-100"
+            },
+            CancellationToken.None);
+        var otherBranch = await handler.Handle(
+            ValidCreate(window3.Id) with
+            {
+                Number = "T-01",
+                IPAddress = "192.168.1.20",
+                SerialNo = "ABC-100"
+            },
+            CancellationToken.None);
+
+        Assert.True(duplicateIp.IsFailure);
+        Assert.True(duplicateSerial.IsFailure);
+        Assert.True(otherBranch.IsSuccess);
+        Assert.Contains(
+            duplicateIp.Errors,
+            error =>
+                error.Code ==
+                "Terminals.Create.IPAddressAlreadyExistsInBranch");
+        Assert.Contains(
+            duplicateSerial.Errors,
+            error =>
+                error.Code ==
+                "Terminals.Create.SerialNoAlreadyExistsInBranch");
+    }
+
+    [Fact]
+    public async Task Update_succeeds_without_changing_window_and_commits_serializable_transaction()
+    {
+        var window = Window(id: 1);
+        var terminal = Terminal(10, window);
+        var terminals = new List<Terminal> { terminal };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var handler = UpdateHandler(
+            new List<Window> { window },
+            terminals,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UpdateTerminalCommand
+            {
+                Id = terminal.Id,
+                RequestId = terminal.Id,
+                Number = " SELF-01 ",
+                IPAddress = " 10.0.0.25 ",
+                SerialNo = " XYZ-100 ",
+                Type = " Self-Service Module "
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(window.Id, terminal.WindowId);
+        Assert.Equal("SELF-01", terminal.Number);
+        Assert.Equal("10.0.0.25", terminal.IPAddress);
+        Assert.Equal("XYZ-100", terminal.SerialNo);
+        Assert.Equal("Self-Service Module", terminal.Type);
+        Assert.Equal(1, writeRepository.UpdateCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
+        Assert.Equal(1, unitOfWork.CommitTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Update_returns_not_found_for_soft_deleted_terminal()
+    {
+        var window = Window(id: 1);
+        var terminal = Terminal(10, window, isDeleted: true);
+        var terminals = new List<Terminal> { terminal };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UpdateHandler(
+            new List<Window> { window },
+            terminals,
+            new InMemoryWriteRepository<Terminal>(terminals),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UpdateTerminalCommand
+            {
+                Id = terminal.Id,
+                RequestId = terminal.Id,
+                Number = "T-02",
+                IPAddress = "192.168.1.21",
+                SerialNo = "ABC-200",
+                Type = "Operator Module"
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Terminals.Update.TerminalNotFound");
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Delete_soft_deletes_terminal_and_saves_once()
+    {
+        var window = Window(id: 1);
+        var terminal = Terminal(10, window);
+        var terminals = new List<Terminal> { terminal };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var handler = new DeleteTerminalCommandHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new DeleteTerminalCommand { Id = terminal.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(terminal.IsDeleted);
+        Assert.NotNull(terminal.DeletedOnUtc);
+        Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Restore_deleted_terminal_preserves_values_and_requires_active_window()
+    {
+        var window = Window(id: 1);
+        var terminal = Terminal(
+            10,
+            window,
+            number: "T-01",
+            ipAddress: "192.168.1.20",
+            serialNo: "ABC-100",
+            type: "Operator Module",
+            isDeleted: true);
+        var terminals = new List<Terminal> { terminal };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var handler = RestoreHandler(
+            new List<Window> { window },
+            terminals,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new RestoreTerminalCommand { Id = terminal.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(terminal.IsDeleted);
+        Assert.Equal("T-01", terminal.Number);
+        Assert.Equal("192.168.1.20", terminal.IPAddress);
+        Assert.Equal("ABC-100", terminal.SerialNo);
+        Assert.Equal("Operator Module", terminal.Type);
+        Assert.Equal(1, writeRepository.UpdateCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
+    }
+
+    [Fact]
+    public async Task Restore_blocks_deleted_parent_window()
+    {
+        var window = Window(id: 1, isDeleted: true);
+        var terminal = Terminal(10, window, isDeleted: true);
+        var terminals = new List<Terminal> { terminal };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = RestoreHandler(
+            new List<Window> { window },
+            terminals,
+            new InMemoryWriteRepository<Terminal>(terminals),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new RestoreTerminalCommand { Id = terminal.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Terminals.Restore.WindowDeleted");
+        Assert.True(terminal.IsDeleted);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Permanent_delete_requires_soft_delete_and_calls_repository_once()
+    {
+        var window = Window(id: 1);
+        var active = Terminal(10, window);
+        var deleted = Terminal(11, window, number: "T-02", isDeleted: true);
+        var terminals = new List<Terminal> { active, deleted };
+        var permanentRepository =
+            new TestTerminalPermanentDeleteRepository();
+        var handler = new PermanentDeleteTerminalCommandHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            permanentRepository,
+            new TestCurrentUser());
+
+        var activeResult = await handler.Handle(
+            new PermanentDeleteTerminalCommand { Id = active.Id },
+            CancellationToken.None);
+        var deletedResult = await handler.Handle(
+            new PermanentDeleteTerminalCommand { Id = deleted.Id },
+            CancellationToken.None);
+
+        Assert.True(activeResult.IsFailure);
+        Assert.True(deletedResult.IsSuccess);
+        Assert.Contains(
+            activeResult.Errors,
+            error =>
+                error.Code ==
+                "Terminals.PermanentDelete.MustBeSoftDeleted");
+        Assert.Equal(1, permanentRepository.CallCount);
+        Assert.Equal(deleted.Id, permanentRepository.LastTerminalId);
+    }
+
+    private static CreateTerminalCommand ValidCreate(int windowId)
+        => new()
+        {
+            WindowId = windowId,
+            Number = "T-01",
+            IPAddress = "192.168.1.20",
+            SerialNo = "ABC-100",
+            Type = "Operator Module"
+        };
+
+    private static Branch Branch(int id)
+        => EntityTestFactory.Branch(id);
+
+    private static WaitingArea WaitingArea(int id, Branch? branch = null)
+    {
+        branch ??= Branch(id);
+
+        return EntityTestFactory.WaitingArea(
+            id,
+            branch.Id,
+            id,
+            branch,
+            descriptiveName: $"Area {id}");
+    }
+
+    private static Window Window(
+        int id,
+        WaitingArea? waitingArea = null,
+        bool isDeleted = false)
+    {
+        waitingArea ??= WaitingArea(id);
+
+        return EntityTestFactory.Window(
+            id,
+            waitingArea.Id,
+            number: id.ToString(),
+            waitingArea,
+            isDeleted: isDeleted);
+    }
+
+    private static Terminal Terminal(
+        int id,
+        Window window,
+        string number = "T-01",
+        string ipAddress = "192.168.1.20",
+        string serialNo = "ABC-100",
+        string type = "Operator Module",
+        bool isDeleted = false)
+        => EntityTestFactory.Terminal(
+            id,
+            window.Id,
+            number,
+            ipAddress,
+            serialNo,
+            type,
+            window,
+            isDeleted);
+
+    private static CreateTerminalCommandHandler CreateHandler(
+        List<Window> windows,
+        List<Terminal> terminals,
+        InMemoryWriteRepository<Terminal> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static UpdateTerminalCommandHandler UpdateHandler(
+        List<Window> windows,
+        List<Terminal> terminals,
+        InMemoryWriteRepository<Terminal> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static RestoreTerminalCommandHandler RestoreHandler(
+        List<Window> windows,
+        List<Terminal> terminals,
+        InMemoryWriteRepository<Terminal> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private sealed class TestTerminalPermanentDeleteRepository
+        : ITerminalPermanentDeleteRepository
+    {
+        public int CallCount { get; private set; }
+
+        public int? LastTerminalId { get; private set; }
+
+        public Task<int> DeletePermanentlyAsync(
+            int terminalId,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            LastTerminalId = terminalId;
+
+            return Task.FromResult(1);
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\Terminals\TerminalQueryHandlerTests.cs ==================== 
+using Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.Terminals;
+
+public sealed class TerminalQueryHandlerTests
+{
+    [Fact]
+    public async Task Active_list_excludes_deleted_filters_search_and_projects_context()
+    {
+        var branch = EntityTestFactory.Branch(
+            1,
+            arabicName: "فرع 1",
+            englishName: "Branch 1");
+        var area = WaitingArea(1, branch);
+        var window1 = Window(1, area, number: "2");
+        var window2 = Window(2, area, number: "1");
+        var active1 = Terminal(
+            10,
+            window1,
+            number: "T-02",
+            ipAddress: "192.168.1.22",
+            serialNo: "ABC-200",
+            type: "Kiosk Module");
+        var active2 = Terminal(
+            11,
+            window2,
+            number: "T-01",
+            ipAddress: "192.168.1.20",
+            serialNo: "ABC-100",
+            type: "Operator Module");
+        var deleted = Terminal(
+            12,
+            window1,
+            number: "SELF-01",
+            ipAddress: "192.168.1.30",
+            serialNo: "ABC-300",
+            type: "Self-Service Module",
+            isDeleted: true);
+        var terminals = new List<Terminal>
+        {
+            active1,
+            active2,
+            deleted
+        };
+        var handler = new GetTerminalsQueryHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetTerminalsQuery
+            {
+                Search = "Module",
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalItems);
+        Assert.DoesNotContain(
+            result.Value.Data,
+            item => item.Id == deleted.Id);
+        Assert.Equal(active1.Id, result.Value.Data[0].Id);
+        Assert.Equal(active2.Id, result.Value.Data[1].Id);
+        Assert.Equal(branch.Id, result.Value.Data[0].BranchId);
+        Assert.Equal(branch.ArabicName, result.Value.Data[0].BranchArabicName);
+        Assert.Equal(area.Id, result.Value.Data[0].WaitingAreaId);
+        Assert.Equal(window1.Number, result.Value.Data[0].WindowNumber);
+    }
+
+    [Fact]
+    public async Task Active_list_supports_window_filter_and_pagination()
+    {
+        var area = WaitingArea(1);
+        var window1 = Window(1, area);
+        var window2 = Window(2, area);
+        var terminals = new List<Terminal>
+        {
+            Terminal(10, window1, number: "T-01"),
+            Terminal(11, window1, number: "T-02"),
+            Terminal(12, window2, number: "T-03")
+        };
+        var handler = new GetTerminalsQueryHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetTerminalsQuery
+            {
+                WindowId = window1.Id,
+                PageNumber = 2,
+                PageSize = 1
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalItems);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(11, result.Value.Data[0].Id);
+    }
+
+    [Fact]
+    public async Task Details_returns_active_terminal_and_hides_missing_or_deleted()
+    {
+        var area = WaitingArea(1);
+        var window = Window(1, area);
+        var active = Terminal(10, window);
+        var deleted = Terminal(11, window, number: "T-02", isDeleted: true);
+        var terminals = new List<Terminal> { active, deleted };
+        var handler = new GetTerminalByIdQueryHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            new TestCurrentUser());
+
+        var activeResult = await handler.Handle(
+            new GetTerminalByIdQuery { Id = active.Id },
+            CancellationToken.None);
+        var deletedResult = await handler.Handle(
+            new GetTerminalByIdQuery { Id = deleted.Id },
+            CancellationToken.None);
+        var missingResult = await handler.Handle(
+            new GetTerminalByIdQuery { Id = 99 },
+            CancellationToken.None);
+
+        Assert.True(activeResult.IsSuccess);
+        Assert.Equal(active.Id, activeResult.Value.Id);
+        Assert.True(deletedResult.IsFailure);
+        Assert.True(missingResult.IsFailure);
+        Assert.Contains(
+            deletedResult.Errors,
+            error => error.Code == "Terminals.Details.TerminalNotFound");
+    }
+
+    [Fact]
+    public async Task Deleted_list_returns_deleted_only_with_deleted_timestamp()
+    {
+        var area = WaitingArea(1);
+        var window = Window(1, area);
+        var active = Terminal(10, window);
+        var deleted = Terminal(
+            11,
+            window,
+            number: "T-02",
+            type: "Self-Service Module",
+            isDeleted: true);
+        var terminals = new List<Terminal> { active, deleted };
+        var handler = new GetDeletedTerminalsQueryHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetDeletedTerminalsQuery
+            {
+                Search = "Self",
+                WindowId = window.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(deleted.Id, result.Value.Data[0].Id);
+        Assert.NotNull(result.Value.Data[0].DeletedOnUtc);
+    }
+
+    private static WaitingArea WaitingArea(int id, Branch? branch = null)
+    {
+        branch ??= EntityTestFactory.Branch(id);
+
+        return EntityTestFactory.WaitingArea(
+            id,
+            branch.Id,
+            id,
+            branch,
+            descriptiveName: $"Area {id}");
+    }
+
+    private static Window Window(
+        int id,
+        WaitingArea waitingArea,
+        string? number = null)
+        => EntityTestFactory.Window(
+            id,
+            waitingArea.Id,
+            number ?? id.ToString(),
+            waitingArea);
+
+    private static Terminal Terminal(
+        int id,
+        Window window,
+        string number = "T-01",
+        string ipAddress = "192.168.1.20",
+        string serialNo = "ABC-100",
+        string type = "Operator Module",
+        bool isDeleted = false)
+        => EntityTestFactory.Terminal(
+            id,
+            window.Id,
+            number,
+            ipAddress,
+            serialNo,
+            type,
+            window,
+            isDeleted);
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\Terminals\TerminalValidatorTests.cs ==================== 
+using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
+using Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
+using Qcontrol.Application.Features.Terminals.Query.GetTerminals;
+
+namespace QControl.Application.Tests.Terminals;
+
+public sealed class TerminalValidatorTests
+{
+    [Fact]
+    public void Create_validator_rejects_required_fields_and_non_ipv4()
+    {
+        var validator = new CreateTerminalCommandValidator();
+
+        var result = validator.Validate(
+            new CreateTerminalCommand
+            {
+                WindowId = 0,
+                Number = " ",
+                IPAddress = "2001:db8::1",
+                SerialNo = " ",
+                Type = " "
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.WindowId));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.Number));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.IPAddress));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.SerialNo));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.Type));
+    }
+
+    [Theory]
+    [InlineData("999.168.1.1")]
+    [InlineData("192.168.1")]
+    [InlineData("terminal-ip")]
+    public void Create_validator_rejects_malformed_ipv4(string ipAddress)
+    {
+        var validator = new CreateTerminalCommandValidator();
+
+        var result = validator.Validate(
+            new CreateTerminalCommand
+            {
+                WindowId = 1,
+                Number = "T-01",
+                IPAddress = ipAddress,
+                SerialNo = "ABC-100",
+                Type = "Operator Module"
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateTerminalCommand.IPAddress));
+    }
+
+    [Fact]
+    public void Update_validator_rejects_route_body_mismatch_and_invalid_lengths()
+    {
+        var validator = new UpdateTerminalCommandValidator();
+
+        var result = validator.Validate(
+            new UpdateTerminalCommand
+            {
+                Id = 1,
+                RequestId = 2,
+                Number = new string('A', 21),
+                IPAddress = "192.168.1.20",
+                SerialNo = new string('S', 101),
+                Type = new string('T', 101)
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.ErrorMessage.Contains("match"));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateTerminalCommand.Number));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateTerminalCommand.SerialNo));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateTerminalCommand.Type));
+    }
+
+    [Fact]
+    public void Query_validators_reject_invalid_pagination_and_window_filter()
+    {
+        var activeValidator = new GetTerminalsQueryValidator();
+        var deletedValidator = new GetDeletedTerminalsQueryValidator();
+
+        var activeResult = activeValidator.Validate(
+            new GetTerminalsQuery
+            {
+                WindowId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+        var deletedResult = deletedValidator.Validate(
+            new GetDeletedTerminalsQuery
+            {
+                WindowId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+
+        Assert.False(activeResult.IsValid);
+        Assert.False(deletedResult.IsValid);
+        Assert.Contains(
+            activeResult.Errors,
+            error => error.PropertyName == nameof(GetTerminalsQuery.WindowId));
+        Assert.Contains(
+            deletedResult.Errors,
+            error => error.PropertyName == nameof(GetDeletedTerminalsQuery.WindowId));
+    }
+
+    [Fact]
+    public void Id_validators_reject_invalid_ids()
+    {
+        Assert.False(new GetTerminalByIdQueryValidator()
+            .Validate(new GetTerminalByIdQuery { Id = 0 })
+            .IsValid);
+        Assert.False(new DeleteTerminalCommandValidator()
+            .Validate(new DeleteTerminalCommand { Id = 0 })
+            .IsValid);
+        Assert.False(new RestoreTerminalCommandValidator()
+            .Validate(new RestoreTerminalCommand { Id = 0 })
+            .IsValid);
+        Assert.False(new PermanentDeleteTerminalCommandValidator()
+            .Validate(new PermanentDeleteTerminalCommand { Id = 0 })
+            .IsValid);
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application.Tests\TestSupport\EntityTestFactory.cs ==================== 
 using System.Reflection;
 using QControl.Domain.Entities;
@@ -10622,19 +13629,29 @@ internal static class EntityTestFactory
     public static Terminal Terminal(
         int id,
         int windowId,
-        int number = 1,
+        string number = "T-01",
         string ipAddress = "10.10.0.1",
-        Window? window = null)
+        string serialNo = "SERIAL-001",
+        string type = "Operator Module",
+        Window? window = null,
+        bool isDeleted = false,
+        DateTime? deletedOnUtc = null)
     {
         var terminal = QControl.Domain.Entities.Terminal.Create(
             windowId,
             number,
             ipAddress,
-            serialNo: null,
-            type: null,
+            serialNo,
+            type,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(terminal, id);
+
+        if (isDeleted)
+        {
+            terminal.IsDeleted = true;
+            terminal.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+        }
 
         if (window is not null)
         {
@@ -11123,6 +14140,7 @@ internal sealed class TestCurrentUser : ICurrentUser
  
 // ==================== E:\QControl\QControl.Application.Tests\TestSupport\TestUnitOfWork.cs ==================== 
 using System.Data;
+using System.Data.Common;
 using BuildingBlock.Application.Repositories;
 using Microsoft.EntityFrameworkCore.Storage;
 using QControl.Application.Abstraction.Presistence;
@@ -11132,6 +14150,14 @@ namespace QControl.Application.Tests.TestSupport;
 internal sealed class TestUnitOfWork : IUnitOfWork
 {
     public int SaveChangesCallCount { get; private set; }
+
+    public int BeginTransactionCallCount { get; private set; }
+
+    public int CommitTransactionCallCount { get; private set; }
+
+    public int RollbackTransactionCallCount { get; private set; }
+
+    public IsolationLevel? LastIsolationLevel { get; private set; }
 
     public IWriteRepository<TEntity, PlatformWriteMarker> WriteRepository<TEntity>()
         where TEntity : class
@@ -11146,18 +14172,106 @@ internal sealed class TestUnitOfWork : IUnitOfWork
 
     public Task<IDbContextTransaction> BeginTransactionAsync(
         CancellationToken ct = default)
-        => throw new NotSupportedException();
+    {
+        BeginTransactionCallCount++;
+
+        return Task.FromResult<IDbContextTransaction>(
+            new TestDbContextTransaction(this));
+    }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(
         IsolationLevel isolationLevel,
         CancellationToken ct = default)
-        => throw new NotSupportedException();
+    {
+        BeginTransactionCallCount++;
+        LastIsolationLevel = isolationLevel;
+
+        return Task.FromResult<IDbContextTransaction>(
+            new TestDbContextTransaction(this));
+    }
 
     public Task CommitTransactionAsync(CancellationToken ct = default)
-        => throw new NotSupportedException();
+    {
+        CommitTransactionCallCount++;
+
+        return Task.CompletedTask;
+    }
 
     public Task RollbackTransactionAsync(CancellationToken ct = default)
-        => throw new NotSupportedException();
+    {
+        RollbackTransactionCallCount++;
+
+        return Task.CompletedTask;
+    }
+
+    private sealed class TestDbContextTransaction
+        : IDbContextTransaction
+    {
+        private readonly TestUnitOfWork _unitOfWork;
+
+        public TestDbContextTransaction(TestUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
+
+        public Guid TransactionId { get; } = Guid.NewGuid();
+
+        public bool SupportsSavepoints => false;
+
+        public void Commit()
+            => _unitOfWork.CommitTransactionCallCount++;
+
+        public Task CommitAsync(CancellationToken cancellationToken = default)
+        {
+            _unitOfWork.CommitTransactionCallCount++;
+
+            return Task.CompletedTask;
+        }
+
+        public void Rollback()
+            => _unitOfWork.RollbackTransactionCallCount++;
+
+        public Task RollbackAsync(CancellationToken cancellationToken = default)
+        {
+            _unitOfWork.RollbackTransactionCallCount++;
+
+            return Task.CompletedTask;
+        }
+
+        public DbTransaction GetDbTransaction()
+            => throw new NotSupportedException();
+
+        public void CreateSavepoint(string name)
+            => throw new NotSupportedException();
+
+        public Task CreateSavepointAsync(
+            string name,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public void RollbackToSavepoint(string name)
+            => throw new NotSupportedException();
+
+        public Task RollbackToSavepointAsync(
+            string name,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public void ReleaseSavepoint(string name)
+            => throw new NotSupportedException();
+
+        public Task ReleaseSavepointAsync(
+            string name,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public void Dispose()
+        {
+        }
+
+        public ValueTask DisposeAsync()
+            => ValueTask.CompletedTask;
+    }
 }
  
 // ==================== E:\QControl\QControl.Application.Tests\WaitingAreas\WaitingAreaCommandHandlerTests.cs ==================== 
@@ -12396,13 +15510,18 @@ public sealed class WindowCommandHandlerTests
             EntityTestFactory.Terminal(20, window.Id, window: window);
         var displayWindow =
             EntityTestFactory.DisplayWindow(30, 1, window.Id, window: window);
+        var terminals = new List<Terminal> { terminal };
         var windows = new List<Window> { window };
         var unitOfWork = new TestUnitOfWork();
         var writeRepository = new InMemoryWriteRepository<Window>(windows);
+        var terminalWriteRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
         var handler = DeleteHandler(
             windows,
             writeRepository,
-            unitOfWork);
+            unitOfWork,
+            terminals,
+            terminalWriteRepository);
 
         var result = await handler.Handle(
             new DeleteWindowCommand { Id = window.Id },
@@ -12411,10 +15530,12 @@ public sealed class WindowCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Single(windows);
         Assert.True(window.IsDeleted);
+        Assert.True(terminal.IsDeleted);
         Assert.NotNull(window.DeletedOnUtc);
         Assert.Contains(terminal, window.Terminals);
         Assert.Contains(displayWindow, window.DisplayWindows);
         Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, terminalWriteRepository.DeleteCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
@@ -12592,12 +15713,22 @@ public sealed class WindowCommandHandlerTests
     private static DeleteWindowCommandHandler DeleteHandler(
         List<Window> windows,
         InMemoryWriteRepository<Window> writeRepository,
-        TestUnitOfWork unitOfWork)
-        => new(
+        TestUnitOfWork unitOfWork,
+        List<Terminal>? terminals = null,
+        InMemoryWriteRepository<Terminal>? terminalWriteRepository = null)
+    {
+        terminals ??= new List<Terminal>();
+        terminalWriteRepository ??=
+            new InMemoryWriteRepository<Terminal>(terminals);
+
+        return new DeleteWindowCommandHandler(
             new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(terminals),
             writeRepository,
+            terminalWriteRepository,
             new TestCurrentUser(),
             unitOfWork);
+    }
 
     private static PermanentDeleteWindowCommandHandler PermanentDeleteHandler(
         List<Window> windows,
@@ -13500,16 +16631,18 @@ public sealed class Location : Entity<int>
     }
 } 
 // ==================== E:\QControl\QControl.Domain\Entities\Terminal.cs ==================== 
-﻿using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.Primitive;
 using Qcontrol.Domain.Identity;
 
 namespace QControl.Domain.Entities;
 
-public sealed class Terminal : AggregateRoot<int>
+public sealed class Terminal : AggregateRoot<int>,
+    ISoftDeleteEntity
 {
-    public string? SerialNo { get; private set; }
+    public string SerialNo { get; private set; } = string.Empty;
 
-    public int Number { get; private set; }
+    public string Number { get; private set; } = string.Empty;
 
     public string IPAddress { get; private set; } = string.Empty;
 
@@ -13517,7 +16650,13 @@ public sealed class Terminal : AggregateRoot<int>
 
     public Window Window { get; private set; } = null!;
 
-    public string? Type { get; private set; }
+    public string Type { get; private set; } = string.Empty;
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedOnUtc { get; set; }
+
+    public DateTime? RestoredOnUtc { get; set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 
@@ -13533,46 +16672,43 @@ public sealed class Terminal : AggregateRoot<int>
 
     public static Terminal Create(
         int windowId,
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid createdByApplicationUserId)
     {
         return new Terminal
         {
             WindowId = windowId,
-            Number = number,
+            Number = number.Trim(),
             IPAddress = ipAddress.Trim(),
-            SerialNo = NormalizeOptional(serialNo),
-            Type = NormalizeOptional(type),
+            SerialNo = serialNo.Trim(),
+            Type = type.Trim(),
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
     }
 
     public void Update(
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid lastModifiedByApplicationUserId)
     {
-        Number = number;
+        Number = number.Trim();
         IPAddress = ipAddress.Trim();
-        SerialNo = NormalizeOptional(serialNo);
-        Type = NormalizeOptional(type);
+        SerialNo = serialNo.Trim();
+        Type = type.Trim();
         LastModifiedByApplicationUserId =
             lastModifiedByApplicationUserId;
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
-} 
+    public void Restore()
+        => IsDeleted = false;
+}
+ 
 // ==================== E:\QControl\QControl.Domain\Entities\WaitingArea.cs ==================== 
 ﻿using BuildingBlock.Domain.EntitiesHelper;
 using Qcontrol.Domain.Identity;
@@ -14777,6 +17913,192 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("Window_WaitingAreaId_Required", resourceCulture);
             }
         }
+
+        public static string Terminal_AlreadyActive {
+            get {
+                return ResourceManager.GetString("Terminal_AlreadyActive", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Authentication_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Create_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Create_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Delete_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Delete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("Terminal_Id_Mismatch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Id_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Id_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_Required {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_NotFound {
+            get {
+                return ResourceManager.GetString("Terminal_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_AlreadyExistsInWindow {
+            get {
+                return ResourceManager.GetString("Terminal_Number_AlreadyExistsInWindow", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_Number_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Number_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_HasRelatedRecords {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_HasRelatedRecords", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_MustBeSoftDeleted {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_MustBeSoftDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_Success {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Restore_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Restore_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Restore_WindowDeleted {
+            get {
+                return ResourceManager.GetString("Terminal_Restore_WindowDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_Required {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Type_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_Type_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Type_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Type_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Update_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Update_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Window_Deleted {
+            get {
+                return ResourceManager.GetString("Terminal_Window_Deleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Window_NotFound {
+            get {
+                return ResourceManager.GetString("Terminal_Window_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_WindowId_Required {
+            get {
+                return ResourceManager.GetString("Terminal_WindowId_Required", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
@@ -15010,6 +18332,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IWriteDbContextAccessor, PlatformWriteDbContextAccessor>();
             services.AddScoped(typeof(IReadModelWriter<>), typeof(EfReadModelWriter<>));
             services.AddScoped<IWindowPermanentDeleteRepository, WindowPermanentDeleteRepository>();
+            services.AddScoped<ITerminalPermanentDeleteRepository, TerminalPermanentDeleteRepository>();
 
             // public survey related services
 
@@ -15746,12 +19069,20 @@ internal sealed class TerminalConfiguration
         builder.ToTable("Terminal", table =>
         {
             table.HasCheckConstraint(
-                "CK_Terminal_Number_Positive",
-                "[Number] > 0");
+                "CK_Terminal_Number_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
 
             table.HasCheckConstraint(
                 "CK_Terminal_IPAddress_NotBlank",
                 "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Terminal_SerialNo_NotBlank",
+                "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Terminal_Type_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
         });
 
         builder.HasKey(x => x.Id);
@@ -15760,11 +19091,13 @@ internal sealed class TerminalConfiguration
             .ValueGeneratedOnAdd();
 
         builder.Property(x => x.SerialNo)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Number)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(20)
+            .IsUnicode(false);
 
         builder.Property(x => x.IPAddress)
             .IsRequired()
@@ -15775,8 +19108,17 @@ internal sealed class TerminalConfiguration
             .IsRequired();
 
         builder.Property(x => x.Type)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
+        builder.Property(x => x.DeletedOnUtc)
+            .IsRequired(false);
+
+        builder.Property(x => x.RestoredOnUtc)
+            .IsRequired(false);
 
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
@@ -15794,8 +19136,7 @@ internal sealed class TerminalConfiguration
             .IsUnique();
 
         builder.HasIndex(x => x.SerialNo)
-            .IsUnique()
-            .HasFilter("[SerialNo] IS NOT NULL");
+            .IsUnique(false);
 
         builder.HasIndex(x => x.IPAddress);
 
@@ -15818,7 +19159,8 @@ internal sealed class TerminalConfiguration
             .HasForeignKey(x => x.LastModifiedByApplicationUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
-} 
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Configurations\UserRoleConfiguration.cs ==================== 
 ﻿using BuildingBlock.Application.Abstraction.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -19254,6 +22596,1211 @@ namespace Qcontrol.Infrastructure.Migrations
     }
 }
  
+// ==================== E:\QControl\QControl.infrastructure\Migrations\20260625101756_AddTerminalManagementAndWindowCascadeSoftDelete.cs ==================== 
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Qcontrol.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddTerminalManagementAndWindowCascadeSoftDelete : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql(
+                """
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Terminal]
+                    WHERE [SerialNo] IS NULL
+                       OR NULLIF(LTRIM(RTRIM([SerialNo])), N'') IS NULL)
+                BEGIN
+                    THROW 51000, 'Cannot apply Terminal management migration: Terminal.SerialNo contains null or blank values. Clean the data before migrating.', 1;
+                END;
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Terminal]
+                    WHERE [Type] IS NULL
+                       OR NULLIF(LTRIM(RTRIM([Type])), N'') IS NULL)
+                BEGIN
+                    THROW 51001, 'Cannot apply Terminal management migration: Terminal.Type contains null or blank values. Clean the data before migrating.', 1;
+                END;
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM (
+                        SELECT
+                            wa.[BranchId],
+                            t.[IPAddress]
+                        FROM [Terminal] AS t
+                        INNER JOIN [Window] AS w
+                            ON w.[Id] = t.[WindowId]
+                        INNER JOIN [WaitingArea] AS wa
+                            ON wa.[Id] = w.[WaitingAreaId]
+                        GROUP BY
+                            wa.[BranchId],
+                            t.[IPAddress]
+                        HAVING COUNT_BIG(*) > 1
+                    ) AS duplicates)
+                BEGIN
+                    THROW 51002, 'Cannot apply Terminal management migration: duplicate Terminal.IPAddress values exist inside the same Branch. Clean the data before migrating.', 1;
+                END;
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM (
+                        SELECT
+                            wa.[BranchId],
+                            t.[SerialNo]
+                        FROM [Terminal] AS t
+                        INNER JOIN [Window] AS w
+                            ON w.[Id] = t.[WindowId]
+                        INNER JOIN [WaitingArea] AS wa
+                            ON wa.[Id] = w.[WaitingAreaId]
+                        GROUP BY
+                            wa.[BranchId],
+                            t.[SerialNo]
+                        HAVING COUNT_BIG(*) > 1
+                    ) AS duplicates)
+                BEGIN
+                    THROW 51003, 'Cannot apply Terminal management migration: duplicate Terminal.SerialNo values exist inside the same Branch. Clean the data before migrating.', 1;
+                END;
+                """);
+
+            migrationBuilder.DropIndex(
+                name: "IX_Terminal_SerialNo",
+                table: "Terminal");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Terminal_Number_Positive",
+                table: "Terminal");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Type",
+                table: "Terminal",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "SerialNo",
+                table: "Terminal",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Number",
+                table: "Terminal",
+                type: "varchar(20)",
+                unicode: false,
+                maxLength: 20,
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "int");
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "DeletedOnUtc",
+                table: "Terminal",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDeleted",
+                table: "Terminal",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "RestoredOnUtc",
+                table: "Terminal",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Terminal_SerialNo",
+                table: "Terminal",
+                column: "SerialNo");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Terminal_Number_NotBlank",
+                table: "Terminal",
+                sql: "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Terminal_SerialNo_NotBlank",
+                table: "Terminal",
+                sql: "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Terminal_Type_NotBlank",
+                table: "Terminal",
+                sql: "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "IX_Terminal_SerialNo",
+                table: "Terminal");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Terminal_Number_NotBlank",
+                table: "Terminal");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Terminal_SerialNo_NotBlank",
+                table: "Terminal");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Terminal_Type_NotBlank",
+                table: "Terminal");
+
+            migrationBuilder.DropColumn(
+                name: "DeletedOnUtc",
+                table: "Terminal");
+
+            migrationBuilder.DropColumn(
+                name: "IsDeleted",
+                table: "Terminal");
+
+            migrationBuilder.DropColumn(
+                name: "RestoredOnUtc",
+                table: "Terminal");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Type",
+                table: "Terminal",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "SerialNo",
+                table: "Terminal",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Number",
+                table: "Terminal",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "varchar(20)",
+                oldUnicode: false,
+                oldMaxLength: 20);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Terminal_SerialNo",
+                table: "Terminal",
+                column: "SerialNo",
+                unique: true,
+                filter: "[SerialNo] IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Terminal_Number_Positive",
+                table: "Terminal",
+                sql: "[Number] > 0");
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.infrastructure\Migrations\20260625101756_AddTerminalManagementAndWindowCascadeSoftDelete.Designer.cs ==================== 
+﻿// <auto-generated />
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using QControl.infrastructure.Persistence;
+
+#nullable disable
+
+namespace Qcontrol.Infrastructure.Migrations
+{
+    [DbContext(typeof(PlatformWriteDbContext))]
+    [Migration("20260625101756_AddTerminalManagementAndWindowCascadeSoftDelete")]
+    partial class AddTerminalManagementAndWindowCascadeSoftDelete
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ArabicName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EnglishName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsUpdatesAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<string>("License")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("IPAddress")
+                        .IsUnique();
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.ToTable("Branch", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Branch_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Branch_NameRequired", "NULLIF(LTRIM(RTRIM([ArabicName])), N'') IS NOT NULL OR NULLIF(LTRIM(RTRIM([EnglishName])), N'') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SerialNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("IPAddress");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("SerialNo")
+                        .IsUnique()
+                        .HasFilter("[SerialNo] IS NOT NULL");
+
+                    b.HasIndex("BranchId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("Display", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Display_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_Number_Positive", "[Number] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.DisplayWindow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WindowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("DisplayId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("WindowId");
+
+                    b.HasIndex("DisplayId", "WindowId")
+                        .IsUnique();
+
+                    b.ToTable("DisplayWindow", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Area")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Governorate")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.ToTable("Location", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SerialNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("WindowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("IPAddress");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("SerialNo");
+
+                    b.HasIndex("WindowId");
+
+                    b.HasIndex("WindowId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("Terminal", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Terminal_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_Type_NotBlank", "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AudioDevice")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ControlDevice")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescriptiveName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("BranchId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("WaitingArea", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WaitingArea_Number_Positive", "[Number] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescriptiveName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EnableDirectCall")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("EnableTicketBooking")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WaitingAreaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("WaitingAreaId");
+
+                    b.HasIndex("WaitingAreaId", "IPAddress")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Window_WaitingAreaId_IPAddress")
+                        .HasFilter("[IPAddress] IS NOT NULL");
+
+                    b.HasIndex("WaitingAreaId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Window_WaitingAreaId_Number");
+
+                    b.ToTable("Window", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Window_IPAddress_NotBlank", "[IPAddress] IS NULL OR NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Window_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), N'') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Identity.TechnicalAdmin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.ToTable("TechnicalAdmin", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("PasswordChangedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("UserType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationUser", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSystemPermission")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Permission", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSystemRole")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Role", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.RolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("RoleId", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("RolePermission", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.UserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("ApplicationUserId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("UserRole", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("Displays")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.DisplayWindow", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QControl.Domain.Entities.Display", "Display")
+                        .WithMany("DisplayWindows")
+                        .HasForeignKey("DisplayId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Window", "Window")
+                        .WithMany("DisplayWindows")
+                        .HasForeignKey("WindowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("Display");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("Window");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Location", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithOne("Location")
+                        .HasForeignKey("QControl.Domain.Entities.Location", "BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Window", "Window")
+                        .WithMany("Terminals")
+                        .HasForeignKey("WindowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("Window");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("WaitingAreas")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.WaitingArea", "WaitingArea")
+                        .WithMany("Windows")
+                        .HasForeignKey("WaitingAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("WaitingArea");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Identity.TechnicalAdmin", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithOne()
+                        .HasForeignKey("QControl.Domain.Identity.TechnicalAdmin", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.RolePermission", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.UserRole", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.Navigation("Displays");
+
+                    b.Navigation("Location")
+                        .IsRequired();
+
+                    b.Navigation("WaitingAreas");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.Navigation("DisplayWindows");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.Navigation("Windows");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.Navigation("DisplayWindows");
+
+                    b.Navigation("Terminals");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Migrations\PlatformWriteDbContextModelSnapshot.cs ==================== 
 ﻿// <auto-generated />
 using System;
@@ -19521,11 +24068,17 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("IPAddress")
                         .IsRequired()
                         .HasMaxLength(45)
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -19533,14 +24086,22 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Number")
-                        .HasColumnType("int");
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SerialNo")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Type")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -19555,9 +24116,7 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasIndex("LastModifiedByApplicationUserId");
 
-                    b.HasIndex("SerialNo")
-                        .IsUnique()
-                        .HasFilter("[SerialNo] IS NOT NULL");
+                    b.HasIndex("SerialNo");
 
                     b.HasIndex("WindowId");
 
@@ -19568,7 +24127,11 @@ namespace Qcontrol.Infrastructure.Migrations
                         {
                             t.HasCheckConstraint("CK_Terminal_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Terminal_Number_Positive", "[Number] > 0");
+                            t.HasCheckConstraint("CK_Terminal_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_Type_NotBlank", "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
                         });
                 });
 
@@ -20530,6 +25093,49 @@ namespace QControl.infrastructure.Repositories
             : base(resolver) { }
     }
 } 
+// ==================== E:\QControl\QControl.infrastructure\Repositories\TerminalPermanentDeleteRepository.cs ==================== 
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+using QControl.infrastructure.Persistence;
+
+namespace QControl.infrastructure.Repositories;
+
+internal sealed class TerminalPermanentDeleteRepository
+    : ITerminalPermanentDeleteRepository
+{
+    private readonly PlatformWriteDbContext _dbContext;
+
+    public TerminalPermanentDeleteRepository(
+        PlatformWriteDbContext dbContext)
+    {
+        _dbContext = dbContext
+            ?? throw new ArgumentNullException(nameof(dbContext));
+    }
+
+    public async Task<int> DeletePermanentlyAsync(
+        int terminalId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _dbContext.Set<Terminal>()
+                .IgnoreQueryFilters()
+                .Where(x => x.Id == terminalId && x.IsDeleted)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (IsForeignKeyViolation(ex))
+        {
+            throw new TerminalPermanentDeleteConflictException(ex);
+        }
+    }
+
+    private static bool IsForeignKeyViolation(DbUpdateException exception)
+        => exception.InnerException is SqlException { Number: 547 };
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Repositories\WindowPermanentDeleteRepository.cs ==================== 
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -21041,6 +25647,30 @@ internal static class SeedConstants
         public const string WindowsDeletePermanent =
             "Windows.DeletePermanent";
 
+        public const string TerminalsViewAll =
+            "Terminals.ViewAll";
+
+        public const string TerminalsViewDetails =
+            "Terminals.ViewDetails";
+
+        public const string TerminalsCreate =
+            "Terminals.Create";
+
+        public const string TerminalsUpdate =
+            "Terminals.Update";
+
+        public const string TerminalsDelete =
+            "Terminals.Delete";
+
+        public const string TerminalsViewDeleted =
+            "Terminals.ViewDeleted";
+
+        public const string TerminalsRestore =
+            "Terminals.Restore";
+
+        public const string TerminalsDeletePermanent =
+            "Terminals.DeletePermanent";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -21155,6 +25785,38 @@ internal static class SeedConstants
             public static readonly Guid WindowsDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000022");
+
+            public static readonly Guid TerminalsViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000023");
+
+            public static readonly Guid TerminalsViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000024");
+
+            public static readonly Guid TerminalsCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000025");
+
+            public static readonly Guid TerminalsUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000026");
+
+            public static readonly Guid TerminalsDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000027");
+
+            public static readonly Guid TerminalsViewDeleted =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000028");
+
+            public static readonly Guid TerminalsRestore =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000029");
+
+            public static readonly Guid TerminalsDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000030");
         }
     }
 
@@ -21240,6 +25902,38 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.WindowsDeletePermanent,
                     PermissionNames.WindowsDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsViewAll,
+                    PermissionNames.TerminalsViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsViewDetails,
+                    PermissionNames.TerminalsViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsCreate,
+                    PermissionNames.TerminalsCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsUpdate,
+                    PermissionNames.TerminalsUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsDelete,
+                    PermissionNames.TerminalsDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsViewDeleted,
+                    PermissionNames.TerminalsViewDeleted),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsRestore,
+                    PermissionNames.TerminalsRestore),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.TerminalsDeletePermanent,
+                    PermissionNames.TerminalsDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

@@ -1,13 +1,15 @@
-﻿using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.Primitive;
 using Qcontrol.Domain.Identity;
 
 namespace QControl.Domain.Entities;
 
-public sealed class Terminal : AggregateRoot<int>
+public sealed class Terminal : AggregateRoot<int>,
+    ISoftDeleteEntity
 {
-    public string? SerialNo { get; private set; }
+    public string SerialNo { get; private set; } = string.Empty;
 
-    public int Number { get; private set; }
+    public string Number { get; private set; } = string.Empty;
 
     public string IPAddress { get; private set; } = string.Empty;
 
@@ -15,7 +17,13 @@ public sealed class Terminal : AggregateRoot<int>
 
     public Window Window { get; private set; } = null!;
 
-    public string? Type { get; private set; }
+    public string Type { get; private set; } = string.Empty;
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedOnUtc { get; set; }
+
+    public DateTime? RestoredOnUtc { get; set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 
@@ -31,43 +39,39 @@ public sealed class Terminal : AggregateRoot<int>
 
     public static Terminal Create(
         int windowId,
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid createdByApplicationUserId)
     {
         return new Terminal
         {
             WindowId = windowId,
-            Number = number,
+            Number = number.Trim(),
             IPAddress = ipAddress.Trim(),
-            SerialNo = NormalizeOptional(serialNo),
-            Type = NormalizeOptional(type),
+            SerialNo = serialNo.Trim(),
+            Type = type.Trim(),
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
     }
 
     public void Update(
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid lastModifiedByApplicationUserId)
     {
-        Number = number;
+        Number = number.Trim();
         IPAddress = ipAddress.Trim();
-        SerialNo = NormalizeOptional(serialNo);
-        Type = NormalizeOptional(type);
+        SerialNo = serialNo.Trim();
+        Type = type.Trim();
         LastModifiedByApplicationUserId =
             lastModifiedByApplicationUserId;
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
+    public void Restore()
+        => IsDeleted = false;
 }

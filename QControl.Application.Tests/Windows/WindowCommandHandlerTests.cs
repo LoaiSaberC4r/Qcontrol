@@ -397,13 +397,18 @@ public sealed class WindowCommandHandlerTests
             EntityTestFactory.Terminal(20, window.Id, window: window);
         var displayWindow =
             EntityTestFactory.DisplayWindow(30, 1, window.Id, window: window);
+        var terminals = new List<Terminal> { terminal };
         var windows = new List<Window> { window };
         var unitOfWork = new TestUnitOfWork();
         var writeRepository = new InMemoryWriteRepository<Window>(windows);
+        var terminalWriteRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
         var handler = DeleteHandler(
             windows,
             writeRepository,
-            unitOfWork);
+            unitOfWork,
+            terminals,
+            terminalWriteRepository);
 
         var result = await handler.Handle(
             new DeleteWindowCommand { Id = window.Id },
@@ -412,10 +417,12 @@ public sealed class WindowCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Single(windows);
         Assert.True(window.IsDeleted);
+        Assert.True(terminal.IsDeleted);
         Assert.NotNull(window.DeletedOnUtc);
         Assert.Contains(terminal, window.Terminals);
         Assert.Contains(displayWindow, window.DisplayWindows);
         Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, terminalWriteRepository.DeleteCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
@@ -593,12 +600,22 @@ public sealed class WindowCommandHandlerTests
     private static DeleteWindowCommandHandler DeleteHandler(
         List<Window> windows,
         InMemoryWriteRepository<Window> writeRepository,
-        TestUnitOfWork unitOfWork)
-        => new(
+        TestUnitOfWork unitOfWork,
+        List<Terminal>? terminals = null,
+        InMemoryWriteRepository<Terminal>? terminalWriteRepository = null)
+    {
+        terminals ??= new List<Terminal>();
+        terminalWriteRepository ??=
+            new InMemoryWriteRepository<Terminal>(terminals);
+
+        return new DeleteWindowCommandHandler(
             new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(terminals),
             writeRepository,
+            terminalWriteRepository,
             new TestCurrentUser(),
             unitOfWork);
+    }
 
     private static PermanentDeleteWindowCommandHandler PermanentDeleteHandler(
         List<Window> windows,

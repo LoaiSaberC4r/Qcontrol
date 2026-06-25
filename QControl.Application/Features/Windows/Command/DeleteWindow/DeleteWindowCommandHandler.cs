@@ -1,6 +1,7 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Domain.Entities;
@@ -11,21 +12,31 @@ internal sealed class DeleteWindowCommandHandler
     : ICommandHandler<DeleteWindowCommand, DeleteWindowResponse>
 {
     private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
     private readonly IWriteRepository<Window> _windowWriteRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IUnitOfWork _unitOfWork;
 
     public DeleteWindowCommandHandler(
         IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<Terminal> terminalReadRepository,
         IWriteRepository<Window> windowWriteRepository,
+        IWriteRepository<Terminal> terminalWriteRepository,
         ICurrentUser currentUser,
         IUnitOfWork unitOfWork)
     {
         _windowReadRepository = windowReadRepository
             ?? throw new ArgumentNullException(nameof(windowReadRepository));
 
+        _terminalReadRepository = terminalReadRepository
+            ?? throw new ArgumentNullException(nameof(terminalReadRepository));
+
         _windowWriteRepository = windowWriteRepository
             ?? throw new ArgumentNullException(nameof(windowWriteRepository));
+
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
 
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
@@ -62,6 +73,12 @@ internal sealed class DeleteWindowCommandHandler
                     Type: ErrorType.NotFound));
         }
 
+        var activeTerminals =
+            await _terminalReadRepository.ListAsync(
+                new GetActiveTerminalsForWindowSpec(window.Id),
+                cancellationToken);
+
+        _terminalWriteRepository.DeleteRange(activeTerminals);
         _windowWriteRepository.Delete(window);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

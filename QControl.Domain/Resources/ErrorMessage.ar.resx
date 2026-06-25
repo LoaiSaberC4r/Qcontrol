@@ -300,6 +300,99 @@
   <data name="Window_WaitingAreaId_Required" xml:space="preserve">
     <value>معرف منطقة انتظار صحيح مطلوب.</value>
   </data>
+  <data name="Terminal_AlreadyActive" xml:space="preserve">
+    <value>الوحدة الطرفية نشطة بالفعل.</value>
+  </data>
+  <data name="Terminal_Authentication_Required" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
+  <data name="Terminal_Create_Success" xml:space="preserve">
+    <value>تم إنشاء الوحدة الطرفية بنجاح.</value>
+  </data>
+  <data name="Terminal_Delete_Success" xml:space="preserve">
+    <value>تم حذف الوحدة الطرفية بنجاح.</value>
+  </data>
+  <data name="Terminal_Id_Mismatch" xml:space="preserve">
+    <value>يجب أن يطابق معرف الوحدة الطرفية في المسار معرفها في الطلب.</value>
+  </data>
+  <data name="Terminal_Id_Required" xml:space="preserve">
+    <value>معرف وحدة طرفية صحيح مطلوب.</value>
+  </data>
+  <data name="Terminal_IPAddress_AlreadyExistsInBranch" xml:space="preserve">
+    <value>يوجد عنوان IP نفسه في هذا الفرع.</value>
+  </data>
+  <data name="Terminal_IPAddress_Invalid" xml:space="preserve">
+    <value>يجب أن يكون عنوان IP عنوان IPv4 صحيحًا.</value>
+  </data>
+  <data name="Terminal_IPAddress_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز عنوان IP 45 حرفًا.</value>
+  </data>
+  <data name="Terminal_IPAddress_Required" xml:space="preserve">
+    <value>عنوان IP مطلوب.</value>
+  </data>
+  <data name="Terminal_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الوحدة الطرفية.</value>
+  </data>
+  <data name="Terminal_Number_AlreadyExistsInWindow" xml:space="preserve">
+    <value>يوجد رقم الوحدة الطرفية نفسه في هذا الشباك.</value>
+  </data>
+  <data name="Terminal_Number_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز رقم الوحدة الطرفية 20 حرفًا.</value>
+  </data>
+  <data name="Terminal_Number_Required" xml:space="preserve">
+    <value>رقم الوحدة الطرفية مطلوب.</value>
+  </data>
+  <data name="Terminal_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="Terminal_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="Terminal_Pagination_PageSize_Max" xml:space="preserve">
+    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+  </data>
+  <data name="Terminal_PermanentDelete_HasRelatedRecords" xml:space="preserve">
+    <value>لا يمكن حذف الوحدة الطرفية نهائيًا لوجود سجلات مرتبطة بها.</value>
+  </data>
+  <data name="Terminal_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
+    <value>يجب حذف الوحدة الطرفية حذفًا منطقيًا قبل حذفها نهائيًا.</value>
+  </data>
+  <data name="Terminal_PermanentDelete_Success" xml:space="preserve">
+    <value>تم حذف الوحدة الطرفية نهائيًا بنجاح.</value>
+  </data>
+  <data name="Terminal_Restore_Success" xml:space="preserve">
+    <value>تمت استعادة الوحدة الطرفية بنجاح.</value>
+  </data>
+  <data name="Terminal_Restore_WindowDeleted" xml:space="preserve">
+    <value>لا يمكن استعادة الوحدة الطرفية لأن الشباك الخاص بها محذوف.</value>
+  </data>
+  <data name="Terminal_SerialNo_AlreadyExistsInBranch" xml:space="preserve">
+    <value>يوجد الرقم التسلسلي نفسه في هذا الفرع.</value>
+  </data>
+  <data name="Terminal_SerialNo_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الرقم التسلسلي 100 حرف.</value>
+  </data>
+  <data name="Terminal_SerialNo_Required" xml:space="preserve">
+    <value>الرقم التسلسلي مطلوب.</value>
+  </data>
+  <data name="Terminal_Type_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز نوع الوحدة 100 حرف.</value>
+  </data>
+  <data name="Terminal_Type_Required" xml:space="preserve">
+    <value>نوع الوحدة مطلوب.</value>
+  </data>
+  <data name="Terminal_Update_Success" xml:space="preserve">
+    <value>تم تحديث الوحدة الطرفية بنجاح.</value>
+  </data>
+  <data name="Terminal_Window_Deleted" xml:space="preserve">
+    <value>لا يمكن إنشاء وحدة طرفية داخل شباك محذوف.</value>
+  </data>
+  <data name="Terminal_Window_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الشباك المحدد.</value>
+  </data>
+  <data name="Terminal_WindowId_Required" xml:space="preserve">
+    <value>معرف شباك صحيح مطلوب.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>تعذر العثور على ملف المستخدم.</value>
   </data>
