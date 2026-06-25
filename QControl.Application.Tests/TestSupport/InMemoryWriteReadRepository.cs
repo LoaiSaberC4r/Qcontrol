@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BuildingBlock.Domain.Primitive;
 using BuildingBlock.Domain.Specification;
 using QControl.Application.Abstraction.Presistence;
 
@@ -62,12 +63,14 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
     public Task<TEntity?> GetByPropertyAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
-        => Task.FromResult(_items.FirstOrDefault(predicate.Compile()));
+        => Task.FromResult(ApplyGlobalFilter(_items)
+            .FirstOrDefault(predicate.Compile()));
 
     public Task<TEntity?> GetByPropertyTrackedAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
-        => Task.FromResult(_items.FirstOrDefault(predicate.Compile()));
+        => Task.FromResult(ApplyGlobalFilter(_items)
+            .FirstOrDefault(predicate.Compile()));
 
     public Task<bool> AnyAsync(
         Expression<Func<TEntity, bool>> predicate,
@@ -75,7 +78,8 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
     {
         AnyCallCount++;
 
-        return Task.FromResult(_items.Any(predicate.Compile()));
+        return Task.FromResult(ApplyGlobalFilter(_items)
+            .Any(predicate.Compile()));
     }
 
     public Task<int> CountAsync(
@@ -83,8 +87,8 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
         CancellationToken ct = default)
     {
         var count = predicate is null
-            ? _items.Count
-            : _items.Count(predicate.Compile());
+            ? ApplyGlobalFilter(_items).Count()
+            : ApplyGlobalFilter(_items).Count(predicate.Compile());
 
         return Task.FromResult(count);
     }
@@ -150,16 +154,26 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
     {
         var property = typeof(TEntity).GetProperty("Id");
 
-        return _items.FirstOrDefault(item =>
+        return ApplyGlobalFilter(_items).FirstOrDefault(item =>
             Equals(property!.GetValue(item), id));
     }
 
     private int CountForSpec(Specification<TEntity> spec)
-        => _items.Count(spec.Criteria.Compile());
+    {
+        var source = spec.IsGlobalFiltersIgnored
+            ? _items
+            : ApplyGlobalFilter(_items);
+
+        return source.Count(spec.Criteria.Compile());
+    }
 
     private IEnumerable<TEntity> ApplyDataSpec(Specification<TEntity> spec)
     {
-        IEnumerable<TEntity> query = _items.Where(spec.Criteria.Compile());
+        IEnumerable<TEntity> query = spec.IsGlobalFiltersIgnored
+            ? _items
+            : ApplyGlobalFilter(_items);
+
+        query = query.Where(spec.Criteria.Compile());
 
         query = ApplyOrdering(query, spec);
 
@@ -171,6 +185,19 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
         }
 
         return query;
+    }
+
+    private static IEnumerable<TEntity> ApplyGlobalFilter(
+        IEnumerable<TEntity> source)
+    {
+        if (!typeof(ISoftDeleteEntity).IsAssignableFrom(typeof(TEntity)))
+        {
+            return source;
+        }
+
+        return source.Where(item =>
+            item is not ISoftDeleteEntity softDeleteEntity ||
+            !softDeleteEntity.IsDeleted);
     }
 
     private static IEnumerable<TEntity> ApplyOrdering(

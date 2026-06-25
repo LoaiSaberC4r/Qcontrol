@@ -52,6 +52,19 @@ internal sealed class WindowConfiguration
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(x => x.IsDeleted)
+            .IsRequired()
+            .HasColumnType("bit")
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.DeletedOnUtc)
+            .IsRequired(false)
+            .HasColumnType("datetime2");
+
+        builder.Property(x => x.RestoredOnUtc)
+            .IsRequired(false)
+            .HasColumnType("datetime2");
+
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
 
@@ -65,11 +78,17 @@ internal sealed class WindowConfiguration
             x.WaitingAreaId,
             x.Number
         })
-            .IsUnique();
-
-        builder.HasIndex(x => x.IPAddress)
             .IsUnique()
-            .HasFilter("[IPAddress] IS NOT NULL");
+            .HasDatabaseName("UX_Window_WaitingAreaId_Number");
+
+        builder.HasIndex(x => new
+        {
+            x.WaitingAreaId,
+            x.IPAddress
+        })
+            .IsUnique()
+            .HasFilter("[IPAddress] IS NOT NULL")
+            .HasDatabaseName("UX_Window_WaitingAreaId_IPAddress");
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 

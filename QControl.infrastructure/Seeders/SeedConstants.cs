@@ -64,6 +64,27 @@ internal static class SeedConstants
         public const string WaitingAreasDelete =
             "WaitingAreas.Delete";
 
+        public const string WindowsViewAll =
+            "Windows.ViewAll";
+
+        public const string WindowsViewDetails =
+            "Windows.ViewDetails";
+
+        public const string WindowsCreate =
+            "Windows.Create";
+
+        public const string WindowsUpdate =
+            "Windows.Update";
+
+        public const string WindowsDelete =
+            "Windows.Delete";
+
+        public const string WindowsViewDeleted =
+            "Windows.ViewDeleted";
+
+        public const string WindowsDeletePermanent =
+            "Windows.DeletePermanent";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -150,6 +171,34 @@ internal static class SeedConstants
             public static readonly Guid WaitingAreasDelete =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000015");
+
+            public static readonly Guid WindowsViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000016");
+
+            public static readonly Guid WindowsViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000017");
+
+            public static readonly Guid WindowsCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000018");
+
+            public static readonly Guid WindowsUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000019");
+
+            public static readonly Guid WindowsDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000020");
+
+            public static readonly Guid WindowsViewDeleted =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000021");
+
+            public static readonly Guid WindowsDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000022");
         }
     }
 
@@ -207,6 +256,34 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.WaitingAreasDelete,
                     PermissionNames.WaitingAreasDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsViewAll,
+                    PermissionNames.WindowsViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsViewDetails,
+                    PermissionNames.WindowsViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsCreate,
+                    PermissionNames.WindowsCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsUpdate,
+                    PermissionNames.WindowsUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsDelete,
+                    PermissionNames.WindowsDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsViewDeleted,
+                    PermissionNames.WindowsViewDeleted),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WindowsDeletePermanent,
+                    PermissionNames.WindowsDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

@@ -3,7 +3,8 @@ using Qcontrol.Domain.Identity;
 
 namespace QControl.Domain.Entities;
 
-public sealed class Window : AggregateRoot<int>
+public sealed class Window : AggregateRoot<int>,
+    BuildingBlock.Domain.Primitive.ISoftDeleteEntity
 {
     private readonly List<Terminal> _terminals = new();
     private readonly List<DisplayWindow> _displayWindows = new();
@@ -21,6 +22,12 @@ public sealed class Window : AggregateRoot<int>
     public bool EnableTicketBooking { get; private set; }
 
     public bool EnableDirectCall { get; private set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedOnUtc { get; set; }
+
+    public DateTime? RestoredOnUtc { get; set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 

@@ -65,18 +65,30 @@ internal static class EntityTestFactory
         int id,
         int waitingAreaId,
         string number = "1",
-        WaitingArea? waitingArea = null)
+        WaitingArea? waitingArea = null,
+        string? descriptiveName = null,
+        string? ipAddress = null,
+        bool enableTicketBooking = false,
+        bool enableDirectCall = false,
+        bool isDeleted = false,
+        DateTime? deletedOnUtc = null)
     {
         var window = QControl.Domain.Entities.Window.Create(
             waitingAreaId,
             number,
-            descriptiveName: null,
-            ipAddress: null,
-            enableTicketBooking: false,
-            enableDirectCall: false,
+            descriptiveName: descriptiveName,
+            ipAddress: ipAddress,
+            enableTicketBooking: enableTicketBooking,
+            enableDirectCall: enableDirectCall,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(window, id);
+
+        if (isDeleted)
+        {
+            window.IsDeleted = true;
+            window.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+        }
 
         if (waitingArea is not null)
         {
@@ -90,6 +102,97 @@ internal static class EntityTestFactory
         return window;
     }
 
+    public static Terminal Terminal(
+        int id,
+        int windowId,
+        int number = 1,
+        string ipAddress = "10.10.0.1",
+        Window? window = null)
+    {
+        var terminal = QControl.Domain.Entities.Terminal.Create(
+            windowId,
+            number,
+            ipAddress,
+            serialNo: null,
+            type: null,
+            createdByApplicationUserId: CurrentUserId);
+
+        SetId(terminal, id);
+
+        if (window is not null)
+        {
+            SetPrivateProperty(
+                terminal,
+                nameof(QControl.Domain.Entities.Terminal.Window),
+                window);
+            AddTerminal(window, terminal);
+        }
+
+        return terminal;
+    }
+
+    public static Display Display(
+        int id,
+        int branchId,
+        int number = 1,
+        string ipAddress = "10.20.0.1",
+        Branch? branch = null)
+    {
+        var display = QControl.Domain.Entities.Display.Create(
+            branchId,
+            number,
+            ipAddress,
+            serialNo: null,
+            type: null,
+            createdByApplicationUserId: CurrentUserId);
+
+        SetId(display, id);
+
+        if (branch is not null)
+        {
+            SetPrivateProperty(
+                display,
+                nameof(QControl.Domain.Entities.Display.Branch),
+                branch);
+        }
+
+        return display;
+    }
+
+    public static DisplayWindow DisplayWindow(
+        int id,
+        int displayId,
+        int windowId,
+        Display? display = null,
+        Window? window = null)
+    {
+        var displayWindow = QControl.Domain.Entities.DisplayWindow.Create(
+            displayId,
+            windowId,
+            CurrentUserId);
+
+        SetId(displayWindow, id);
+
+        if (display is not null)
+        {
+            SetPrivateProperty(
+                displayWindow,
+                nameof(QControl.Domain.Entities.DisplayWindow.Display),
+                display);
+        }
+
+        if (window is not null)
+        {
+            SetPrivateProperty(
+                displayWindow,
+                nameof(QControl.Domain.Entities.DisplayWindow.Window),
+                window);
+            AddDisplayWindow(window, displayWindow);
+        }
+
+        return displayWindow;
+    }
+
     public static void AddWindow(WaitingArea waitingArea, Window window)
     {
         var field = typeof(WaitingArea).GetField(
@@ -98,6 +201,29 @@ internal static class EntityTestFactory
 
         var windows = (List<Window>)field!.GetValue(waitingArea)!;
         windows.Add(window);
+    }
+
+    public static void AddTerminal(Window window, Terminal terminal)
+    {
+        var field = typeof(Window).GetField(
+            "_terminals",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        var terminals = (List<Terminal>)field!.GetValue(window)!;
+        terminals.Add(terminal);
+    }
+
+    public static void AddDisplayWindow(
+        Window window,
+        DisplayWindow displayWindow)
+    {
+        var field = typeof(Window).GetField(
+            "_displayWindows",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        var displayWindows =
+            (List<DisplayWindow>)field!.GetValue(window)!;
+        displayWindows.Add(displayWindow);
     }
 
     private static void SetId<TEntity, TId>(TEntity entity, TId id)

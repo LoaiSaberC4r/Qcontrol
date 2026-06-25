@@ -1,3 +1,4 @@
+using BuildingBlock.Domain.Primitive;
 using QControl.Application.Abstraction.Presistence;
 
 namespace QControl.Application.Tests.TestSupport;
@@ -54,6 +55,14 @@ internal sealed class InMemoryWriteRepository<TEntity>
     public void Delete(TEntity entity)
     {
         DeleteCallCount++;
+
+        if (entity is ISoftDeleteEntity softDeleteEntity)
+        {
+            softDeleteEntity.IsDeleted = true;
+            softDeleteEntity.DeletedOnUtc ??= DateTime.UtcNow;
+            return;
+        }
+
         _items.Remove(entity);
     }
 
