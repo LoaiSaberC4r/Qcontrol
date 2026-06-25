@@ -5503,6 +5503,38 @@ public sealed class UpdateBranchRequest
 
     public BranchLocationRequest? Location { get; init; }
 } 
+// ==================== E:\QControl\QControl.Api\Contracts\Displays\CreateDisplayRequest.cs ==================== 
+namespace Qcontrol.Api.Contracts.Displays;
+
+public sealed class CreateDisplayRequest
+{
+    public int BranchId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Api\Contracts\Displays\UpdateDisplayRequest.cs ==================== 
+namespace Qcontrol.Api.Contracts.Displays;
+
+public sealed class UpdateDisplayRequest
+{
+    public int Id { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
 // ==================== E:\QControl\QControl.Api\Contracts\Terminals\CreateTerminalRequest.cs ==================== 
 namespace Qcontrol.Api.Contracts.Terminals;
 
@@ -5780,6 +5812,188 @@ public sealed class BranchesController : ControllerBase
         return result.ToIActionResult();
     }
 } 
+// ==================== E:\QControl\QControl.Api\Controllers\DisplaysController.cs ==================== 
+using BuildingBlock.Api;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Qcontrol.Api.Contracts.Displays;
+using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+using Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+using Qcontrol.Application.Features.Displays.Query.GetDisplays;
+using QControl.Api.Attribute;
+
+namespace Qcontrol.Api.Controllers;
+
+[ApiController]
+[Route("api/displays")]
+[Authorize]
+public sealed class DisplaysController : ControllerBase
+{
+    private readonly ISender sender;
+
+    public DisplaysController(ISender sender)
+    {
+        this.sender = sender
+            ?? throw new ArgumentNullException(nameof(sender));
+    }
+
+    [HttpGet]
+    [Permission("Displays.ViewAll")]
+    public async Task<IActionResult> GetPaginated(
+        [FromQuery] GetDisplaysQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDisplaysQuery();
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("deleted")]
+    [Permission("Displays.ViewDeleted")]
+    public async Task<IActionResult> GetDeleted(
+        [FromQuery] GetDeletedDisplaysQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDeletedDisplaysQuery();
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{displayId:int}")]
+    [Permission("Displays.ViewDetails")]
+    public async Task<IActionResult> GetById(
+        int displayId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetDisplayByIdQuery
+        {
+            Id = displayId
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost]
+    [Permission("Displays.Create")]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateDisplayRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateDisplayCommand
+        {
+            BranchId = request.BranchId,
+            Number = request.Number,
+            IPAddress = request.IPAddress,
+            SerialNo = request.SerialNo,
+            Type = request.Type
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPut("{displayId:int}")]
+    [Permission("Displays.Update")]
+    public async Task<IActionResult> Update(
+        int displayId,
+        [FromBody] UpdateDisplayRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateDisplayCommand
+        {
+            Id = displayId,
+            RequestId = request.Id,
+            Number = request.Number,
+            IPAddress = request.IPAddress,
+            SerialNo = request.SerialNo,
+            Type = request.Type
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{displayId:int}")]
+    [Permission("Displays.Delete")]
+    public async Task<IActionResult> Delete(
+        int displayId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteDisplayCommand
+        {
+            Id = displayId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{displayId:int}/restore")]
+    [Permission("Displays.Restore")]
+    public async Task<IActionResult> Restore(
+        int displayId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RestoreDisplayCommand
+        {
+            Id = displayId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{displayId:int}/permanent")]
+    [Permission("Displays.DeletePermanent")]
+    public async Task<IActionResult> DeletePermanently(
+        int displayId,
+        CancellationToken cancellationToken)
+    {
+        var command = new PermanentDeleteDisplayCommand
+        {
+            Id = displayId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Api\Controllers\TerminalsController.cs ==================== 
 using BuildingBlock.Api;
 using MediatR;
@@ -6310,6 +6524,27 @@ namespace QControl.Application
         public static readonly Assembly Assembly = typeof(AssemblyReference).Assembly;
     }
 } 
+// ==================== E:\QControl\QControl.Application\Abstraction\Presistence\DisplayPermanentDeleteConflictException.cs ==================== 
+namespace QControl.Application.Abstraction.Presistence;
+
+public sealed class DisplayPermanentDeleteConflictException : Exception
+{
+    public DisplayPermanentDeleteConflictException(Exception innerException)
+        : base("Display permanent delete failed because related data exists.", innerException)
+    {
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Abstraction\Presistence\IDisplayPermanentDeleteRepository.cs ==================== 
+namespace QControl.Application.Abstraction.Presistence;
+
+public interface IDisplayPermanentDeleteRepository
+{
+    Task<int> DeletePermanentlyAsync(
+        int displayId,
+        CancellationToken cancellationToken);
+}
+ 
 // ==================== E:\QControl\QControl.Application\Abstraction\Presistence\IReadRepository.cs ==================== 
 ﻿using System;
 using System.Collections.Generic;
@@ -7252,6 +7487,26 @@ public sealed record CreateBranchResponse
 
     public DateTime CreatedOnUtc { get; init; }
 } 
+// ==================== E:\QControl\QControl.Application\Features\Branches\Command\DeleteBranch\AnyDisplayForBranchIncludingDeletedSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Branches.Command.DeleteBranch;
+
+internal sealed class AnyDisplayForBranchIncludingDeletedSpec
+    : Specification<Display, int>
+{
+    public AnyDisplayForBranchIncludingDeletedSpec(int branchId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.BranchId == branchId);
+
+        Select(x => x.Id);
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application\Features\Branches\Command\DeleteBranch\DeleteBranchCommand.cs ==================== 
 ﻿using BuildingBlock.Application.Abstraction;
 
@@ -7342,9 +7597,11 @@ internal sealed class DeleteBranchCommandHandler
             x => x.BranchId == branch.Id,
             cancellationToken);
 
-        var hasDisplays = await _displayReadRepository.AnyAsync(
-            x => x.BranchId == branch.Id,
+        var displayId = await _displayReadRepository.FirstOrDefaultAsync(
+            new AnyDisplayForBranchIncludingDeletedSpec(branch.Id),
             cancellationToken);
+
+        var hasDisplays = displayId > 0;
 
         if (hasWaitingAreas || hasDisplays)
         {
@@ -7370,7 +7627,8 @@ internal sealed class DeleteBranchCommandHandler
                 BranchId = branch.Id
             });
     }
-} 
+}
+ 
 // ==================== E:\QControl\QControl.Application\Features\Branches\Command\DeleteBranch\DeleteBranchCommandValidator.cs ==================== 
 ﻿using FluentValidation;
 using Qcontrol.Domain.Resources;
@@ -8133,6 +8391,1944 @@ public sealed record BranchLocationResponse
 
     public string? Latitude { get; init; }
 } 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\CreateDisplay\CreateDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+
+public sealed record CreateDisplayCommand
+    : ICommand<CreateDisplayResponse>
+{
+    public int BranchId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\CreateDisplay\CreateDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.Displays.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+
+internal sealed class CreateDisplayCommandHandler
+    : ICommandHandler<CreateDisplayCommand, CreateDisplayResponse>
+{
+    private readonly IWriteReadRepository<Branch> _branchReadRepository;
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteRepository<Display> _displayWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateDisplayCommandHandler(
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteRepository<Display> displayWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWriteRepository = displayWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<CreateDisplayResponse>> Handle(
+        CreateDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<CreateDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Create.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var normalizedNumber = request.Number.Trim();
+        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedSerialNo = request.SerialNo.Trim();
+        var normalizedType = request.Type.Trim();
+
+        var branch =
+            await _branchReadRepository.GetByIdAsync(
+                request.BranchId,
+                cancellationToken);
+
+        if (branch is null)
+        {
+            return Result<CreateDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Create.BranchNotFound",
+                    Message: ErrorMessage.Display_Branch_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        var duplicate =
+            await CheckCreateDuplicatesAsync(
+                request.BranchId,
+                normalizedNumber,
+                normalizedIPAddress,
+                normalizedSerialNo,
+                cancellationToken);
+
+        if (duplicate.IsFailure)
+        {
+            return duplicate;
+        }
+
+        var display = Display.Create(
+            branchId: request.BranchId,
+            number: normalizedNumber,
+            ipAddress: normalizedIPAddress,
+            serialNo: normalizedSerialNo,
+            type: normalizedType,
+            createdByApplicationUserId: _currentUser.UserId.Value);
+
+        await _displayWriteRepository.AddAsync(
+            display,
+            cancellationToken);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (DisplayUniqueConstraintErrorMapper.TryMapCreate(
+                ex,
+                out var error))
+        {
+            return Result<CreateDisplayResponse>.Fail(error);
+        }
+
+        return Result<CreateDisplayResponse>.Ok(
+            new CreateDisplayResponse
+            {
+                Id = display.Id,
+                BranchId = display.BranchId,
+                Number = display.Number,
+                IPAddress = display.IPAddress,
+                SerialNo = display.SerialNo,
+                Type = display.Type,
+                CreatedByApplicationUserId =
+                    display.CreatedByApplicationUserId,
+                CreatedOnUtc = display.CreatedOnUtc,
+                Message = ErrorMessage.Display_Create_Success
+            });
+    }
+
+    private async Task<Result<CreateDisplayResponse>> CheckCreateDuplicatesAsync(
+        int branchId,
+        string number,
+        string ipAddress,
+        string serialNo,
+        CancellationToken cancellationToken)
+    {
+        var existingNumberDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayNumberExistsInBranchSpec(branchId, number),
+                cancellationToken);
+
+        if (existingNumberDisplayId > 0)
+        {
+            return Result<CreateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Create.NumberAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_Number_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayIPAddressExistsInBranchSpec(branchId, ipAddress),
+                cancellationToken);
+
+        if (existingIPAddressDisplayId > 0)
+        {
+            return Result<CreateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Create.IPAddressAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplaySerialNoExistsInBranchSpec(branchId, serialNo),
+                cancellationToken);
+
+        if (existingSerialNoDisplayId > 0)
+        {
+            return Result<CreateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Create.SerialNoAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        return Result<CreateDisplayResponse>.Ok(null!);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\CreateDisplay\CreateDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Application.Features.Displays.Shared;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+
+internal sealed class CreateDisplayCommandValidator
+    : AbstractValidator<CreateDisplayCommand>
+{
+    public CreateDisplayCommandValidator()
+    {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_BranchId_Required);
+
+        RuleFor(x => x.Number)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_Number_Required)
+            .MaximumLength(20)
+            .WithMessage(ErrorMessage.Display_Number_MaxLength);
+
+        RuleFor(x => x.IPAddress)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_IPAddress_Required)
+            .MaximumLength(45)
+            .WithMessage(ErrorMessage.Display_IPAddress_MaxLength)
+            .Must(DisplayIPAddressValidation.BeValidIPv4)
+            .WithMessage(ErrorMessage.Display_IPAddress_Invalid);
+
+        RuleFor(x => x.SerialNo)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_SerialNo_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Display_SerialNo_MaxLength);
+
+        RuleFor(x => x.Type)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_Type_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Display_Type_MaxLength);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\CreateDisplay\CreateDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+
+public sealed record CreateDisplayResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public Guid CreatedByApplicationUserId { get; init; }
+
+    public DateTime CreatedOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\DeleteDisplay\DeleteDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+
+public sealed record DeleteDisplayCommand
+    : ICommand<DeleteDisplayResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\DeleteDisplay\DeleteDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+
+internal sealed class DeleteDisplayCommandHandler
+    : ICommandHandler<DeleteDisplayCommand, DeleteDisplayResponse>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteRepository<Display> _displayWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteDisplayCommandHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteRepository<Display> displayWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWriteRepository = displayWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<DeleteDisplayResponse>> Handle(
+        DeleteDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<DeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Delete.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var display =
+            await _displayReadRepository.GetByIdTrackedAsync(
+                request.Id,
+                cancellationToken);
+
+        if (display is null)
+        {
+            return Result<DeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Delete.DisplayNotFound",
+                    Message: ErrorMessage.Display_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        _displayWriteRepository.Delete(display);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<DeleteDisplayResponse>.Ok(
+            new DeleteDisplayResponse
+            {
+                Id = display.Id,
+                Message = ErrorMessage.Display_Delete_Success
+            });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\DeleteDisplay\DeleteDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+
+internal sealed class DeleteDisplayCommandValidator
+    : AbstractValidator<DeleteDisplayCommand>
+{
+    public DeleteDisplayCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\DeleteDisplay\DeleteDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+
+public sealed record DeleteDisplayResponse
+{
+    public int Id { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\GetDisplayForPermanentDeleteSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+internal sealed class GetDisplayForPermanentDeleteSpec
+    : Specification<Display, PermanentDeleteDisplayCandidate>
+{
+    public GetDisplayForPermanentDeleteSpec(int displayId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == displayId);
+
+        Select(x => new PermanentDeleteDisplayCandidate
+        {
+            Id = x.Id,
+            IsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\PermanentDeleteDisplayCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+internal sealed record PermanentDeleteDisplayCandidate
+{
+    public int Id { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\PermanentDeleteDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+public sealed record PermanentDeleteDisplayCommand
+    : ICommand<PermanentDeleteDisplayResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\PermanentDeleteDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+internal sealed class PermanentDeleteDisplayCommandHandler
+    : ICommandHandler<PermanentDeleteDisplayCommand, PermanentDeleteDisplayResponse>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<DisplayWindow> _displayWindowReadRepository;
+    private readonly IDisplayPermanentDeleteRepository _permanentDeleteRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public PermanentDeleteDisplayCommandHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteReadRepository<DisplayWindow> displayWindowReadRepository,
+        IDisplayPermanentDeleteRepository permanentDeleteRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWindowReadRepository = displayWindowReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(displayWindowReadRepository));
+
+        _permanentDeleteRepository = permanentDeleteRepository
+            ?? throw new ArgumentNullException(nameof(permanentDeleteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<PermanentDeleteDisplayResponse>> Handle(
+        PermanentDeleteDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<PermanentDeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.PermanentDelete.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayForPermanentDeleteSpec(request.Id),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return DisplayNotFound();
+        }
+
+        if (!display.IsDeleted)
+        {
+            return Result<PermanentDeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.PermanentDelete.MustBeSoftDeleted",
+                    Message:
+                        ErrorMessage
+                            .Display_PermanentDelete_MustBeSoftDeleted,
+                    Type: ErrorType.Conflict));
+        }
+
+        var hasDisplayWindowLinks =
+            await _displayWindowReadRepository.AnyAsync(
+                x => x.DisplayId == request.Id,
+                cancellationToken);
+
+        if (hasDisplayWindowLinks)
+        {
+            return Result<PermanentDeleteDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.PermanentDelete.HasDisplayWindowLinks",
+                    Message:
+                        ErrorMessage
+                            .Display_PermanentDelete_HasDisplayWindowLinks,
+                    Type: ErrorType.Conflict));
+        }
+
+        int deletedRows;
+        try
+        {
+            deletedRows =
+                await _permanentDeleteRepository.DeletePermanentlyAsync(
+                    request.Id,
+                    cancellationToken);
+        }
+        catch (DisplayPermanentDeleteConflictException)
+        {
+            return HasRelatedRecords();
+        }
+
+        if (deletedRows == 0)
+        {
+            return DisplayNotFound();
+        }
+
+        return Result<PermanentDeleteDisplayResponse>.Ok(
+            new PermanentDeleteDisplayResponse
+            {
+                Id = request.Id,
+                Message = ErrorMessage.Display_PermanentDelete_Success
+            });
+    }
+
+    private static Result<PermanentDeleteDisplayResponse> DisplayNotFound()
+        => Result<PermanentDeleteDisplayResponse>.Fail(
+            new Error(
+                Code: "Displays.PermanentDelete.DisplayNotFound",
+                Message: ErrorMessage.Display_NotFound,
+                Type: ErrorType.NotFound));
+
+    private static Result<PermanentDeleteDisplayResponse> HasRelatedRecords()
+        => Result<PermanentDeleteDisplayResponse>.Fail(
+            new Error(
+                Code: "Displays.PermanentDelete.HasRelatedRecords",
+                Message:
+                    ErrorMessage
+                        .Display_PermanentDelete_HasRelatedRecords,
+                Type: ErrorType.Conflict));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\PermanentDeleteDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+internal sealed class PermanentDeleteDisplayCommandValidator
+    : AbstractValidator<PermanentDeleteDisplayCommand>
+{
+    public PermanentDeleteDisplayCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\PermanentDeleteDisplay\PermanentDeleteDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+
+public sealed record PermanentDeleteDisplayResponse
+{
+    public int Id { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\RestoreDisplay\RestoreDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+
+public sealed record RestoreDisplayCommand
+    : ICommand<RestoreDisplayResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\RestoreDisplay\RestoreDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.Displays.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+
+internal sealed class RestoreDisplayCommandHandler
+    : ICommandHandler<RestoreDisplayCommand, RestoreDisplayResponse>
+{
+    private readonly IWriteReadRepository<Branch> _branchReadRepository;
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteRepository<Display> _displayWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public RestoreDisplayCommandHandler(
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteRepository<Display> displayWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWriteRepository = displayWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<RestoreDisplayResponse>> Handle(
+        RestoreDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayIncludingDeletedSpec(request.Id),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return DisplayNotFound();
+        }
+
+        if (!display.IsDeleted)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.AlreadyActive",
+                    Message: ErrorMessage.Display_AlreadyActive,
+                    Type: ErrorType.Conflict));
+        }
+
+        var branch =
+            await _branchReadRepository.GetByIdAsync(
+                display.BranchId,
+                cancellationToken);
+
+        if (branch is null)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.BranchNotFound",
+                    Message: ErrorMessage.Display_Branch_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        var duplicate =
+            await CheckRestoreDuplicatesAsync(
+                display,
+                cancellationToken);
+
+        if (duplicate.IsFailure)
+        {
+            return duplicate;
+        }
+
+        display.Restore();
+        _displayWriteRepository.Update(display);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (DisplayUniqueConstraintErrorMapper.TryMapRestore(
+                ex,
+                out var error))
+        {
+            return Result<RestoreDisplayResponse>.Fail(error);
+        }
+
+        return Result<RestoreDisplayResponse>.Ok(
+            new RestoreDisplayResponse
+            {
+                Id = display.Id,
+                BranchId = display.BranchId,
+                Number = display.Number,
+                IPAddress = display.IPAddress,
+                SerialNo = display.SerialNo,
+                Type = display.Type,
+                RestoredOnUtc = display.RestoredOnUtc,
+                Message = ErrorMessage.Display_Restore_Success
+            });
+    }
+
+    private async Task<Result<RestoreDisplayResponse>> CheckRestoreDuplicatesAsync(
+        Display display,
+        CancellationToken cancellationToken)
+    {
+        var existingNumberDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayNumberExistsInBranchSpec(
+                    display.BranchId,
+                    display.Number,
+                    excludedDisplayId: display.Id),
+                cancellationToken);
+
+        if (existingNumberDisplayId > 0)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.NumberConflict",
+                    Message:
+                        ErrorMessage
+                            .Display_Number_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayIPAddressExistsInBranchSpec(
+                    display.BranchId,
+                    display.IPAddress,
+                    excludedDisplayId: display.Id),
+                cancellationToken);
+
+        if (existingIPAddressDisplayId > 0)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.IPAddressConflict",
+                    Message:
+                        ErrorMessage
+                            .Display_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplaySerialNoExistsInBranchSpec(
+                    display.BranchId,
+                    display.SerialNo,
+                    excludedDisplayId: display.Id),
+                cancellationToken);
+
+        if (existingSerialNoDisplayId > 0)
+        {
+            return Result<RestoreDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Restore.SerialNoConflict",
+                    Message:
+                        ErrorMessage
+                            .Display_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        return Result<RestoreDisplayResponse>.Ok(null!);
+    }
+
+    private static Result<RestoreDisplayResponse> DisplayNotFound()
+        => Result<RestoreDisplayResponse>.Fail(
+            new Error(
+                Code: "Displays.Restore.DisplayNotFound",
+                Message: ErrorMessage.Display_NotFound,
+                Type: ErrorType.NotFound));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\RestoreDisplay\RestoreDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+
+internal sealed class RestoreDisplayCommandValidator
+    : AbstractValidator<RestoreDisplayCommand>
+{
+    public RestoreDisplayCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\RestoreDisplay\RestoreDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+
+public sealed record RestoreDisplayResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime? RestoredOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\UpdateDisplay\UpdateDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+
+public sealed record UpdateDisplayCommand
+    : ICommand<UpdateDisplayResponse>
+{
+    public int Id { get; init; }
+
+    public int RequestId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\UpdateDisplay\UpdateDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.Displays.Shared;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+
+internal sealed class UpdateDisplayCommandHandler
+    : ICommandHandler<UpdateDisplayCommand, UpdateDisplayResponse>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteRepository<Display> _displayWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateDisplayCommandHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteRepository<Display> displayWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWriteRepository = displayWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<UpdateDisplayResponse>> Handle(
+        UpdateDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<UpdateDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.Update.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var normalizedNumber = request.Number.Trim();
+        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedSerialNo = request.SerialNo.Trim();
+        var normalizedType = request.Type.Trim();
+
+        var display =
+            await _displayReadRepository.GetByIdTrackedAsync(
+                request.Id,
+                cancellationToken);
+
+        if (display is null)
+        {
+            return DisplayNotFound();
+        }
+
+        var duplicate =
+            await CheckUpdateDuplicatesAsync(
+                display.BranchId,
+                display.Id,
+                normalizedNumber,
+                normalizedIPAddress,
+                normalizedSerialNo,
+                cancellationToken);
+
+        if (duplicate.IsFailure)
+        {
+            return duplicate;
+        }
+
+        display.Update(
+            number: normalizedNumber,
+            ipAddress: normalizedIPAddress,
+            serialNo: normalizedSerialNo,
+            type: normalizedType,
+            lastModifiedByApplicationUserId: _currentUser.UserId.Value);
+
+        _displayWriteRepository.Update(display);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (DisplayUniqueConstraintErrorMapper.TryMapUpdate(
+                ex,
+                out var error))
+        {
+            return Result<UpdateDisplayResponse>.Fail(error);
+        }
+
+        return Result<UpdateDisplayResponse>.Ok(
+            new UpdateDisplayResponse
+            {
+                Id = display.Id,
+                BranchId = display.BranchId,
+                Number = display.Number,
+                IPAddress = display.IPAddress,
+                SerialNo = display.SerialNo,
+                Type = display.Type,
+                LastModifiedByApplicationUserId =
+                    display.LastModifiedByApplicationUserId,
+                ModifiedOnUtc = display.ModifiedOnUtc,
+                Message = ErrorMessage.Display_Update_Success
+            });
+    }
+
+    private async Task<Result<UpdateDisplayResponse>> CheckUpdateDuplicatesAsync(
+        int branchId,
+        int displayId,
+        string number,
+        string ipAddress,
+        string serialNo,
+        CancellationToken cancellationToken)
+    {
+        var existingNumberDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayNumberExistsInBranchSpec(
+                    branchId,
+                    number,
+                    excludedDisplayId: displayId),
+                cancellationToken);
+
+        if (existingNumberDisplayId > 0)
+        {
+            return Result<UpdateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Update.NumberAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_Number_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingIPAddressDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplayIPAddressExistsInBranchSpec(
+                    branchId,
+                    ipAddress,
+                    excludedDisplayId: displayId),
+                cancellationToken);
+
+        if (existingIPAddressDisplayId > 0)
+        {
+            return Result<UpdateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Update.IPAddressAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_IPAddress_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        var existingSerialNoDisplayId =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new DisplaySerialNoExistsInBranchSpec(
+                    branchId,
+                    serialNo,
+                    excludedDisplayId: displayId),
+                cancellationToken);
+
+        if (existingSerialNoDisplayId > 0)
+        {
+            return Result<UpdateDisplayResponse>.Fail(
+                new Error(
+                    Code:
+                        "Displays.Update.SerialNoAlreadyExistsInBranch",
+                    Message:
+                        ErrorMessage
+                            .Display_SerialNo_AlreadyExistsInBranch,
+                    Type: ErrorType.Conflict));
+        }
+
+        return Result<UpdateDisplayResponse>.Ok(null!);
+    }
+
+    private static Result<UpdateDisplayResponse> DisplayNotFound()
+        => Result<UpdateDisplayResponse>.Fail(
+            new Error(
+                Code: "Displays.Update.DisplayNotFound",
+                Message: ErrorMessage.Display_NotFound,
+                Type: ErrorType.NotFound));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\UpdateDisplay\UpdateDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Application.Features.Displays.Shared;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+
+internal sealed class UpdateDisplayCommandValidator
+    : AbstractValidator<UpdateDisplayCommand>
+{
+    public UpdateDisplayCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+
+        RuleFor(x => x.RequestId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+
+        RuleFor(x => x)
+            .Must(x => x.Id == x.RequestId)
+            .WithMessage(ErrorMessage.Display_Id_Mismatch);
+
+        RuleFor(x => x.Number)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_Number_Required)
+            .MaximumLength(20)
+            .WithMessage(ErrorMessage.Display_Number_MaxLength);
+
+        RuleFor(x => x.IPAddress)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_IPAddress_Required)
+            .MaximumLength(45)
+            .WithMessage(ErrorMessage.Display_IPAddress_MaxLength)
+            .Must(DisplayIPAddressValidation.BeValidIPv4)
+            .WithMessage(ErrorMessage.Display_IPAddress_Invalid);
+
+        RuleFor(x => x.SerialNo)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_SerialNo_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Display_SerialNo_MaxLength);
+
+        RuleFor(x => x.Type)
+            .Cascade(CascadeMode.Stop)
+            .Must(x => !string.IsNullOrWhiteSpace(x))
+            .WithMessage(ErrorMessage.Display_Type_Required)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.Display_Type_MaxLength);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Command\UpdateDisplay\UpdateDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+
+public sealed record UpdateDisplayResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public Guid? LastModifiedByApplicationUserId { get; init; }
+
+    public DateTime? ModifiedOnUtc { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDeletedDisplays\DeletedDisplayListItemResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+
+public sealed record DeletedDisplayListItemResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime? DeletedOnUtc { get; init; }
+
+    public DateTime? RestoredOnUtc { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDeletedDisplays\GetDeletedDisplaysQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+
+public sealed class GetDeletedDisplaysQuery
+    : IQuery<Pagination<DeletedDisplayListItemResponse>>
+{
+    public int? BranchId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDeletedDisplays\GetDeletedDisplaysQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+
+internal sealed class GetDeletedDisplaysQueryHandler
+    : IQueryHandler<GetDeletedDisplaysQuery, Pagination<DeletedDisplayListItemResponse>>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDeletedDisplaysQueryHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<DeletedDisplayListItemResponse>>> Handle(
+        GetDeletedDisplaysQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<Pagination<DeletedDisplayListItemResponse>>.Fail(
+                new Error(
+                    Code: "Displays.DeletedPagination.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetDeletedDisplaysSpec(request);
+
+        var (items, totalCount) =
+            await _displayReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<DeletedDisplayListItemResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<DeletedDisplayListItemResponse>>.Ok(response);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDeletedDisplays\GetDeletedDisplaysQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+
+internal sealed class GetDeletedDisplaysQueryValidator
+    : AbstractValidator<GetDeletedDisplaysQuery>
+{
+    public GetDeletedDisplaysQueryValidator()
+    {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_BranchId_Required)
+            .When(x => x.BranchId.HasValue);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Display_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Display_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.Display_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDeletedDisplays\GetDeletedDisplaysSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+
+internal sealed class GetDeletedDisplaysSpec
+    : Specification<Display, DeletedDisplayListItemResponse>
+{
+    public GetDeletedDisplaysSpec(GetDeletedDisplaysQuery query)
+    {
+        IgnoreGlobalFilters();
+        AddCriteria(x => x.IsDeleted);
+
+        if (query.BranchId.HasValue)
+        {
+            var branchId = query.BranchId.Value;
+            AddCriteria(x => x.BranchId == branchId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Number.Contains(searchText) ||
+                x.IPAddress.Contains(searchText) ||
+                x.SerialNo.Contains(searchText) ||
+                x.Type.Contains(searchText));
+        }
+
+        AddOrderBy(x => x.BranchId);
+        AddOrderBy(x => x.Number);
+        AddOrderBy(x => x.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        UseNoTracking();
+
+        Select(x => new DeletedDisplayListItemResponse
+        {
+            Id = x.Id,
+            BranchId = x.BranchId,
+            BranchArabicName = x.Branch.ArabicName,
+            BranchEnglishName = x.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type,
+            DeletedOnUtc = x.DeletedOnUtc,
+            RestoredOnUtc = x.RestoredOnUtc
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplayById\DisplayDetailsResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+
+public sealed record DisplayDetailsResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+
+    public DateTime CreatedOnUtc { get; init; }
+
+    public DateTime? ModifiedOnUtc { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplayById\GetDisplayByIdQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+
+public sealed record GetDisplayByIdQuery
+    : IQuery<DisplayDetailsResponse>
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplayById\GetDisplayByIdQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+
+internal sealed class GetDisplayByIdQueryHandler
+    : IQueryHandler<GetDisplayByIdQuery, DisplayDetailsResponse>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDisplayByIdQueryHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<DisplayDetailsResponse>> Handle(
+        GetDisplayByIdQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<DisplayDetailsResponse>.Fail(
+                new Error(
+                    Code: "Displays.Details.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayByIdSpec(request.Id),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return Result<DisplayDetailsResponse>.Fail(
+                new Error(
+                    Code: "Displays.Details.DisplayNotFound",
+                    Message: ErrorMessage.Display_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        return Result<DisplayDetailsResponse>.Ok(display);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplayById\GetDisplayByIdQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+
+internal sealed class GetDisplayByIdQueryValidator
+    : AbstractValidator<GetDisplayByIdQuery>
+{
+    public GetDisplayByIdQueryValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_Id_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplayById\GetDisplayByIdSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+
+internal sealed class GetDisplayByIdSpec
+    : Specification<Display, DisplayDetailsResponse>
+{
+    public GetDisplayByIdSpec(int displayId)
+    {
+        AddCriteria(x => x.Id == displayId);
+        UseNoTracking();
+
+        Select(x => new DisplayDetailsResponse
+        {
+            Id = x.Id,
+            BranchId = x.BranchId,
+            BranchArabicName = x.Branch.ArabicName,
+            BranchEnglishName = x.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type,
+            CreatedOnUtc = x.CreatedOnUtc,
+            ModifiedOnUtc = x.ModifiedOnUtc
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplays\DisplayListItemResponse.cs ==================== 
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+public sealed record DisplayListItemResponse
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public string? BranchArabicName { get; init; }
+
+    public string? BranchEnglishName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string IPAddress { get; init; } = string.Empty;
+
+    public string SerialNo { get; init; } = string.Empty;
+
+    public string Type { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplays\GetDisplaysQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+public sealed class GetDisplaysQuery
+    : IQuery<Pagination<DisplayListItemResponse>>
+{
+    public int? BranchId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplays\GetDisplaysQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+internal sealed class GetDisplaysQueryHandler
+    : IQueryHandler<GetDisplaysQuery, Pagination<DisplayListItemResponse>>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDisplaysQueryHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<DisplayListItemResponse>>> Handle(
+        GetDisplaysQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<Pagination<DisplayListItemResponse>>.Fail(
+                new Error(
+                    Code: "Displays.Pagination.Unauthenticated",
+                    Message: ErrorMessage.Display_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetDisplaysSpec(request);
+
+        var (items, totalCount) =
+            await _displayReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<DisplayListItemResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<DisplayListItemResponse>>.Ok(response);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplays\GetDisplaysQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+internal sealed class GetDisplaysQueryValidator
+    : AbstractValidator<GetDisplaysQuery>
+{
+    public GetDisplaysQueryValidator()
+    {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.Display_BranchId_Required)
+            .When(x => x.BranchId.HasValue);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Display_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.Display_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.Display_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Query\GetDisplays\GetDisplaysSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+internal sealed class GetDisplaysSpec
+    : Specification<Display, DisplayListItemResponse>
+{
+    public GetDisplaysSpec(GetDisplaysQuery query)
+    {
+        if (query.BranchId.HasValue)
+        {
+            var branchId = query.BranchId.Value;
+            AddCriteria(x => x.BranchId == branchId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Number.Contains(searchText) ||
+                x.IPAddress.Contains(searchText) ||
+                x.SerialNo.Contains(searchText) ||
+                x.Type.Contains(searchText));
+        }
+
+        AddOrderBy(x => x.BranchId);
+        AddOrderBy(x => x.Number);
+        AddOrderBy(x => x.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        UseNoTracking();
+
+        Select(x => new DisplayListItemResponse
+        {
+            Id = x.Id,
+            BranchId = x.BranchId,
+            BranchArabicName = x.Branch.ArabicName,
+            BranchEnglishName = x.Branch.EnglishName,
+            Number = x.Number,
+            IPAddress = x.IPAddress,
+            SerialNo = x.SerialNo,
+            Type = x.Type
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\DisplayIPAddressExistsInBranchSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal sealed class DisplayIPAddressExistsInBranchSpec
+    : Specification<Display, int>
+{
+    public DisplayIPAddressExistsInBranchSpec(
+        int branchId,
+        string ipAddress,
+        int? excludedDisplayId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.BranchId == branchId &&
+            x.IPAddress == ipAddress);
+
+        if (excludedDisplayId.HasValue)
+        {
+            var displayId = excludedDisplayId.Value;
+            AddCriteria(x => x.Id != displayId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\DisplayIPAddressValidation.cs ==================== 
+using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal static class DisplayIPAddressValidation
+{
+    public static bool BeValidIPv4(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var ipAddress = value.Trim();
+
+        if (ipAddress.Contains(':'))
+        {
+            return false;
+        }
+
+        var parts = ipAddress.Split('.');
+
+        if (parts.Length != 4)
+        {
+            return false;
+        }
+
+        foreach (var part in parts)
+        {
+            if (!byte.TryParse(
+                    part,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out _))
+            {
+                return false;
+            }
+        }
+
+        return IPAddress.TryParse(ipAddress, out var parsed) &&
+            parsed.AddressFamily == AddressFamily.InterNetwork &&
+            parsed.ToString() == ipAddress;
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\DisplayNumberExistsInBranchSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal sealed class DisplayNumberExistsInBranchSpec
+    : Specification<Display, int>
+{
+    public DisplayNumberExistsInBranchSpec(
+        int branchId,
+        string number,
+        int? excludedDisplayId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.BranchId == branchId &&
+            x.Number == number);
+
+        if (excludedDisplayId.HasValue)
+        {
+            var displayId = excludedDisplayId.Value;
+            AddCriteria(x => x.Id != displayId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\DisplaySerialNoExistsInBranchSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal sealed class DisplaySerialNoExistsInBranchSpec
+    : Specification<Display, int>
+{
+    public DisplaySerialNoExistsInBranchSpec(
+        int branchId,
+        string serialNo,
+        int? excludedDisplayId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.BranchId == branchId &&
+            x.SerialNo == serialNo);
+
+        if (excludedDisplayId.HasValue)
+        {
+            var displayId = excludedDisplayId.Value;
+            AddCriteria(x => x.Id != displayId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\DisplayUniqueConstraintErrorMapper.cs ==================== 
+using BuildingBlock.Domain.Results;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal static class DisplayUniqueConstraintErrorMapper
+{
+    public static bool TryMapCreate(
+        DbUpdateException exception,
+        out Error error)
+        => TryMap(
+            exception,
+            "Displays.Create.NumberAlreadyExistsInBranch",
+            "Displays.Create.IPAddressAlreadyExistsInBranch",
+            "Displays.Create.SerialNoAlreadyExistsInBranch",
+            out error);
+
+    public static bool TryMapUpdate(
+        DbUpdateException exception,
+        out Error error)
+        => TryMap(
+            exception,
+            "Displays.Update.NumberAlreadyExistsInBranch",
+            "Displays.Update.IPAddressAlreadyExistsInBranch",
+            "Displays.Update.SerialNoAlreadyExistsInBranch",
+            out error);
+
+    public static bool TryMapRestore(
+        DbUpdateException exception,
+        out Error error)
+        => TryMap(
+            exception,
+            "Displays.Restore.NumberConflict",
+            "Displays.Restore.IPAddressConflict",
+            "Displays.Restore.SerialNoConflict",
+            out error);
+
+    private static bool TryMap(
+        DbUpdateException exception,
+        string numberCode,
+        string ipAddressCode,
+        string serialNoCode,
+        out Error error)
+    {
+        error = default!;
+
+        if (exception.InnerException is not SqlException
+            {
+                Number: 2601 or 2627
+            } sqlException)
+        {
+            return false;
+        }
+
+        var message = sqlException.Message;
+
+        if (message.Contains(
+                "IX_Display_BranchId_Number",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                Code: numberCode,
+                Message: ErrorMessage.Display_Number_AlreadyExistsInBranch,
+                Type: ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (message.Contains(
+                "IX_Display_BranchId_IPAddress",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                Code: ipAddressCode,
+                Message:
+                    ErrorMessage.Display_IPAddress_AlreadyExistsInBranch,
+                Type: ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (message.Contains(
+                "IX_Display_BranchId_SerialNo",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                Code: serialNoCode,
+                Message:
+                    ErrorMessage.Display_SerialNo_AlreadyExistsInBranch,
+                Type: ErrorType.Conflict);
+
+            return true;
+        }
+
+        error = new Error(
+            Code: "Displays.UniqueConstraint",
+            Message: ErrorMessage.Display_UniqueConstraint_Conflict,
+            Type: ErrorType.Conflict);
+
+        return true;
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\Displays\Shared\GetDisplayIncludingDeletedSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.Displays.Shared;
+
+internal sealed class GetDisplayIncludingDeletedSpec
+    : Specification<Display>
+{
+    public GetDisplayIncludingDeletedSpec(int displayId)
+    {
+        IgnoreGlobalFilters();
+        UseTracking();
+
+        AddCriteria(x => x.Id == displayId);
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application\Features\Terminals\Command\CreateTerminal\CreateTerminalCommand.cs ==================== 
 using BuildingBlock.Application.Abstraction;
 
@@ -12673,6 +14869,919 @@ namespace QControl.Application.Shared.Validation
         //}
     }
 } 
+// ==================== E:\QControl\QControl.Application.Tests\Branches\BranchDeleteHandlerTests.cs ==================== 
+using Qcontrol.Application.Features.Branches.Command.DeleteBranch;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.Branches;
+
+public sealed class BranchDeleteHandlerTests
+{
+    [Fact]
+    public async Task Delete_is_blocked_by_active_display()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var display = EntityTestFactory.Display(
+            10,
+            branch.Id,
+            branch: branch);
+        var displays = new List<Display> { display };
+        var unitOfWork = new TestUnitOfWork();
+        var displayWriteRepository =
+            new InMemoryWriteRepository<Display>(displays);
+        var handler = CreateHandler(
+            new List<Branch> { branch },
+            new List<WaitingArea>(),
+            displays,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new DeleteBranchCommand { BranchId = branch.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Branches.Delete.HasRelatedData");
+        Assert.Contains(display, displays);
+        Assert.Equal(0, displayWriteRepository.DeleteCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Delete_is_blocked_by_soft_deleted_display_using_ignore_filter_check()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var display = EntityTestFactory.Display(
+            10,
+            branch.Id,
+            branch: branch,
+            isDeleted: true);
+        var displays = new List<Display> { display };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = CreateHandler(
+            new List<Branch> { branch },
+            new List<WaitingArea>(),
+            displays,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new DeleteBranchCommand { BranchId = branch.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Branches.Delete.HasRelatedData");
+        Assert.Contains(display, displays);
+        Assert.True(display.IsDeleted);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    private static DeleteBranchCommandHandler CreateHandler(
+        List<Branch> branches,
+        List<WaitingArea> waitingAreas,
+        List<Display> displays,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Branch>(branches),
+            new InMemoryWriteRepository<Branch>(branches),
+            new InMemoryWriteRepository<Location>(new List<Location>()),
+            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser(),
+            unitOfWork);
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\Displays\DisplayCommandHandlerTests.cs ==================== 
+using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+using Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.Displays;
+
+public sealed class DisplayCommandHandlerTests
+{
+    [Fact]
+    public async Task Create_succeeds_trims_values_saves_once_and_creates_no_window_links()
+    {
+        var branch = Branch(1);
+        var displays = new List<Display>();
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Display>(displays);
+        var handler = CreateHandler(
+            new List<Branch> { branch },
+            displays,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new CreateDisplayCommand
+            {
+                BranchId = branch.Id,
+                Number = " D-01 ",
+                IPAddress = " 192.168.1.30 ",
+                SerialNo = " DISPLAY-SN-001 ",
+                Type = " LED Display "
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(displays);
+        Assert.Equal("D-01", result.Value.Number);
+        Assert.Equal("192.168.1.30", result.Value.IPAddress);
+        Assert.Equal("DISPLAY-SN-001", result.Value.SerialNo);
+        Assert.Equal("LED Display", result.Value.Type);
+        Assert.Empty(displays[0].DisplayWindows);
+        Assert.Equal(1, writeRepository.AddCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(0, unitOfWork.BeginTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Create_scopes_number_ip_and_serial_to_branch_and_includes_deleted()
+    {
+        var branch1 = Branch(1);
+        var branch2 = Branch(2);
+        var deleted = Display(
+            10,
+            branch1,
+            number: "D-01",
+            ipAddress: "192.168.1.30",
+            serialNo: "DISPLAY-SN-001",
+            isDeleted: true);
+        var displays = new List<Display> { deleted };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = CreateHandler(
+            new List<Branch> { branch1, branch2 },
+            displays,
+            new InMemoryWriteRepository<Display>(displays),
+            unitOfWork);
+
+        var duplicateNumber = await handler.Handle(
+            ValidCreate(branch1.Id) with
+            {
+                Number = "D-01",
+                IPAddress = "192.168.1.31",
+                SerialNo = "DISPLAY-SN-002"
+            },
+            CancellationToken.None);
+        var duplicateIp = await handler.Handle(
+            ValidCreate(branch1.Id) with
+            {
+                Number = "D-02",
+                IPAddress = "192.168.1.30",
+                SerialNo = "DISPLAY-SN-003"
+            },
+            CancellationToken.None);
+        var duplicateSerial = await handler.Handle(
+            ValidCreate(branch1.Id) with
+            {
+                Number = "D-03",
+                IPAddress = "192.168.1.32",
+                SerialNo = "DISPLAY-SN-001"
+            },
+            CancellationToken.None);
+        var otherBranch = await handler.Handle(
+            ValidCreate(branch2.Id) with
+            {
+                Number = "D-01",
+                IPAddress = "192.168.1.30",
+                SerialNo = "DISPLAY-SN-001"
+            },
+            CancellationToken.None);
+
+        Assert.True(duplicateNumber.IsFailure);
+        Assert.True(duplicateIp.IsFailure);
+        Assert.True(duplicateSerial.IsFailure);
+        Assert.True(otherBranch.IsSuccess);
+        Assert.Contains(
+            duplicateNumber.Errors,
+            error =>
+                error.Code ==
+                "Displays.Create.NumberAlreadyExistsInBranch");
+        Assert.Contains(
+            duplicateIp.Errors,
+            error =>
+                error.Code ==
+                "Displays.Create.IPAddressAlreadyExistsInBranch");
+        Assert.Contains(
+            duplicateSerial.Errors,
+            error =>
+                error.Code ==
+                "Displays.Create.SerialNoAlreadyExistsInBranch");
+    }
+
+    [Fact]
+    public async Task Create_returns_not_found_when_branch_is_missing()
+    {
+        var displays = new List<Display>();
+        var unitOfWork = new TestUnitOfWork();
+        var handler = CreateHandler(
+            new List<Branch>(),
+            displays,
+            new InMemoryWriteRepository<Display>(displays),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            ValidCreate(branchId: 99),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Displays.Create.BranchNotFound");
+        Assert.Empty(displays);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Update_succeeds_without_changing_branch_and_includes_deleted_duplicates()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var deletedDuplicate = Display(
+            11,
+            branch,
+            number: "D-02",
+            ipAddress: "192.168.1.31",
+            serialNo: "DISPLAY-SN-002",
+            isDeleted: true);
+        var displays = new List<Display> { display, deletedDuplicate };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Display>(displays);
+        var handler = UpdateHandler(displays, writeRepository, unitOfWork);
+
+        var currentValues = await handler.Handle(
+            new UpdateDisplayCommand
+            {
+                Id = display.Id,
+                RequestId = display.Id,
+                Number = " D-01 ",
+                IPAddress = " 192.168.1.30 ",
+                SerialNo = " DISPLAY-SN-001 ",
+                Type = " LCD Display "
+            },
+            CancellationToken.None);
+        var duplicateNumber = await handler.Handle(
+            new UpdateDisplayCommand
+            {
+                Id = display.Id,
+                RequestId = display.Id,
+                Number = "D-02",
+                IPAddress = "192.168.1.30",
+                SerialNo = "DISPLAY-SN-001",
+                Type = "LCD Display"
+            },
+            CancellationToken.None);
+
+        Assert.True(currentValues.IsSuccess);
+        Assert.Equal(branch.Id, display.BranchId);
+        Assert.Equal("LCD Display", display.Type);
+        Assert.True(duplicateNumber.IsFailure);
+        Assert.Contains(
+            duplicateNumber.Errors,
+            error =>
+                error.Code ==
+                "Displays.Update.NumberAlreadyExistsInBranch");
+        Assert.Equal(1, writeRepository.UpdateCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Update_returns_not_found_for_soft_deleted_display()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var displays = new List<Display> { display };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UpdateHandler(
+            displays,
+            new InMemoryWriteRepository<Display>(displays),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UpdateDisplayCommand
+            {
+                Id = display.Id,
+                RequestId = display.Id,
+                Number = "D-02",
+                IPAddress = "192.168.1.31",
+                SerialNo = "DISPLAY-SN-002",
+                Type = "LCD Display"
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Displays.Update.DisplayNotFound");
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Delete_soft_deletes_display_and_preserves_window_links()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var window = Window(1, branch);
+        var displayWindow = EntityTestFactory.DisplayWindow(
+            30,
+            display.Id,
+            window.Id,
+            display,
+            window);
+        var displays = new List<Display> { display };
+        var displayWindows = new List<DisplayWindow> { displayWindow };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Display>(displays);
+        var handler = new DeleteDisplayCommandHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new DeleteDisplayCommand { Id = display.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(display.IsDeleted);
+        Assert.NotNull(display.DeletedOnUtc);
+        Assert.Single(displayWindows);
+        Assert.Equal("D-01", display.Number);
+        Assert.Equal("192.168.1.30", display.IPAddress);
+        Assert.Equal("DISPLAY-SN-001", display.SerialNo);
+        Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Restore_preserves_values_requires_branch_and_checks_conflicts()
+    {
+        var branch = Branch(1);
+        var deleted = Display(10, branch, isDeleted: true);
+        var conflict = Display(
+            11,
+            branch,
+            number: "D-02",
+            ipAddress: "192.168.1.31",
+            serialNo: "DISPLAY-SN-002");
+        var displays = new List<Display> { deleted, conflict };
+        var unitOfWork = new TestUnitOfWork();
+        var writeRepository =
+            new InMemoryWriteRepository<Display>(displays);
+        var handler = RestoreHandler(
+            new List<Branch> { branch },
+            displays,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new RestoreDisplayCommand { Id = deleted.Id },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(deleted.IsDeleted);
+        Assert.Equal(branch.Id, deleted.BranchId);
+        Assert.Equal("D-01", deleted.Number);
+        Assert.Equal("192.168.1.30", deleted.IPAddress);
+        Assert.Equal("DISPLAY-SN-001", deleted.SerialNo);
+        Assert.Equal("LED Display", deleted.Type);
+        Assert.Equal(1, writeRepository.UpdateCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+
+        deleted.IsDeleted = true;
+        deleted.Update(
+            "D-02",
+            "192.168.1.30",
+            "DISPLAY-SN-001",
+            "LED Display",
+            EntityTestFactory.CurrentUserId);
+
+        var conflictResult = await handler.Handle(
+            new RestoreDisplayCommand { Id = deleted.Id },
+            CancellationToken.None);
+
+        Assert.True(conflictResult.IsFailure);
+        Assert.Contains(
+            conflictResult.Errors,
+            error => error.Code == "Displays.Restore.NumberConflict");
+    }
+
+    [Fact]
+    public async Task Permanent_delete_requires_soft_delete_blocks_display_window_and_calls_repository_once()
+    {
+        var branch = Branch(1);
+        var active = Display(10, branch);
+        var linkedDeleted = Display(11, branch, number: "D-02", isDeleted: true);
+        var deleted = Display(12, branch, number: "D-03", isDeleted: true);
+        var window = Window(1, branch);
+        var displayWindow = EntityTestFactory.DisplayWindow(
+            30,
+            linkedDeleted.Id,
+            window.Id,
+            linkedDeleted,
+            window);
+        var displays = new List<Display> { active, linkedDeleted, deleted };
+        var displayWindows = new List<DisplayWindow> { displayWindow };
+        var permanentRepository =
+            new TestDisplayPermanentDeleteRepository();
+        var handler = new PermanentDeleteDisplayCommandHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            permanentRepository,
+            new TestCurrentUser());
+
+        var activeResult = await handler.Handle(
+            new PermanentDeleteDisplayCommand { Id = active.Id },
+            CancellationToken.None);
+        var linkedResult = await handler.Handle(
+            new PermanentDeleteDisplayCommand { Id = linkedDeleted.Id },
+            CancellationToken.None);
+        var deletedResult = await handler.Handle(
+            new PermanentDeleteDisplayCommand { Id = deleted.Id },
+            CancellationToken.None);
+
+        Assert.True(activeResult.IsFailure);
+        Assert.True(linkedResult.IsFailure);
+        Assert.True(deletedResult.IsSuccess);
+        Assert.Contains(
+            activeResult.Errors,
+            error =>
+                error.Code ==
+                "Displays.PermanentDelete.MustBeSoftDeleted");
+        Assert.Contains(
+            linkedResult.Errors,
+            error =>
+                error.Code ==
+                "Displays.PermanentDelete.HasDisplayWindowLinks");
+        Assert.Single(displayWindows);
+        Assert.Equal(1, permanentRepository.CallCount);
+        Assert.Equal(deleted.Id, permanentRepository.LastDisplayId);
+    }
+
+    private static CreateDisplayCommand ValidCreate(int branchId)
+        => new()
+        {
+            BranchId = branchId,
+            Number = "D-01",
+            IPAddress = "192.168.1.30",
+            SerialNo = "DISPLAY-SN-001",
+            Type = "LED Display"
+        };
+
+    private static Branch Branch(int id)
+        => EntityTestFactory.Branch(id);
+
+    private static WaitingArea WaitingArea(int id, Branch branch)
+        => EntityTestFactory.WaitingArea(
+            id,
+            branch.Id,
+            id,
+            branch,
+            descriptiveName: $"Area {id}");
+
+    private static Window Window(int id, Branch branch)
+    {
+        var waitingArea = WaitingArea(id, branch);
+
+        return EntityTestFactory.Window(
+            id,
+            waitingArea.Id,
+            id.ToString(),
+            waitingArea);
+    }
+
+    private static Display Display(
+        int id,
+        Branch branch,
+        string number = "D-01",
+        string ipAddress = "192.168.1.30",
+        string serialNo = "DISPLAY-SN-001",
+        string type = "LED Display",
+        bool isDeleted = false)
+        => EntityTestFactory.Display(
+            id,
+            branch.Id,
+            number,
+            ipAddress,
+            serialNo,
+            type,
+            branch,
+            isDeleted);
+
+    private static CreateDisplayCommandHandler CreateHandler(
+        List<Branch> branches,
+        List<Display> displays,
+        InMemoryWriteRepository<Display> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Branch>(branches),
+            new InMemoryWriteReadRepository<Display>(displays),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static UpdateDisplayCommandHandler UpdateHandler(
+        List<Display> displays,
+        InMemoryWriteRepository<Display> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Display>(displays),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static RestoreDisplayCommandHandler RestoreHandler(
+        List<Branch> branches,
+        List<Display> displays,
+        InMemoryWriteRepository<Display> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Branch>(branches),
+            new InMemoryWriteReadRepository<Display>(displays),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private sealed class TestDisplayPermanentDeleteRepository
+        : IDisplayPermanentDeleteRepository
+    {
+        public int CallCount { get; private set; }
+
+        public int? LastDisplayId { get; private set; }
+
+        public Task<int> DeletePermanentlyAsync(
+            int displayId,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            LastDisplayId = displayId;
+
+            return Task.FromResult(1);
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\Displays\DisplayQueryHandlerTests.cs ==================== 
+using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+using Qcontrol.Application.Features.Displays.Query.GetDisplays;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.Displays;
+
+public sealed class DisplayQueryHandlerTests
+{
+    [Fact]
+    public async Task Active_list_excludes_deleted_filters_search_orders_and_projects_branch_context()
+    {
+        var branch1 = EntityTestFactory.Branch(
+            1,
+            arabicName: "فرع 1",
+            englishName: "Branch 1");
+        var branch2 = EntityTestFactory.Branch(
+            2,
+            arabicName: "فرع 2",
+            englishName: "Branch 2");
+        var active2 = Display(
+            11,
+            branch1,
+            number: "D-02",
+            ipAddress: "192.168.1.31",
+            serialNo: "DISPLAY-SN-002",
+            type: "LCD Display");
+        var active1 = Display(
+            10,
+            branch1,
+            number: "D-01",
+            ipAddress: "192.168.1.30",
+            serialNo: "DISPLAY-SN-001",
+            type: "LED Display");
+        var otherBranch = Display(
+            12,
+            branch2,
+            number: "D-01",
+            ipAddress: "192.168.1.30",
+            serialNo: "DISPLAY-SN-001",
+            type: "LED Display");
+        var deleted = Display(
+            13,
+            branch1,
+            number: "SCREEN-A",
+            ipAddress: "192.168.1.40",
+            serialNo: "DISPLAY-SN-003",
+            type: "Queue Display",
+            isDeleted: true);
+        var displays = new List<Display>
+        {
+            active2,
+            active1,
+            otherBranch,
+            deleted
+        };
+        var handler = new GetDisplaysQueryHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetDisplaysQuery
+            {
+                BranchId = branch1.Id,
+                Search = "Display",
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalItems);
+        Assert.Equal(active1.Id, result.Value.Data[0].Id);
+        Assert.Equal(active2.Id, result.Value.Data[1].Id);
+        Assert.DoesNotContain(
+            result.Value.Data,
+            item => item.Id == deleted.Id);
+        Assert.All(
+            result.Value.Data,
+            item => Assert.Equal(branch1.Id, item.BranchId));
+        Assert.Equal(branch1.ArabicName, result.Value.Data[0].BranchArabicName);
+        Assert.Equal(branch1.EnglishName, result.Value.Data[0].BranchEnglishName);
+    }
+
+    [Fact]
+    public async Task Active_list_supports_pagination()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var displays = new List<Display>
+        {
+            Display(10, branch, number: "D-01"),
+            Display(11, branch, number: "D-02"),
+            Display(12, branch, number: "D-03")
+        };
+        var handler = new GetDisplaysQueryHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetDisplaysQuery
+            {
+                PageNumber = 2,
+                PageSize = 1
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(11, result.Value.Data[0].Id);
+    }
+
+    [Fact]
+    public async Task Details_returns_active_display_and_hides_missing_or_deleted()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var active = Display(10, branch);
+        var deleted = Display(11, branch, number: "D-02", isDeleted: true);
+        var displays = new List<Display> { active, deleted };
+        var handler = new GetDisplayByIdQueryHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser());
+
+        var activeResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = active.Id },
+            CancellationToken.None);
+        var deletedResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = deleted.Id },
+            CancellationToken.None);
+        var missingResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = 99 },
+            CancellationToken.None);
+
+        Assert.True(activeResult.IsSuccess);
+        Assert.Equal(active.Id, activeResult.Value.Id);
+        Assert.Equal(branch.Id, activeResult.Value.BranchId);
+        Assert.True(deletedResult.IsFailure);
+        Assert.True(missingResult.IsFailure);
+        Assert.Contains(
+            deletedResult.Errors,
+            error => error.Code == "Displays.Details.DisplayNotFound");
+    }
+
+    [Fact]
+    public async Task Deleted_list_returns_deleted_only_with_delete_and_restore_timestamps()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var active = Display(10, branch);
+        var deleted = Display(
+            11,
+            branch,
+            number: "D-02",
+            type: "Queue Display",
+            isDeleted: true);
+        deleted.RestoredOnUtc = DateTime.UtcNow;
+        var displays = new List<Display> { active, deleted };
+        var handler = new GetDeletedDisplaysQueryHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser());
+
+        var result = await handler.Handle(
+            new GetDeletedDisplaysQuery
+            {
+                Search = "Queue",
+                BranchId = branch.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(deleted.Id, result.Value.Data[0].Id);
+        Assert.NotNull(result.Value.Data[0].DeletedOnUtc);
+        Assert.NotNull(result.Value.Data[0].RestoredOnUtc);
+    }
+
+    private static Display Display(
+        int id,
+        Branch branch,
+        string number = "D-01",
+        string ipAddress = "192.168.1.30",
+        string serialNo = "DISPLAY-SN-001",
+        string type = "LED Display",
+        bool isDeleted = false)
+        => EntityTestFactory.Display(
+            id,
+            branch.Id,
+            number,
+            ipAddress,
+            serialNo,
+            type,
+            branch,
+            isDeleted);
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\Displays\DisplayValidatorTests.cs ==================== 
+using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
+using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+using Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
+using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
+using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
+using Qcontrol.Application.Features.Displays.Query.GetDisplays;
+
+namespace QControl.Application.Tests.Displays;
+
+public sealed class DisplayValidatorTests
+{
+    [Fact]
+    public void Create_validator_rejects_required_fields_and_non_ipv4()
+    {
+        var validator = new CreateDisplayCommandValidator();
+
+        var result = validator.Validate(
+            new CreateDisplayCommand
+            {
+                BranchId = 0,
+                Number = " ",
+                IPAddress = "2001:db8::1",
+                SerialNo = " ",
+                Type = " "
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.BranchId));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.Number));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.IPAddress));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.SerialNo));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.Type));
+    }
+
+    [Theory]
+    [InlineData("999.168.1.30")]
+    [InlineData("192.168.1")]
+    [InlineData("display-ip")]
+    public void Create_validator_rejects_malformed_ipv4(string ipAddress)
+    {
+        var validator = new CreateDisplayCommandValidator();
+
+        var result = validator.Validate(
+            new CreateDisplayCommand
+            {
+                BranchId = 1,
+                Number = "D-01",
+                IPAddress = ipAddress,
+                SerialNo = "DISPLAY-SN-001",
+                Type = "LED Display"
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateDisplayCommand.IPAddress));
+    }
+
+    [Fact]
+    public void Update_validator_rejects_route_body_mismatch_and_invalid_lengths()
+    {
+        var validator = new UpdateDisplayCommandValidator();
+
+        var result = validator.Validate(
+            new UpdateDisplayCommand
+            {
+                Id = 1,
+                RequestId = 2,
+                Number = new string('A', 21),
+                IPAddress = "192.168.1.30",
+                SerialNo = new string('S', 101),
+                Type = new string('T', 101)
+            });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Errors,
+            error => error.ErrorMessage.Contains("match"));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateDisplayCommand.Number));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateDisplayCommand.SerialNo));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateDisplayCommand.Type));
+    }
+
+    [Fact]
+    public void Query_validators_reject_invalid_pagination_and_branch_filter()
+    {
+        var activeValidator = new GetDisplaysQueryValidator();
+        var deletedValidator = new GetDeletedDisplaysQueryValidator();
+
+        var activeResult = activeValidator.Validate(
+            new GetDisplaysQuery
+            {
+                BranchId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+        var deletedResult = deletedValidator.Validate(
+            new GetDeletedDisplaysQuery
+            {
+                BranchId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+
+        Assert.False(activeResult.IsValid);
+        Assert.False(deletedResult.IsValid);
+        Assert.Contains(
+            activeResult.Errors,
+            error => error.PropertyName == nameof(GetDisplaysQuery.BranchId));
+        Assert.Contains(
+            deletedResult.Errors,
+            error => error.PropertyName == nameof(GetDeletedDisplaysQuery.BranchId));
+    }
+
+    [Fact]
+    public void Id_validators_reject_invalid_ids()
+    {
+        Assert.False(new GetDisplayByIdQueryValidator()
+            .Validate(new GetDisplayByIdQuery { Id = 0 })
+            .IsValid);
+        Assert.False(new DeleteDisplayCommandValidator()
+            .Validate(new DeleteDisplayCommand { Id = 0 })
+            .IsValid);
+        Assert.False(new RestoreDisplayCommandValidator()
+            .Validate(new RestoreDisplayCommand { Id = 0 })
+            .IsValid);
+        Assert.False(new PermanentDeleteDisplayCommandValidator()
+            .Validate(new PermanentDeleteDisplayCommand { Id = 0 })
+            .IsValid);
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application.Tests\Terminals\TerminalCommandHandlerTests.cs ==================== 
 using System.Data;
 using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
@@ -13668,19 +16777,29 @@ internal static class EntityTestFactory
     public static Display Display(
         int id,
         int branchId,
-        int number = 1,
+        string number = "D-01",
         string ipAddress = "10.20.0.1",
-        Branch? branch = null)
+        string serialNo = "DISPLAY-SERIAL-001",
+        string type = "LED Display",
+        Branch? branch = null,
+        bool isDeleted = false,
+        DateTime? deletedOnUtc = null)
     {
         var display = QControl.Domain.Entities.Display.Create(
             branchId,
             number,
             ipAddress,
-            serialNo: null,
-            type: null,
+            serialNo,
+            type,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(display, id);
+
+        if (isDeleted)
+        {
+            display.IsDeleted = true;
+            display.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+        }
 
         if (branch is not null)
         {
@@ -16415,12 +19534,14 @@ public sealed class Branch : AggregateRoot<int>
     }
 } 
 // ==================== E:\QControl\QControl.Domain\Entities\Display.cs ==================== 
-﻿using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.EntitiesHelper;
+using BuildingBlock.Domain.Primitive;
 using Qcontrol.Domain.Identity;
 
 namespace QControl.Domain.Entities;
 
-public sealed class Display : AggregateRoot<int>
+public sealed class Display : AggregateRoot<int>,
+    ISoftDeleteEntity
 {
     private readonly List<DisplayWindow> _displayWindows = new();
 
@@ -16428,13 +19549,19 @@ public sealed class Display : AggregateRoot<int>
 
     public Branch Branch { get; private set; } = null!;
 
-    public string? SerialNo { get; private set; }
+    public string SerialNo { get; private set; } = string.Empty;
 
-    public int Number { get; private set; }
+    public string Number { get; private set; } = string.Empty;
 
     public string IPAddress { get; private set; } = string.Empty;
 
-    public string? Type { get; private set; }
+    public string Type { get; private set; } = string.Empty;
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedOnUtc { get; set; }
+
+    public DateTime? RestoredOnUtc { get; set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 
@@ -16453,46 +19580,43 @@ public sealed class Display : AggregateRoot<int>
 
     public static Display Create(
         int branchId,
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid createdByApplicationUserId)
     {
         return new Display
         {
             BranchId = branchId,
-            Number = number,
+            Number = number.Trim(),
             IPAddress = ipAddress.Trim(),
-            SerialNo = NormalizeOptional(serialNo),
-            Type = NormalizeOptional(type),
+            SerialNo = serialNo.Trim(),
+            Type = type.Trim(),
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
     }
 
     public void Update(
-        int number,
+        string number,
         string ipAddress,
-        string? serialNo,
-        string? type,
+        string serialNo,
+        string type,
         Guid lastModifiedByApplicationUserId)
     {
-        Number = number;
+        Number = number.Trim();
         IPAddress = ipAddress.Trim();
-        SerialNo = NormalizeOptional(serialNo);
-        Type = NormalizeOptional(type);
+        SerialNo = serialNo.Trim();
+        Type = type.Trim();
         LastModifiedByApplicationUserId =
             lastModifiedByApplicationUserId;
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
-} 
+    public void Restore()
+        => IsDeleted = false;
+}
+ 
 // ==================== E:\QControl\QControl.Domain\Entities\DisplayWindow.cs ==================== 
 ﻿using BuildingBlock.Domain.EntitiesHelper;
 using Qcontrol.Domain.Identity;
@@ -18100,6 +21224,192 @@ namespace Qcontrol.Domain.Resources {
             }
         }
         
+        public static string Display_AlreadyActive {
+            get {
+                return ResourceManager.GetString("Display_AlreadyActive", resourceCulture);
+            }
+        }
+        
+        public static string Display_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Display_Authentication_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Branch_NotFound {
+            get {
+                return ResourceManager.GetString("Display_Branch_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Display_BranchId_Required {
+            get {
+                return ResourceManager.GetString("Display_BranchId_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Create_Success {
+            get {
+                return ResourceManager.GetString("Display_Create_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Delete_Success {
+            get {
+                return ResourceManager.GetString("Display_Delete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("Display_Id_Mismatch", resourceCulture);
+            }
+        }
+        
+        public static string Display_Id_Required {
+            get {
+                return ResourceManager.GetString("Display_Id_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_Required {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_NotFound {
+            get {
+                return ResourceManager.GetString("Display_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_Number_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_Number_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_Required {
+            get {
+                return ResourceManager.GetString("Display_Number_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_HasDisplayWindowLinks {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_HasDisplayWindowLinks", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_HasRelatedRecords {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_HasRelatedRecords", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_MustBeSoftDeleted {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_MustBeSoftDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_Success {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Restore_Success {
+            get {
+                return ResourceManager.GetString("Display_Restore_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_Required {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Type_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_Type_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_Type_Required {
+            get {
+                return ResourceManager.GetString("Display_Type_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_UniqueConstraint_Conflict {
+            get {
+                return ResourceManager.GetString("Display_UniqueConstraint_Conflict", resourceCulture);
+            }
+        }
+        
+        public static string Display_Update_Success {
+            get {
+                return ResourceManager.GetString("Display_Update_Success", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
         /// </summary>
@@ -18333,6 +21643,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped(typeof(IReadModelWriter<>), typeof(EfReadModelWriter<>));
             services.AddScoped<IWindowPermanentDeleteRepository, WindowPermanentDeleteRepository>();
             services.AddScoped<ITerminalPermanentDeleteRepository, TerminalPermanentDeleteRepository>();
+            services.AddScoped<IDisplayPermanentDeleteRepository, DisplayPermanentDeleteRepository>();
 
             // public survey related services
 
@@ -18677,12 +21988,20 @@ internal sealed class DisplayConfiguration
         builder.ToTable("Display", table =>
         {
             table.HasCheckConstraint(
-                "CK_Display_Number_Positive",
-                "[Number] > 0");
+                "CK_Display_Number_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
 
             table.HasCheckConstraint(
                 "CK_Display_IPAddress_NotBlank",
                 "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Display_SerialNo_NotBlank",
+                "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Display_Type_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
         });
 
         builder.HasKey(x => x.Id);
@@ -18694,11 +22013,13 @@ internal sealed class DisplayConfiguration
             .IsRequired();
 
         builder.Property(x => x.SerialNo)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Number)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(20)
+            .IsUnicode(false);
 
         builder.Property(x => x.IPAddress)
             .IsRequired()
@@ -18706,8 +22027,17 @@ internal sealed class DisplayConfiguration
             .IsUnicode(false);
 
         builder.Property(x => x.Type)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
+        builder.Property(x => x.DeletedOnUtc)
+            .IsRequired(false);
+
+        builder.Property(x => x.RestoredOnUtc)
+            .IsRequired(false);
 
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
@@ -18724,11 +22054,19 @@ internal sealed class DisplayConfiguration
         })
             .IsUnique();
 
-        builder.HasIndex(x => x.SerialNo)
-            .IsUnique()
-            .HasFilter("[SerialNo] IS NOT NULL");
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.IPAddress
+        })
+            .IsUnique();
 
-        builder.HasIndex(x => x.IPAddress);
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.SerialNo
+        })
+            .IsUnique();
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 
@@ -18749,7 +22087,8 @@ internal sealed class DisplayConfiguration
             .HasForeignKey(x => x.LastModifiedByApplicationUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
-} 
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Configurations\DisplayWindowConfiguration.cs ==================== 
 ﻿using BuildingBlock.Application.Abstraction.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -23801,6 +27140,1251 @@ namespace Qcontrol.Infrastructure.Migrations
     }
 }
  
+// ==================== E:\QControl\QControl.infrastructure\Migrations\20260625123517_AddDisplayManagementAndSoftDelete.cs ==================== 
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Qcontrol.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddDisplayManagementAndSoftDelete : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql(
+                """
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    WHERE [SerialNo] IS NULL
+                       OR NULLIF(LTRIM(RTRIM([SerialNo])), N'') IS NULL
+                )
+                BEGIN
+                    THROW 51031, 'Display migration failed: SerialNo contains null or blank values.', 1;
+                END
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    WHERE [Type] IS NULL
+                       OR NULLIF(LTRIM(RTRIM([Type])), N'') IS NULL
+                )
+                BEGIN
+                    THROW 51032, 'Display migration failed: Type contains null or blank values.', 1;
+                END
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    WHERE [IPAddress] IS NULL
+                       OR NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NULL
+                )
+                BEGIN
+                    THROW 51033, 'Display migration failed: IPAddress contains null or blank values.', 1;
+                END
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    GROUP BY [BranchId], [Number]
+                    HAVING COUNT(*) > 1
+                )
+                BEGIN
+                    THROW 51034, 'Display migration failed: duplicate Number values exist inside the same Branch.', 1;
+                END
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    GROUP BY [BranchId], [IPAddress]
+                    HAVING COUNT(*) > 1
+                )
+                BEGIN
+                    THROW 51035, 'Display migration failed: duplicate IPAddress values exist inside the same Branch.', 1;
+                END
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM [Display]
+                    GROUP BY [BranchId], [SerialNo]
+                    HAVING COUNT(*) > 1
+                )
+                BEGIN
+                    THROW 51036, 'Display migration failed: duplicate SerialNo values exist inside the same Branch.', 1;
+                END
+                """);
+
+            migrationBuilder.DropIndex(
+                name: "IX_Display_IPAddress",
+                table: "Display");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Display_SerialNo",
+                table: "Display");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Display_Number_Positive",
+                table: "Display");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Type",
+                table: "Display",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "SerialNo",
+                table: "Display",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Number",
+                table: "Display",
+                type: "varchar(20)",
+                unicode: false,
+                maxLength: 20,
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "int");
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "DeletedOnUtc",
+                table: "Display",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDeleted",
+                table: "Display",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "RestoredOnUtc",
+                table: "Display",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Display_BranchId_IPAddress",
+                table: "Display",
+                columns: new[] { "BranchId", "IPAddress" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Display_BranchId_SerialNo",
+                table: "Display",
+                columns: new[] { "BranchId", "SerialNo" },
+                unique: true);
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Display_Number_NotBlank",
+                table: "Display",
+                sql: "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Display_SerialNo_NotBlank",
+                table: "Display",
+                sql: "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Display_Type_NotBlank",
+                table: "Display",
+                sql: "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "IX_Display_BranchId_IPAddress",
+                table: "Display");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Display_BranchId_SerialNo",
+                table: "Display");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Display_Number_NotBlank",
+                table: "Display");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Display_SerialNo_NotBlank",
+                table: "Display");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_Display_Type_NotBlank",
+                table: "Display");
+
+            migrationBuilder.DropColumn(
+                name: "DeletedOnUtc",
+                table: "Display");
+
+            migrationBuilder.DropColumn(
+                name: "IsDeleted",
+                table: "Display");
+
+            migrationBuilder.DropColumn(
+                name: "RestoredOnUtc",
+                table: "Display");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Type",
+                table: "Display",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "SerialNo",
+                table: "Display",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Number",
+                table: "Display",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "varchar(20)",
+                oldUnicode: false,
+                oldMaxLength: 20);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Display_IPAddress",
+                table: "Display",
+                column: "IPAddress");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Display_SerialNo",
+                table: "Display",
+                column: "SerialNo",
+                unique: true,
+                filter: "[SerialNo] IS NOT NULL");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_Display_Number_Positive",
+                table: "Display",
+                sql: "[Number] > 0");
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.infrastructure\Migrations\20260625123517_AddDisplayManagementAndSoftDelete.Designer.cs ==================== 
+﻿// <auto-generated />
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using QControl.infrastructure.Persistence;
+
+#nullable disable
+
+namespace Qcontrol.Infrastructure.Migrations
+{
+    [DbContext(typeof(PlatformWriteDbContext))]
+    [Migration("20260625123517_AddDisplayManagementAndSoftDelete")]
+    partial class AddDisplayManagementAndSoftDelete
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ArabicName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EnglishName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsUpdatesAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<string>("License")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("IPAddress")
+                        .IsUnique();
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.ToTable("Branch", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Branch_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Branch_NameRequired", "NULLIF(LTRIM(RTRIM([ArabicName])), N'') IS NOT NULL OR NULLIF(LTRIM(RTRIM([EnglishName])), N'') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SerialNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("BranchId", "IPAddress")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "SerialNo")
+                        .IsUnique();
+
+                    b.ToTable("Display", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Display_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_Type_NotBlank", "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.DisplayWindow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WindowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("DisplayId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("WindowId");
+
+                    b.HasIndex("DisplayId", "WindowId")
+                        .IsUnique();
+
+                    b.ToTable("DisplayWindow", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Area")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Governorate")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.ToTable("Location", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SerialNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("WindowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("IPAddress");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("SerialNo");
+
+                    b.HasIndex("WindowId");
+
+                    b.HasIndex("WindowId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("Terminal", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Terminal_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_Type_NotBlank", "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AudioDevice")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ControlDevice")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescriptiveName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("BranchId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("WaitingArea", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WaitingArea_Number_Positive", "[Number] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescriptiveName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EnableDirectCall")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("EnableTicketBooking")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WaitingAreaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("WaitingAreaId");
+
+                    b.HasIndex("WaitingAreaId", "IPAddress")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Window_WaitingAreaId_IPAddress")
+                        .HasFilter("[IPAddress] IS NOT NULL");
+
+                    b.HasIndex("WaitingAreaId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Window_WaitingAreaId_Number");
+
+                    b.ToTable("Window", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Window_IPAddress_NotBlank", "[IPAddress] IS NULL OR NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Window_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), N'') IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Identity.TechnicalAdmin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.ToTable("TechnicalAdmin", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("PasswordChangedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("UserType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationUser", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSystemPermission")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Permission", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSystemRole")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Role", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.RolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("RoleId", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("RolePermission", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.UserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("ApplicationUserId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("UserRole", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("Displays")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.DisplayWindow", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QControl.Domain.Entities.Display", "Display")
+                        .WithMany("DisplayWindows")
+                        .HasForeignKey("DisplayId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Window", "Window")
+                        .WithMany("DisplayWindows")
+                        .HasForeignKey("WindowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("Display");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("Window");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Location", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithOne("Location")
+                        .HasForeignKey("QControl.Domain.Entities.Location", "BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Window", "Window")
+                        .WithMany("Terminals")
+                        .HasForeignKey("WindowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("Window");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("WaitingAreas")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.WaitingArea", "WaitingArea")
+                        .WithMany("Windows")
+                        .HasForeignKey("WaitingAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("WaitingArea");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Identity.TechnicalAdmin", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithOne()
+                        .HasForeignKey("QControl.Domain.Identity.TechnicalAdmin", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.RolePermission", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.UserRole", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Branch", b =>
+                {
+                    b.Navigation("Displays");
+
+                    b.Navigation("Location")
+                        .IsRequired();
+
+                    b.Navigation("WaitingAreas");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
+                {
+                    b.Navigation("DisplayWindows");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>
+                {
+                    b.Navigation("Windows");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
+                {
+                    b.Navigation("DisplayWindows");
+
+                    b.Navigation("Terminals");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Migrations\PlatformWriteDbContextModelSnapshot.cs ==================== 
 ﻿// <auto-generated />
 using System;
@@ -23905,11 +28489,17 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedOnUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("IPAddress")
                         .IsRequired()
                         .HasMaxLength(45)
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -23917,14 +28507,22 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Number")
-                        .HasColumnType("int");
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RestoredOnUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SerialNo")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Type")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -23934,22 +28532,26 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasIndex("CreatedByApplicationUserId");
 
-                    b.HasIndex("IPAddress");
-
                     b.HasIndex("LastModifiedByApplicationUserId");
 
-                    b.HasIndex("SerialNo")
-                        .IsUnique()
-                        .HasFilter("[SerialNo] IS NOT NULL");
+                    b.HasIndex("BranchId", "IPAddress")
+                        .IsUnique();
 
                     b.HasIndex("BranchId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "SerialNo")
                         .IsUnique();
 
                     b.ToTable("Display", null, t =>
                         {
                             t.HasCheckConstraint("CK_Display_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Display_Number_Positive", "[Number] > 0");
+                            t.HasCheckConstraint("CK_Display_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_Type_NotBlank", "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
                         });
                 });
 
@@ -25036,6 +29638,49 @@ namespace QControl.infrastructure.Persistence
         public DbContext Resolve() => _db;
     }
 } 
+// ==================== E:\QControl\QControl.infrastructure\Repositories\DisplayPermanentDeleteRepository.cs ==================== 
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+using QControl.infrastructure.Persistence;
+
+namespace QControl.infrastructure.Repositories;
+
+internal sealed class DisplayPermanentDeleteRepository
+    : IDisplayPermanentDeleteRepository
+{
+    private readonly PlatformWriteDbContext _dbContext;
+
+    public DisplayPermanentDeleteRepository(
+        PlatformWriteDbContext dbContext)
+    {
+        _dbContext = dbContext
+            ?? throw new ArgumentNullException(nameof(dbContext));
+    }
+
+    public async Task<int> DeletePermanentlyAsync(
+        int displayId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _dbContext.Set<Display>()
+                .IgnoreQueryFilters()
+                .Where(x => x.Id == displayId && x.IsDeleted)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (IsForeignKeyViolation(ex))
+        {
+            throw new DisplayPermanentDeleteConflictException(ex);
+        }
+    }
+
+    private static bool IsForeignKeyViolation(DbUpdateException exception)
+        => exception.InnerException is SqlException { Number: 547 };
+}
+ 
 // ==================== E:\QControl\QControl.infrastructure\Repositories\PlatformReadRepository.cs ==================== 
 ﻿using BuildingBlock.Application.Abstraction.Persistence;
 using QControl.Application.Abstraction.Presistence;
@@ -25671,6 +30316,30 @@ internal static class SeedConstants
         public const string TerminalsDeletePermanent =
             "Terminals.DeletePermanent";
 
+        public const string DisplaysViewAll =
+            "Displays.ViewAll";
+
+        public const string DisplaysViewDetails =
+            "Displays.ViewDetails";
+
+        public const string DisplaysCreate =
+            "Displays.Create";
+
+        public const string DisplaysUpdate =
+            "Displays.Update";
+
+        public const string DisplaysDelete =
+            "Displays.Delete";
+
+        public const string DisplaysViewDeleted =
+            "Displays.ViewDeleted";
+
+        public const string DisplaysRestore =
+            "Displays.Restore";
+
+        public const string DisplaysDeletePermanent =
+            "Displays.DeletePermanent";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -25817,6 +30486,38 @@ internal static class SeedConstants
             public static readonly Guid TerminalsDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000030");
+
+            public static readonly Guid DisplaysViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000031");
+
+            public static readonly Guid DisplaysViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000032");
+
+            public static readonly Guid DisplaysCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000033");
+
+            public static readonly Guid DisplaysUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000034");
+
+            public static readonly Guid DisplaysDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000035");
+
+            public static readonly Guid DisplaysViewDeleted =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000036");
+
+            public static readonly Guid DisplaysRestore =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000037");
+
+            public static readonly Guid DisplaysDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000038");
         }
     }
 
@@ -25934,6 +30635,38 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.TerminalsDeletePermanent,
                     PermissionNames.TerminalsDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewAll,
+                    PermissionNames.DisplaysViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewDetails,
+                    PermissionNames.DisplaysViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysCreate,
+                    PermissionNames.DisplaysCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysUpdate,
+                    PermissionNames.DisplaysUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysDelete,
+                    PermissionNames.DisplaysDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewDeleted,
+                    PermissionNames.DisplaysViewDeleted),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysRestore,
+                    PermissionNames.DisplaysRestore),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysDeletePermanent,
+                    PermissionNames.DisplaysDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

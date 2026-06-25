@@ -109,6 +109,30 @@ internal static class SeedConstants
         public const string TerminalsDeletePermanent =
             "Terminals.DeletePermanent";
 
+        public const string DisplaysViewAll =
+            "Displays.ViewAll";
+
+        public const string DisplaysViewDetails =
+            "Displays.ViewDetails";
+
+        public const string DisplaysCreate =
+            "Displays.Create";
+
+        public const string DisplaysUpdate =
+            "Displays.Update";
+
+        public const string DisplaysDelete =
+            "Displays.Delete";
+
+        public const string DisplaysViewDeleted =
+            "Displays.ViewDeleted";
+
+        public const string DisplaysRestore =
+            "Displays.Restore";
+
+        public const string DisplaysDeletePermanent =
+            "Displays.DeletePermanent";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -255,6 +279,38 @@ internal static class SeedConstants
             public static readonly Guid TerminalsDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000030");
+
+            public static readonly Guid DisplaysViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000031");
+
+            public static readonly Guid DisplaysViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000032");
+
+            public static readonly Guid DisplaysCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000033");
+
+            public static readonly Guid DisplaysUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000034");
+
+            public static readonly Guid DisplaysDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000035");
+
+            public static readonly Guid DisplaysViewDeleted =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000036");
+
+            public static readonly Guid DisplaysRestore =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000037");
+
+            public static readonly Guid DisplaysDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000038");
         }
     }
 
@@ -372,6 +428,38 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.TerminalsDeletePermanent,
                     PermissionNames.TerminalsDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewAll,
+                    PermissionNames.DisplaysViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewDetails,
+                    PermissionNames.DisplaysViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysCreate,
+                    PermissionNames.DisplaysCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysUpdate,
+                    PermissionNames.DisplaysUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysDelete,
+                    PermissionNames.DisplaysDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysViewDeleted,
+                    PermissionNames.DisplaysViewDeleted),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysRestore,
+                    PermissionNames.DisplaysRestore),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplaysDeletePermanent,
+                    PermissionNames.DisplaysDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

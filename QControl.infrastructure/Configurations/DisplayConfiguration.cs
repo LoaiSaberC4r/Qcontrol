@@ -14,12 +14,20 @@ internal sealed class DisplayConfiguration
         builder.ToTable("Display", table =>
         {
             table.HasCheckConstraint(
-                "CK_Display_Number_Positive",
-                "[Number] > 0");
+                "CK_Display_Number_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
 
             table.HasCheckConstraint(
                 "CK_Display_IPAddress_NotBlank",
                 "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Display_SerialNo_NotBlank",
+                "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Display_Type_NotBlank",
+                "NULLIF(LTRIM(RTRIM([Type])), '') IS NOT NULL");
         });
 
         builder.HasKey(x => x.Id);
@@ -31,11 +39,13 @@ internal sealed class DisplayConfiguration
             .IsRequired();
 
         builder.Property(x => x.SerialNo)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Number)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(20)
+            .IsUnicode(false);
 
         builder.Property(x => x.IPAddress)
             .IsRequired()
@@ -43,8 +53,17 @@ internal sealed class DisplayConfiguration
             .IsUnicode(false);
 
         builder.Property(x => x.Type)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
+        builder.Property(x => x.DeletedOnUtc)
+            .IsRequired(false);
+
+        builder.Property(x => x.RestoredOnUtc)
+            .IsRequired(false);
 
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
@@ -61,11 +80,19 @@ internal sealed class DisplayConfiguration
         })
             .IsUnique();
 
-        builder.HasIndex(x => x.SerialNo)
-            .IsUnique()
-            .HasFilter("[SerialNo] IS NOT NULL");
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.IPAddress
+        })
+            .IsUnique();
 
-        builder.HasIndex(x => x.IPAddress);
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.SerialNo
+        })
+            .IsUnique();
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 

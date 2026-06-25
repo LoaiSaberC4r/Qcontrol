@@ -393,6 +393,99 @@
   <data name="Terminal_WindowId_Required" xml:space="preserve">
     <value>A valid window id is required.</value>
   </data>
+  <data name="Display_AlreadyActive" xml:space="preserve">
+    <value>The display is already active.</value>
+  </data>
+  <data name="Display_Authentication_Required" xml:space="preserve">
+    <value>Authentication is required.</value>
+  </data>
+  <data name="Display_Branch_NotFound" xml:space="preserve">
+    <value>The selected branch could not be found.</value>
+  </data>
+  <data name="Display_BranchId_Required" xml:space="preserve">
+    <value>A valid branch id is required.</value>
+  </data>
+  <data name="Display_Create_Success" xml:space="preserve">
+    <value>The display was created successfully.</value>
+  </data>
+  <data name="Display_Delete_Success" xml:space="preserve">
+    <value>The display was deleted successfully.</value>
+  </data>
+  <data name="Display_Id_Mismatch" xml:space="preserve">
+    <value>The route display id must match the request display id.</value>
+  </data>
+  <data name="Display_Id_Required" xml:space="preserve">
+    <value>A valid display id is required.</value>
+  </data>
+  <data name="Display_IPAddress_AlreadyExistsInBranch" xml:space="preserve">
+    <value>The IP address already exists in this branch.</value>
+  </data>
+  <data name="Display_IPAddress_Invalid" xml:space="preserve">
+    <value>The IP address must be a valid IPv4 address.</value>
+  </data>
+  <data name="Display_IPAddress_MaxLength" xml:space="preserve">
+    <value>The IP address must not exceed 45 characters.</value>
+  </data>
+  <data name="Display_IPAddress_Required" xml:space="preserve">
+    <value>The IP address is required.</value>
+  </data>
+  <data name="Display_NotFound" xml:space="preserve">
+    <value>The display could not be found.</value>
+  </data>
+  <data name="Display_Number_AlreadyExistsInBranch" xml:space="preserve">
+    <value>The display number already exists in this branch.</value>
+  </data>
+  <data name="Display_Number_MaxLength" xml:space="preserve">
+    <value>The display number must not exceed 20 characters.</value>
+  </data>
+  <data name="Display_Number_Required" xml:space="preserve">
+    <value>The display number is required.</value>
+  </data>
+  <data name="Display_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>Page number must be at least 1.</value>
+  </data>
+  <data name="Display_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>Page size must be at least 1.</value>
+  </data>
+  <data name="Display_Pagination_PageSize_Max" xml:space="preserve">
+    <value>Page size must not exceed 100.</value>
+  </data>
+  <data name="Display_PermanentDelete_HasDisplayWindowLinks" xml:space="preserve">
+    <value>The display cannot be permanently deleted because it is linked to windows.</value>
+  </data>
+  <data name="Display_PermanentDelete_HasRelatedRecords" xml:space="preserve">
+    <value>The display cannot be permanently deleted because related records exist.</value>
+  </data>
+  <data name="Display_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
+    <value>The display must be soft deleted before permanent deletion.</value>
+  </data>
+  <data name="Display_PermanentDelete_Success" xml:space="preserve">
+    <value>The display was permanently deleted successfully.</value>
+  </data>
+  <data name="Display_Restore_Success" xml:space="preserve">
+    <value>The display was restored successfully.</value>
+  </data>
+  <data name="Display_SerialNo_AlreadyExistsInBranch" xml:space="preserve">
+    <value>The serial number already exists in this branch.</value>
+  </data>
+  <data name="Display_SerialNo_MaxLength" xml:space="preserve">
+    <value>The serial number must not exceed 100 characters.</value>
+  </data>
+  <data name="Display_SerialNo_Required" xml:space="preserve">
+    <value>The serial number is required.</value>
+  </data>
+  <data name="Display_Type_MaxLength" xml:space="preserve">
+    <value>The display type must not exceed 100 characters.</value>
+  </data>
+  <data name="Display_Type_Required" xml:space="preserve">
+    <value>The display type is required.</value>
+  </data>
+  <data name="Display_UniqueConstraint_Conflict" xml:space="preserve">
+    <value>A display with the same unique value already exists in this branch.</value>
+  </data>
+  <data name="Display_Update_Success" xml:space="preserve">
+    <value>The display was updated successfully.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>The user profile could not be found.</value>
   </data>
