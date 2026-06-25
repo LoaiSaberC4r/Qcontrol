@@ -144,19 +144,29 @@ internal static class EntityTestFactory
     public static Display Display(
         int id,
         int branchId,
-        int number = 1,
+        string number = "D-01",
         string ipAddress = "10.20.0.1",
-        Branch? branch = null)
+        string serialNo = "DISPLAY-SERIAL-001",
+        string type = "LED Display",
+        Branch? branch = null,
+        bool isDeleted = false,
+        DateTime? deletedOnUtc = null)
     {
         var display = QControl.Domain.Entities.Display.Create(
             branchId,
             number,
             ipAddress,
-            serialNo: null,
-            type: null,
+            serialNo,
+            type,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(display, id);
+
+        if (isDeleted)
+        {
+            display.IsDeleted = true;
+            display.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+        }
 
         if (branch is not null)
         {

@@ -82,6 +82,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped(typeof(IReadModelWriter<>), typeof(EfReadModelWriter<>));
             services.AddScoped<IWindowPermanentDeleteRepository, WindowPermanentDeleteRepository>();
             services.AddScoped<ITerminalPermanentDeleteRepository, TerminalPermanentDeleteRepository>();
+            services.AddScoped<IDisplayPermanentDeleteRepository, DisplayPermanentDeleteRepository>();
 
             // public survey related services
 

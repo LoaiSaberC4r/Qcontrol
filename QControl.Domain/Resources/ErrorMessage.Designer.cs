@@ -795,6 +795,192 @@ namespace Qcontrol.Domain.Resources {
             }
         }
         
+        public static string Display_AlreadyActive {
+            get {
+                return ResourceManager.GetString("Display_AlreadyActive", resourceCulture);
+            }
+        }
+        
+        public static string Display_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Display_Authentication_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Branch_NotFound {
+            get {
+                return ResourceManager.GetString("Display_Branch_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Display_BranchId_Required {
+            get {
+                return ResourceManager.GetString("Display_BranchId_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Create_Success {
+            get {
+                return ResourceManager.GetString("Display_Create_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Delete_Success {
+            get {
+                return ResourceManager.GetString("Display_Delete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("Display_Id_Mismatch", resourceCulture);
+            }
+        }
+        
+        public static string Display_Id_Required {
+            get {
+                return ResourceManager.GetString("Display_Id_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_IPAddress_Required {
+            get {
+                return ResourceManager.GetString("Display_IPAddress_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_NotFound {
+            get {
+                return ResourceManager.GetString("Display_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_Number_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_Number_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_Number_Required {
+            get {
+                return ResourceManager.GetString("Display_Number_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Display_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Display_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_HasDisplayWindowLinks {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_HasDisplayWindowLinks", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_HasRelatedRecords {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_HasRelatedRecords", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_MustBeSoftDeleted {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_MustBeSoftDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Display_PermanentDelete_Success {
+            get {
+                return ResourceManager.GetString("Display_PermanentDelete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_Restore_Success {
+            get {
+                return ResourceManager.GetString("Display_Restore_Success", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_SerialNo_Required {
+            get {
+                return ResourceManager.GetString("Display_SerialNo_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_Type_MaxLength {
+            get {
+                return ResourceManager.GetString("Display_Type_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Display_Type_Required {
+            get {
+                return ResourceManager.GetString("Display_Type_Required", resourceCulture);
+            }
+        }
+        
+        public static string Display_UniqueConstraint_Conflict {
+            get {
+                return ResourceManager.GetString("Display_UniqueConstraint_Conflict", resourceCulture);
+            }
+        }
+        
+        public static string Display_Update_Success {
+            get {
+                return ResourceManager.GetString("Display_Update_Success", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
         /// </summary>

@@ -77,9 +77,11 @@ internal sealed class DeleteBranchCommandHandler
             x => x.BranchId == branch.Id,
             cancellationToken);
 
-        var hasDisplays = await _displayReadRepository.AnyAsync(
-            x => x.BranchId == branch.Id,
+        var displayId = await _displayReadRepository.FirstOrDefaultAsync(
+            new AnyDisplayForBranchIncludingDeletedSpec(branch.Id),
             cancellationToken);
+
+        var hasDisplays = displayId > 0;
 
         if (hasWaitingAreas || hasDisplays)
         {
