@@ -105,19 +105,29 @@ internal static class EntityTestFactory
     public static Terminal Terminal(
         int id,
         int windowId,
-        int number = 1,
+        string number = "T-01",
         string ipAddress = "10.10.0.1",
-        Window? window = null)
+        string serialNo = "SERIAL-001",
+        string type = "Operator Module",
+        Window? window = null,
+        bool isDeleted = false,
+        DateTime? deletedOnUtc = null)
     {
         var terminal = QControl.Domain.Entities.Terminal.Create(
             windowId,
             number,
             ipAddress,
-            serialNo: null,
-            type: null,
+            serialNo,
+            type,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(terminal, id);
+
+        if (isDeleted)
+        {
+            terminal.IsDeleted = true;
+            terminal.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+        }
 
         if (window is not null)
         {

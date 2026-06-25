@@ -608,6 +608,192 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("Window_WaitingAreaId_Required", resourceCulture);
             }
         }
+
+        public static string Terminal_AlreadyActive {
+            get {
+                return ResourceManager.GetString("Terminal_AlreadyActive", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Authentication_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Authentication_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Create_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Create_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Delete_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Delete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Id_Mismatch {
+            get {
+                return ResourceManager.GetString("Terminal_Id_Mismatch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Id_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Id_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_IPAddress_Required {
+            get {
+                return ResourceManager.GetString("Terminal_IPAddress_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_NotFound {
+            get {
+                return ResourceManager.GetString("Terminal_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_AlreadyExistsInWindow {
+            get {
+                return ResourceManager.GetString("Terminal_Number_AlreadyExistsInWindow", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_Number_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Number_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Number_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("Terminal_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_HasRelatedRecords {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_HasRelatedRecords", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_MustBeSoftDeleted {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_MustBeSoftDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_PermanentDelete_Success {
+            get {
+                return ResourceManager.GetString("Terminal_PermanentDelete_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Restore_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Restore_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Restore_WindowDeleted {
+            get {
+                return ResourceManager.GetString("Terminal_Restore_WindowDeleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_AlreadyExistsInBranch {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_AlreadyExistsInBranch", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_SerialNo_Required {
+            get {
+                return ResourceManager.GetString("Terminal_SerialNo_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Type_MaxLength {
+            get {
+                return ResourceManager.GetString("Terminal_Type_MaxLength", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Type_Required {
+            get {
+                return ResourceManager.GetString("Terminal_Type_Required", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Update_Success {
+            get {
+                return ResourceManager.GetString("Terminal_Update_Success", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Window_Deleted {
+            get {
+                return ResourceManager.GetString("Terminal_Window_Deleted", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_Window_NotFound {
+            get {
+                return ResourceManager.GetString("Terminal_Window_NotFound", resourceCulture);
+            }
+        }
+        
+        public static string Terminal_WindowId_Required {
+            get {
+                return ResourceManager.GetString("Terminal_WindowId_Required", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..

@@ -1,6 +1,7 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Domain.Entities;
@@ -77,12 +78,12 @@ internal sealed class PermanentDeleteWindowCommandHandler
                     Type: ErrorType.Conflict));
         }
 
-        var hasTerminal =
-            await _terminalReadRepository.AnyAsync(
-                x => x.WindowId == request.Id,
+        var terminalId =
+            await _terminalReadRepository.FirstOrDefaultAsync(
+                new AnyTerminalForWindowIncludingDeletedSpec(request.Id),
                 cancellationToken);
 
-        if (hasTerminal)
+        if (terminalId > 0)
         {
             return HasRelatedRecords();
         }
