@@ -133,6 +133,18 @@ internal static class SeedConstants
         public const string DisplaysDeletePermanent =
             "Displays.DeletePermanent";
 
+        public const string DisplayWindowsViewLinked =
+            "DisplayWindows.ViewLinked";
+
+        public const string DisplayWindowsViewAvailable =
+            "DisplayWindows.ViewAvailable";
+
+        public const string DisplayWindowsAssign =
+            "DisplayWindows.Assign";
+
+        public const string DisplayWindowsUnassign =
+            "DisplayWindows.Unassign";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -311,6 +323,22 @@ internal static class SeedConstants
             public static readonly Guid DisplaysDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000038");
+
+            public static readonly Guid DisplayWindowsViewLinked =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000039");
+
+            public static readonly Guid DisplayWindowsViewAvailable =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000040");
+
+            public static readonly Guid DisplayWindowsAssign =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000041");
+
+            public static readonly Guid DisplayWindowsUnassign =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000042");
         }
     }
 
@@ -460,6 +488,22 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplaysDeletePermanent,
                     PermissionNames.DisplaysDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsViewLinked,
+                    PermissionNames.DisplayWindowsViewLinked),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsViewAvailable,
+                    PermissionNames.DisplayWindowsViewAvailable),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsAssign,
+                    PermissionNames.DisplayWindowsAssign),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsUnassign,
+                    PermissionNames.DisplayWindowsUnassign),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,

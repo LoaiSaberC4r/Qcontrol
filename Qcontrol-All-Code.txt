@@ -5818,6 +5818,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Displays;
+using Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
 using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
 using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
 using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
@@ -5888,6 +5892,82 @@ public sealed class DisplaysController : ControllerBase
 
         var result = await sender.Send(
             query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{displayId:int}/windows")]
+    [Permission("DisplayWindows.ViewLinked")]
+    public async Task<IActionResult> GetLinkedWindows(
+        int displayId,
+        [FromQuery] GetDisplayLinkedWindowsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDisplayLinkedWindowsQuery();
+        query.DisplayId = displayId;
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{displayId:int}/available-windows")]
+    [Permission("DisplayWindows.ViewAvailable")]
+    public async Task<IActionResult> GetAvailableWindows(
+        int displayId,
+        [FromQuery] GetDisplayAvailableWindowsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDisplayAvailableWindowsQuery();
+        query.DisplayId = displayId;
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{displayId:int}/windows/{windowId:int}")]
+    [Permission("DisplayWindows.Assign")]
+    public async Task<IActionResult> AssignWindow(
+        int displayId,
+        int windowId,
+        CancellationToken cancellationToken)
+    {
+        var command = new AssignWindowToDisplayCommand
+        {
+            DisplayId = displayId,
+            WindowId = windowId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{displayId:int}/windows/{windowId:int}")]
+    [Permission("DisplayWindows.Unassign")]
+    public async Task<IActionResult> UnassignWindow(
+        int displayId,
+        int windowId,
+        CancellationToken cancellationToken)
+    {
+        var command = new UnassignWindowFromDisplayCommand
+        {
+            DisplayId = displayId,
+            WindowId = windowId
+        };
+
+        var result = await sender.Send(
+            command,
             cancellationToken);
 
         return result.ToIActionResult();
@@ -10326,6 +10406,934 @@ internal sealed class GetDisplayIncludingDeletedSpec
         UseTracking();
 
         AddCriteria(x => x.Id == displayId);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\AssignWindowToDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+public sealed record AssignWindowToDisplayCommand
+    : ICommand<AssignWindowToDisplayResponse>
+{
+    public int DisplayId { get; init; }
+
+    public int WindowId { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\AssignWindowToDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed class AssignWindowToDisplayCommandHandler
+    : ICommandHandler<AssignWindowToDisplayCommand, AssignWindowToDisplayResponse>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly IWriteReadRepository<DisplayWindow> _displayWindowReadRepository;
+    private readonly IWriteRepository<DisplayWindow> _displayWindowWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AssignWindowToDisplayCommandHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteReadRepository<Window> windowReadRepository,
+        IWriteReadRepository<DisplayWindow> displayWindowReadRepository,
+        IWriteRepository<DisplayWindow> displayWindowWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _windowReadRepository = windowReadRepository
+            ?? throw new ArgumentNullException(nameof(windowReadRepository));
+
+        _displayWindowReadRepository = displayWindowReadRepository
+            ?? throw new ArgumentNullException(nameof(displayWindowReadRepository));
+
+        _displayWindowWriteRepository = displayWindowWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWindowWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<AssignWindowToDisplayResponse>> Handle(
+        AssignWindowToDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Failure(
+                "DisplayWindows.Assign.Unauthenticated",
+                ErrorMessage.DisplayWindow_Authentication_Required,
+                ErrorType.Security);
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayForAssignmentSpec(request.DisplayId),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return Failure(
+                "DisplayWindows.Assign.DisplayNotFound",
+                ErrorMessage.DisplayWindow_Display_NotFound,
+                ErrorType.NotFound);
+        }
+
+        if (display.IsDeleted)
+        {
+            return Failure(
+                "DisplayWindows.Assign.DisplayDeleted",
+                ErrorMessage.DisplayWindow_Assign_DisplayDeleted,
+                ErrorType.Conflict);
+        }
+
+        var window =
+            await _windowReadRepository.FirstOrDefaultAsync(
+                new GetWindowForAssignmentSpec(request.WindowId),
+                cancellationToken);
+
+        if (window is null)
+        {
+            return Failure(
+                "DisplayWindows.Assign.WindowNotFound",
+                ErrorMessage.DisplayWindow_Window_NotFound,
+                ErrorType.NotFound);
+        }
+
+        if (window.IsDeleted)
+        {
+            return Failure(
+                "DisplayWindows.Assign.WindowDeleted",
+                ErrorMessage.DisplayWindow_Assign_WindowDeleted,
+                ErrorType.Conflict);
+        }
+
+        if (display.BranchId != window.BranchId)
+        {
+            return Failure(
+                "DisplayWindows.Assign.DifferentBranch",
+                ErrorMessage.DisplayWindow_Assign_DifferentBranch,
+                ErrorType.Conflict);
+        }
+
+        var alreadyLinked =
+            await _displayWindowReadRepository.AnyAsync(
+                x =>
+                    x.DisplayId == request.DisplayId &&
+                    x.WindowId == request.WindowId,
+                cancellationToken);
+
+        if (alreadyLinked)
+        {
+            return Failure(
+                "DisplayWindows.Assign.AlreadyLinked",
+                ErrorMessage.DisplayWindow_Assign_AlreadyLinked,
+                ErrorType.Conflict);
+        }
+
+        var displayWindow = DisplayWindow.Create(
+            request.DisplayId,
+            request.WindowId,
+            _currentUser.UserId.Value);
+
+        await _displayWindowWriteRepository.AddAsync(
+            displayWindow,
+            cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<AssignWindowToDisplayResponse>.Ok(
+            new AssignWindowToDisplayResponse
+            {
+                DisplayId = request.DisplayId,
+                WindowId = request.WindowId,
+                Message = ErrorMessage.DisplayWindow_Assign_Success
+            });
+    }
+
+    private static Result<AssignWindowToDisplayResponse> Failure(
+        string code,
+        string message,
+        ErrorType type)
+        => Result<AssignWindowToDisplayResponse>.Fail(
+            new Error(
+                Code: code,
+                Message: message,
+                Type: type));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\AssignWindowToDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed class AssignWindowToDisplayCommandValidator
+    : AbstractValidator<AssignWindowToDisplayCommand>
+{
+    public AssignWindowToDisplayCommandValidator()
+    {
+        RuleFor(x => x.DisplayId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_DisplayId_Required);
+
+        RuleFor(x => x.WindowId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_WindowId_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\AssignWindowToDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+public sealed record AssignWindowToDisplayResponse
+{
+    public int DisplayId { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\DisplayAssignmentCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed record DisplayAssignmentCandidate
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\GetDisplayForAssignmentSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed class GetDisplayForAssignmentSpec
+    : Specification<Display, DisplayAssignmentCandidate>
+{
+    public GetDisplayForAssignmentSpec(int displayId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == displayId);
+
+        Select(x => new DisplayAssignmentCandidate
+        {
+            Id = x.Id,
+            BranchId = x.BranchId,
+            IsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\GetWindowForAssignmentSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed class GetWindowForAssignmentSpec
+    : Specification<Window, WindowAssignmentCandidate>
+{
+    public GetWindowForAssignmentSpec(int windowId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == windowId);
+
+        Select(x => new WindowAssignmentCandidate
+        {
+            Id = x.Id,
+            BranchId = x.WaitingArea.BranchId,
+            IsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\AssignWindowToDisplay\WindowAssignmentCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+
+internal sealed record WindowAssignmentCandidate
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\UnassignWindowFromDisplay\GetDisplayWindowLinkSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+
+internal sealed class GetDisplayWindowLinkSpec
+    : Specification<DisplayWindow>
+{
+    public GetDisplayWindowLinkSpec(
+        int displayId,
+        int windowId)
+    {
+        AddCriteria(x =>
+            x.DisplayId == displayId &&
+            x.WindowId == windowId);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\UnassignWindowFromDisplay\UnassignWindowFromDisplayCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+
+public sealed record UnassignWindowFromDisplayCommand
+    : ICommand<UnassignWindowFromDisplayResponse>
+{
+    public int DisplayId { get; init; }
+
+    public int WindowId { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\UnassignWindowFromDisplay\UnassignWindowFromDisplayCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+
+internal sealed class UnassignWindowFromDisplayCommandHandler
+    : ICommandHandler<UnassignWindowFromDisplayCommand, UnassignWindowFromDisplayResponse>
+{
+    private readonly IWriteReadRepository<DisplayWindow> _displayWindowReadRepository;
+    private readonly IWriteRepository<DisplayWindow> _displayWindowWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UnassignWindowFromDisplayCommandHandler(
+        IWriteReadRepository<DisplayWindow> displayWindowReadRepository,
+        IWriteRepository<DisplayWindow> displayWindowWriteRepository,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+    {
+        _displayWindowReadRepository = displayWindowReadRepository
+            ?? throw new ArgumentNullException(nameof(displayWindowReadRepository));
+
+        _displayWindowWriteRepository = displayWindowWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWindowWriteRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<UnassignWindowFromDisplayResponse>> Handle(
+        UnassignWindowFromDisplayCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Failure(
+                "DisplayWindows.Unassign.Unauthenticated",
+                ErrorMessage.DisplayWindow_Authentication_Required,
+                ErrorType.Security);
+        }
+
+        var displayWindow =
+            await _displayWindowReadRepository.FirstOrDefaultAsync(
+                new GetDisplayWindowLinkSpec(
+                    request.DisplayId,
+                    request.WindowId),
+                cancellationToken);
+
+        if (displayWindow is null)
+        {
+            return Failure(
+                "DisplayWindows.Unassign.LinkNotFound",
+                ErrorMessage.DisplayWindow_Unassign_LinkNotFound,
+                ErrorType.NotFound);
+        }
+
+        _displayWindowWriteRepository.Delete(displayWindow);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<UnassignWindowFromDisplayResponse>.Ok(
+            new UnassignWindowFromDisplayResponse
+            {
+                DisplayId = request.DisplayId,
+                WindowId = request.WindowId,
+                Message = ErrorMessage.DisplayWindow_Unassign_Success
+            });
+    }
+
+    private static Result<UnassignWindowFromDisplayResponse> Failure(
+        string code,
+        string message,
+        ErrorType type)
+        => Result<UnassignWindowFromDisplayResponse>.Fail(
+            new Error(
+                Code: code,
+                Message: message,
+                Type: type));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\UnassignWindowFromDisplay\UnassignWindowFromDisplayCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+
+internal sealed class UnassignWindowFromDisplayCommandValidator
+    : AbstractValidator<UnassignWindowFromDisplayCommand>
+{
+    public UnassignWindowFromDisplayCommandValidator()
+    {
+        RuleFor(x => x.DisplayId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_DisplayId_Required);
+
+        RuleFor(x => x.WindowId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_WindowId_Required);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Command\UnassignWindowFromDisplay\UnassignWindowFromDisplayResponse.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+
+public sealed record UnassignWindowFromDisplayResponse
+{
+    public int DisplayId { get; init; }
+
+    public int WindowId { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\AvailableWindowResponse.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+public sealed record AvailableWindowResponse
+{
+    public int Id { get; init; }
+
+    public int WaitingAreaId { get; init; }
+
+    public int WaitingAreaNumber { get; init; }
+
+    public string? WaitingAreaDescriptiveName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string? DescriptiveName { get; init; }
+
+    public string? IPAddress { get; init; }
+
+    public bool EnableTicketBooking { get; init; }
+
+    public bool EnableDirectCall { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\DisplayAvailableWindowsDisplayCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+internal sealed record DisplayAvailableWindowsDisplayCandidate
+{
+    public int Id { get; init; }
+
+    public int BranchId { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\GetDisplayAvailableWindowsQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+public sealed class GetDisplayAvailableWindowsQuery
+    : IQuery<Pagination<AvailableWindowResponse>>
+{
+    public int DisplayId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\GetDisplayAvailableWindowsQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+internal sealed class GetDisplayAvailableWindowsQueryHandler
+    : IQueryHandler<GetDisplayAvailableWindowsQuery, Pagination<AvailableWindowResponse>>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<Window> _windowReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDisplayAvailableWindowsQueryHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteReadRepository<Window> windowReadRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _windowReadRepository = windowReadRepository
+            ?? throw new ArgumentNullException(nameof(windowReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<AvailableWindowResponse>>> Handle(
+        GetDisplayAvailableWindowsQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Failure(
+                "DisplayWindows.Available.Unauthenticated",
+                ErrorMessage.DisplayWindow_Authentication_Required,
+                ErrorType.Security);
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayForAvailableWindowsSpec(request.DisplayId),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return Failure(
+                "DisplayWindows.Available.DisplayNotFound",
+                ErrorMessage.DisplayWindow_Display_NotFound,
+                ErrorType.NotFound);
+        }
+
+        if (display.IsDeleted)
+        {
+            return Failure(
+                "DisplayWindows.Available.DisplayDeleted",
+                ErrorMessage.DisplayWindow_Available_DisplayDeleted,
+                ErrorType.Conflict);
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetDisplayAvailableWindowsSpec(
+            request,
+            display.BranchId);
+
+        var (items, totalCount) =
+            await _windowReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<AvailableWindowResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<AvailableWindowResponse>>.Ok(response);
+    }
+
+    private static Result<Pagination<AvailableWindowResponse>> Failure(
+        string code,
+        string message,
+        ErrorType type)
+        => Result<Pagination<AvailableWindowResponse>>.Fail(
+            new Error(
+                Code: code,
+                Message: message,
+                Type: type));
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\GetDisplayAvailableWindowsQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+internal sealed class GetDisplayAvailableWindowsQueryValidator
+    : AbstractValidator<GetDisplayAvailableWindowsQuery>
+{
+    public GetDisplayAvailableWindowsQueryValidator()
+    {
+        RuleFor(x => x.DisplayId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_DisplayId_Required);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\GetDisplayAvailableWindowsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+internal sealed class GetDisplayAvailableWindowsSpec
+    : Specification<Window, AvailableWindowResponse>
+{
+    public GetDisplayAvailableWindowsSpec(
+        GetDisplayAvailableWindowsQuery query,
+        int branchId)
+    {
+        UseNoTracking();
+
+        AddCriteria(x =>
+            x.WaitingArea.BranchId == branchId &&
+            !x.DisplayWindows.Any(link => link.DisplayId == query.DisplayId));
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Number.Contains(searchText) ||
+                (x.DescriptiveName != null &&
+                    x.DescriptiveName.Contains(searchText)) ||
+                (x.IPAddress != null &&
+                    x.IPAddress.Contains(searchText)));
+        }
+
+        AddOrderBy(x => x.WaitingAreaId);
+        AddOrderBy(x => x.Number);
+        AddOrderBy(x => x.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        Select(x => new AvailableWindowResponse
+        {
+            Id = x.Id,
+            WaitingAreaId = x.WaitingAreaId,
+            WaitingAreaNumber = x.WaitingArea.Number,
+            WaitingAreaDescriptiveName =
+                x.WaitingArea.DescriptiveName,
+            Number = x.Number,
+            DescriptiveName = x.DescriptiveName,
+            IPAddress = x.IPAddress,
+            EnableTicketBooking = x.EnableTicketBooking,
+            EnableDirectCall = x.EnableDirectCall
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayAvailableWindows\GetDisplayForAvailableWindowsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+
+internal sealed class GetDisplayForAvailableWindowsSpec
+    : Specification<Display, DisplayAvailableWindowsDisplayCandidate>
+{
+    public GetDisplayForAvailableWindowsSpec(int displayId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == displayId);
+
+        Select(x => new DisplayAvailableWindowsDisplayCandidate
+        {
+            Id = x.Id,
+            BranchId = x.BranchId,
+            IsDeleted = x.IsDeleted
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\DisplayLinkedWindowResponse.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+public sealed record DisplayLinkedWindowResponse
+{
+    public int Id { get; init; }
+
+    public int WaitingAreaId { get; init; }
+
+    public int WaitingAreaNumber { get; init; }
+
+    public string? WaitingAreaDescriptiveName { get; init; }
+
+    public string Number { get; init; } = string.Empty;
+
+    public string? DescriptiveName { get; init; }
+
+    public string? IPAddress { get; init; }
+
+    public bool EnableTicketBooking { get; init; }
+
+    public bool EnableDirectCall { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\DisplayLinkedWindowsDisplayCandidate.cs ==================== 
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+internal sealed record DisplayLinkedWindowsDisplayCandidate
+{
+    public int Id { get; init; }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\GetDisplayForLinkedWindowsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+internal sealed class GetDisplayForLinkedWindowsSpec
+    : Specification<Display, DisplayLinkedWindowsDisplayCandidate>
+{
+    public GetDisplayForLinkedWindowsSpec(int displayId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.Id == displayId);
+
+        Select(x => new DisplayLinkedWindowsDisplayCandidate
+        {
+            Id = x.Id
+        });
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\GetDisplayLinkedWindowsQuery.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Domain.SharedDto;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+public sealed class GetDisplayLinkedWindowsQuery
+    : IQuery<Pagination<DisplayLinkedWindowResponse>>
+{
+    public int DisplayId { get; set; }
+
+    public string? Search { get; set; }
+
+    public int PageNumber { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\GetDisplayLinkedWindowsQueryHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using BuildingBlock.Domain.SharedDto;
+using Qcontrol.Domain.Resources;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+internal sealed class GetDisplayLinkedWindowsQueryHandler
+    : IQueryHandler<GetDisplayLinkedWindowsQuery, Pagination<DisplayLinkedWindowResponse>>
+{
+    private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<DisplayWindow> _displayWindowReadRepository;
+    private readonly ICurrentUser _currentUser;
+
+    public GetDisplayLinkedWindowsQueryHandler(
+        IWriteReadRepository<Display> displayReadRepository,
+        IWriteReadRepository<DisplayWindow> displayWindowReadRepository,
+        ICurrentUser currentUser)
+    {
+        _displayReadRepository = displayReadRepository
+            ?? throw new ArgumentNullException(nameof(displayReadRepository));
+
+        _displayWindowReadRepository = displayWindowReadRepository
+            ?? throw new ArgumentNullException(nameof(displayWindowReadRepository));
+
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+    }
+
+    public async Task<Result<Pagination<DisplayLinkedWindowResponse>>> Handle(
+        GetDisplayLinkedWindowsQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !_currentUser.UserId.HasValue)
+        {
+            return Result<Pagination<DisplayLinkedWindowResponse>>.Fail(
+                new Error(
+                    Code: "DisplayWindows.Linked.Unauthenticated",
+                    Message: ErrorMessage.DisplayWindow_Authentication_Required,
+                    Type: ErrorType.Security));
+        }
+
+        var display =
+            await _displayReadRepository.FirstOrDefaultAsync(
+                new GetDisplayForLinkedWindowsSpec(request.DisplayId),
+                cancellationToken);
+
+        if (display is null)
+        {
+            return Result<Pagination<DisplayLinkedWindowResponse>>.Fail(
+                new Error(
+                    Code: "DisplayWindows.Linked.DisplayNotFound",
+                    Message: ErrorMessage.DisplayWindow_Display_NotFound,
+                    Type: ErrorType.NotFound));
+        }
+
+        request.Search ??= string.Empty;
+
+        var specification = new GetDisplayLinkedWindowsSpec(request);
+
+        var (items, totalCount) =
+            await _displayWindowReadRepository.ListWithCountAsync(
+                specification,
+                cancellationToken);
+
+        var response = new Pagination<DisplayLinkedWindowResponse>(
+            currentPage: request.PageNumber,
+            pageSize: request.PageSize,
+            totalItems: totalCount,
+            data: items);
+
+        return Result<Pagination<DisplayLinkedWindowResponse>>.Ok(response);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\GetDisplayLinkedWindowsQueryValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Domain.Resources;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+internal sealed class GetDisplayLinkedWindowsQueryValidator
+    : AbstractValidator<GetDisplayLinkedWindowsQuery>
+{
+    public GetDisplayLinkedWindowsQueryValidator()
+    {
+        RuleFor(x => x.DisplayId)
+            .GreaterThan(0)
+            .WithMessage(ErrorMessage.DisplayWindow_DisplayId_Required);
+
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageNumber_Invalid);
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Invalid)
+            .LessThanOrEqualTo(100)
+            .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Max);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\DisplayWindows\Query\GetDisplayLinkedWindows\GetDisplayLinkedWindowsSpec.cs ==================== 
+using BuildingBlock.Domain.Specification;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+internal sealed class GetDisplayLinkedWindowsSpec
+    : Specification<DisplayWindow, DisplayLinkedWindowResponse>
+{
+    public GetDisplayLinkedWindowsSpec(GetDisplayLinkedWindowsQuery query)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+
+        AddCriteria(x => x.DisplayId == query.DisplayId);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var searchText = query.Search.Trim();
+
+            AddCriteria(x =>
+                x.Window.Number.Contains(searchText) ||
+                (x.Window.DescriptiveName != null &&
+                    x.Window.DescriptiveName.Contains(searchText)) ||
+                (x.Window.IPAddress != null &&
+                    x.Window.IPAddress.Contains(searchText)));
+        }
+
+        AddOrderBy(x => x.Window.WaitingAreaId);
+        AddOrderBy(x => x.Window.Number);
+        AddOrderBy(x => x.Window.Id);
+
+        EnableTotalCount();
+
+        ApplyPaging(
+            query.PageNumber,
+            query.PageSize);
+
+        Select(x => new DisplayLinkedWindowResponse
+        {
+            Id = x.Window.Id,
+            WaitingAreaId = x.Window.WaitingAreaId,
+            WaitingAreaNumber = x.Window.WaitingArea.Number,
+            WaitingAreaDescriptiveName =
+                x.Window.WaitingArea.DescriptiveName,
+            Number = x.Window.Number,
+            DescriptiveName = x.Window.DescriptiveName,
+            IPAddress = x.Window.IPAddress,
+            EnableTicketBooking = x.Window.EnableTicketBooking,
+            EnableDirectCall = x.Window.EnableDirectCall,
+            IsDeleted = x.Window.IsDeleted
+        });
     }
 }
  
@@ -15779,6 +16787,1337 @@ public sealed class DisplayValidatorTests
         Assert.False(new PermanentDeleteDisplayCommandValidator()
             .Validate(new PermanentDeleteDisplayCommand { Id = 0 })
             .IsValid);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\DisplayWindows\DisplayWindowCommandHandlerTests.cs ==================== 
+using BuildingBlock.Domain.Primitive;
+using Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
+using Qcontrol.Application.Features.Windows.Command.PermanentDeleteWindow;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.DisplayWindows;
+
+public sealed class DisplayWindowCommandHandlerTests
+{
+    [Fact]
+    public async Task Assign_succeeds_for_active_same_branch_pair_creates_one_link_and_saves_once()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var window = Window(20, branch);
+        var displays = new List<Display> { display };
+        var windows = new List<Window> { window };
+        var displayWindows = new List<DisplayWindow>();
+        var writeRepository =
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows);
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            displays,
+            windows,
+            displayWindows,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(displayWindows);
+        Assert.Equal(display.Id, displayWindows[0].DisplayId);
+        Assert.Equal(window.Id, displayWindows[0].WindowId);
+        Assert.Equal(
+            EntityTestFactory.CurrentUserId,
+            displayWindows[0].CreatedByApplicationUserId);
+        Assert.Equal(display.Id, result.Value.DisplayId);
+        Assert.Equal(window.Id, result.Value.WindowId);
+        Assert.Single(displays);
+        Assert.Single(windows);
+        Assert.Equal(1, writeRepository.AddCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(0, unitOfWork.BeginTransactionCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_not_found_when_display_is_missing()
+    {
+        var branch = Branch(1);
+        var window = Window(20, branch);
+        var displayWindows = new List<DisplayWindow>();
+        var writeRepository =
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows);
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display>(),
+            new List<Window> { window },
+            displayWindows,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = 99,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.DisplayNotFound");
+        Assert.Empty(displayWindows);
+        Assert.Equal(0, writeRepository.AddCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_conflict_when_display_is_soft_deleted()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var window = Window(20, branch);
+        var displayWindows = new List<DisplayWindow>();
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { display },
+            new List<Window> { window },
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.DisplayDeleted");
+        Assert.Empty(displayWindows);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_not_found_when_window_is_missing()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var displayWindows = new List<DisplayWindow>();
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { display },
+            new List<Window>(),
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = 99
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.WindowNotFound");
+        Assert.Empty(displayWindows);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_conflict_when_window_is_soft_deleted()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var window = Window(20, branch, isDeleted: true);
+        var displayWindows = new List<DisplayWindow>();
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { display },
+            new List<Window> { window },
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.WindowDeleted");
+        Assert.Empty(displayWindows);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_conflict_when_display_and_window_are_in_different_branches()
+    {
+        var displayBranch = Branch(1);
+        var windowBranch = Branch(2);
+        var display = Display(10, displayBranch);
+        var window = Window(20, windowBranch);
+        var displayWindows = new List<DisplayWindow>();
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { display },
+            new List<Window> { window },
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.DifferentBranch");
+        Assert.Empty(displayWindows);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_returns_conflict_for_existing_pair_and_does_not_save()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var window = Window(20, branch);
+        var existingLink = Link(30, display, window);
+        var displayWindows = new List<DisplayWindow> { existingLink };
+        var writeRepository =
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows);
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { display },
+            new List<Window> { window },
+            displayWindows,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Assign.AlreadyLinked");
+        Assert.Single(displayWindows);
+        Assert.Equal(0, writeRepository.AddCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Assign_allows_same_window_to_another_display_in_same_branch()
+    {
+        var branch = Branch(1);
+        var firstDisplay = Display(10, branch, number: "D-01");
+        var secondDisplay = Display(11, branch, number: "D-02");
+        var window = Window(20, branch);
+        var existingLink = Link(30, firstDisplay, window);
+        var displayWindows = new List<DisplayWindow> { existingLink };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = AssignHandler(
+            new List<Display> { firstDisplay, secondDisplay },
+            new List<Window> { window },
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = secondDisplay.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, displayWindows.Count);
+        Assert.Contains(
+            displayWindows,
+            link =>
+                link.DisplayId == firstDisplay.Id &&
+                link.WindowId == window.Id);
+        Assert.Contains(
+            displayWindows,
+            link =>
+                link.DisplayId == secondDisplay.Id &&
+                link.WindowId == window.Id);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Unassign_existing_link_physically_removes_it_and_saves_once()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var window = Window(20, branch);
+        var link = Link(30, display, window);
+        var displayWindows = new List<DisplayWindow> { link };
+        var writeRepository =
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows);
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UnassignHandler(
+            displayWindows,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(displayWindows);
+        Assert.False(
+            typeof(ISoftDeleteEntity).IsAssignableFrom(link.GetType()));
+        Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Unassign_missing_link_returns_not_found_and_does_not_save()
+    {
+        var displayWindows = new List<DisplayWindow>();
+        var writeRepository =
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows);
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UnassignHandler(
+            displayWindows,
+            writeRepository,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = 10,
+                WindowId = 20
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Unassign.LinkNotFound");
+        Assert.Equal(0, writeRepository.DeleteCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Unassign_allows_active_or_deleted_parents(
+        bool displayDeleted,
+        bool windowDeleted)
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: displayDeleted);
+        var window = Window(20, branch, isDeleted: windowDeleted);
+        var link = Link(30, display, window);
+        var displayWindows = new List<DisplayWindow> { link };
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UnassignHandler(
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(displayWindows);
+        Assert.Equal(displayDeleted, display.IsDeleted);
+        Assert.Equal(windowDeleted, window.IsDeleted);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Unassign_does_not_modify_display_or_window()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var window = Window(20, branch, isDeleted: true);
+        var originalDisplayNumber = display.Number;
+        var originalWindowNumber = window.Number;
+        var link = Link(30, display, window);
+        var displayWindows = new List<DisplayWindow> { link };
+        var handler = UnassignHandler(
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(display.IsDeleted);
+        Assert.True(window.IsDeleted);
+        Assert.Equal(originalDisplayNumber, display.Number);
+        Assert.Equal(originalWindowNumber, window.Number);
+        Assert.Null(display.LastModifiedByApplicationUserId);
+        Assert.Null(window.LastModifiedByApplicationUserId);
+    }
+
+    [Fact]
+    public async Task Unassign_removes_final_link_so_permanent_delete_can_proceed()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var window = Window(20, branch, isDeleted: true);
+        var link = Link(30, display, window);
+        var displays = new List<Display> { display };
+        var windows = new List<Window> { window };
+        var displayWindows = new List<DisplayWindow> { link };
+        var displayPermanentRepository =
+            new TestDisplayPermanentDeleteRepository();
+        var windowPermanentRepository =
+            new TestWindowPermanentDeleteRepository();
+        var displayPermanentHandler = PermanentDisplayHandler(
+            displays,
+            displayWindows,
+            displayPermanentRepository);
+        var windowPermanentHandler = PermanentWindowHandler(
+            windows,
+            displayWindows,
+            windowPermanentRepository);
+
+        var blockedDisplay = await displayPermanentHandler.Handle(
+            new PermanentDeleteDisplayCommand { Id = display.Id },
+            CancellationToken.None);
+        var blockedWindow = await windowPermanentHandler.Handle(
+            new PermanentDeleteWindowCommand { Id = window.Id },
+            CancellationToken.None);
+
+        Assert.True(blockedDisplay.IsFailure);
+        Assert.True(blockedWindow.IsFailure);
+
+        var unassignHandler = UnassignHandler(
+            displayWindows,
+            new InMemoryWriteRepository<DisplayWindow>(displayWindows),
+            new TestUnitOfWork());
+
+        var unassign = await unassignHandler.Handle(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = display.Id,
+                WindowId = window.Id
+            },
+            CancellationToken.None);
+
+        var displayDelete = await displayPermanentHandler.Handle(
+            new PermanentDeleteDisplayCommand { Id = display.Id },
+            CancellationToken.None);
+        var windowDelete = await windowPermanentHandler.Handle(
+            new PermanentDeleteWindowCommand { Id = window.Id },
+            CancellationToken.None);
+
+        Assert.True(unassign.IsSuccess);
+        Assert.True(displayDelete.IsSuccess);
+        Assert.True(windowDelete.IsSuccess);
+        Assert.Empty(displayWindows);
+        Assert.Equal(1, displayPermanentRepository.CallCount);
+        Assert.Equal(1, windowPermanentRepository.CallCount);
+    }
+
+    private static AssignWindowToDisplayCommandHandler AssignHandler(
+        List<Display> displays,
+        List<Window> windows,
+        List<DisplayWindow> displayWindows,
+        InMemoryWriteRepository<DisplayWindow> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static UnassignWindowFromDisplayCommandHandler UnassignHandler(
+        List<DisplayWindow> displayWindows,
+        InMemoryWriteRepository<DisplayWindow> writeRepository,
+        TestUnitOfWork unitOfWork)
+        => new(
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            writeRepository,
+            new TestCurrentUser(),
+            unitOfWork);
+
+    private static PermanentDeleteDisplayCommandHandler PermanentDisplayHandler(
+        List<Display> displays,
+        List<DisplayWindow> displayWindows,
+        IDisplayPermanentDeleteRepository permanentRepository)
+        => new(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            permanentRepository,
+            new TestCurrentUser());
+
+    private static PermanentDeleteWindowCommandHandler PermanentWindowHandler(
+        List<Window> windows,
+        List<DisplayWindow> displayWindows,
+        IWindowPermanentDeleteRepository permanentRepository)
+        => new(
+            new InMemoryWriteReadRepository<Window>(windows),
+            new InMemoryWriteReadRepository<Terminal>(new List<Terminal>()),
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            permanentRepository,
+            new TestCurrentUser());
+
+    private static Branch Branch(int id)
+        => EntityTestFactory.Branch(id);
+
+    private static WaitingArea WaitingArea(int id, Branch branch)
+        => EntityTestFactory.WaitingArea(
+            id,
+            branch.Id,
+            id,
+            branch,
+            descriptiveName: $"Area {id}");
+
+    private static Window Window(
+        int id,
+        Branch branch,
+        string number = "W-01",
+        bool isDeleted = false)
+    {
+        var waitingArea = WaitingArea(id, branch);
+
+        return EntityTestFactory.Window(
+            id,
+            waitingArea.Id,
+            number,
+            waitingArea,
+            isDeleted: isDeleted);
+    }
+
+    private static Display Display(
+        int id,
+        Branch branch,
+        string number = "D-01",
+        bool isDeleted = false)
+        => EntityTestFactory.Display(
+            id,
+            branch.Id,
+            number,
+            ipAddress: $"192.168.1.{id}",
+            serialNo: $"DISPLAY-SN-{id}",
+            type: "LED Display",
+            branch,
+            isDeleted);
+
+    private static DisplayWindow Link(
+        int id,
+        Display display,
+        Window window)
+        => EntityTestFactory.DisplayWindow(
+            id,
+            display.Id,
+            window.Id,
+            display,
+            window);
+
+    private sealed class TestDisplayPermanentDeleteRepository
+        : IDisplayPermanentDeleteRepository
+    {
+        public int CallCount { get; private set; }
+
+        public Task<int> DeletePermanentlyAsync(
+            int displayId,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+
+            return Task.FromResult(1);
+        }
+    }
+
+    private sealed class TestWindowPermanentDeleteRepository
+        : IWindowPermanentDeleteRepository
+    {
+        public int CallCount { get; private set; }
+
+        public Task<int> DeletePermanentlyAsync(
+            int windowId,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+
+            return Task.FromResult(1);
+        }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\DisplayWindows\DisplayWindowQueryHandlerTests.cs ==================== 
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+using QControl.Application.Tests.TestSupport;
+using QControl.Domain.Entities;
+
+namespace QControl.Application.Tests.DisplayWindows;
+
+public sealed class DisplayWindowQueryHandlerTests
+{
+    [Fact]
+    public async Task Linked_returns_only_requested_display_links_including_deleted_and_legacy_cross_branch_windows()
+    {
+        var branch1 = Branch(1);
+        var branch2 = Branch(2);
+        var display = Display(10, branch1);
+        var otherDisplay = Display(11, branch1, number: "D-02");
+        var deletedLinked = Window(
+            10,
+            branch1,
+            number: "W-01",
+            descriptiveName: "Alpha",
+            ipAddress: "10.0.0.1",
+            isDeleted: true);
+        var activeLinked = Window(
+            20,
+            branch1,
+            number: "W-02",
+            descriptiveName: "Beta",
+            ipAddress: "10.0.0.2",
+            enableTicketBooking: true,
+            enableDirectCall: true);
+        var legacyCrossBranch = Window(
+            30,
+            branch2,
+            number: "W-03",
+            descriptiveName: "Legacy",
+            ipAddress: "10.0.0.3");
+        var otherDisplayWindow = Window(
+            40,
+            branch1,
+            number: "W-04",
+            descriptiveName: "Other",
+            ipAddress: "10.0.0.4");
+        var unlinked = Window(
+            50,
+            branch1,
+            number: "W-05",
+            descriptiveName: "Unlinked",
+            ipAddress: "10.0.0.5");
+        var displayWindows = new List<DisplayWindow>
+        {
+            Link(1, display, activeLinked),
+            Link(2, display, deletedLinked),
+            Link(3, display, legacyCrossBranch),
+            Link(4, otherDisplay, otherDisplayWindow)
+        };
+        var handler = LinkedHandler(
+            new List<Display> { display, otherDisplay },
+            displayWindows);
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Equal(
+            new[] { deletedLinked.Id, activeLinked.Id, legacyCrossBranch.Id },
+            result.Value.Data.Select(x => x.Id).ToArray());
+        Assert.Contains(
+            result.Value.Data,
+            item => item.Id == deletedLinked.Id && item.IsDeleted);
+        Assert.Contains(
+            result.Value.Data,
+            item =>
+                item.Id == activeLinked.Id &&
+                item.EnableTicketBooking &&
+                item.EnableDirectCall);
+        Assert.Contains(
+            result.Value.Data,
+            item => item.Id == legacyCrossBranch.Id);
+        Assert.DoesNotContain(
+            result.Value.Data,
+            item => item.Id == otherDisplayWindow.Id || item.Id == unlinked.Id);
+        Assert.Equal(
+            deletedLinked.WaitingArea.Number,
+            result.Value.Data[0].WaitingAreaNumber);
+        Assert.Equal(
+            deletedLinked.WaitingArea.DescriptiveName,
+            result.Value.Data[0].WaitingAreaDescriptiveName);
+        Assert.Equal(
+            typeof(DisplayLinkedWindowResponse),
+            result.Value.Data[0].GetType());
+    }
+
+    [Fact]
+    public async Task Linked_works_when_display_is_soft_deleted()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var window = Window(20, branch);
+        var displayWindows = new List<DisplayWindow>
+        {
+            Link(1, display, window)
+        };
+        var handler = LinkedHandler(
+            new List<Display> { display },
+            displayWindows);
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(window.Id, result.Value.Data[0].Id);
+    }
+
+    [Fact]
+    public async Task Linked_missing_display_returns_not_found()
+    {
+        var handler = LinkedHandler(
+            new List<Display>(),
+            new List<DisplayWindow>());
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = 99,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Linked.DisplayNotFound");
+    }
+
+    [Theory]
+    [InlineData("W-02")]
+    [InlineData("Beta")]
+    [InlineData("10.0.0.2")]
+    public async Task Linked_searches_number_descriptive_name_and_ip_address(
+        string search)
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var matching = Window(
+            20,
+            branch,
+            number: "W-02",
+            descriptiveName: "Beta",
+            ipAddress: "10.0.0.2");
+        var nonMatching = Window(
+            30,
+            branch,
+            number: "W-03",
+            descriptiveName: "Gamma",
+            ipAddress: "10.0.0.3");
+        var displayWindows = new List<DisplayWindow>
+        {
+            Link(1, display, matching),
+            Link(2, display, nonMatching)
+        };
+        var handler = LinkedHandler(
+            new List<Display> { display },
+            displayWindows);
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = display.Id,
+                Search = $" {search} ",
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(matching.Id, result.Value.Data[0].Id);
+        Assert.Equal(1, result.Value.TotalItems);
+    }
+
+    [Fact]
+    public async Task Linked_paginates_and_reports_total_count()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var first = Window(10, branch, number: "W-01");
+        var second = Window(20, branch, number: "W-02");
+        var third = Window(30, branch, number: "W-03");
+        var displayWindows = new List<DisplayWindow>
+        {
+            Link(1, display, first),
+            Link(2, display, second),
+            Link(3, display, third)
+        };
+        var handler = LinkedHandler(
+            new List<Display> { display },
+            displayWindows);
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 2,
+                PageSize = 1
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(second.Id, result.Value.Data[0].Id);
+    }
+
+    [Fact]
+    public async Task Linked_authentication_failure_returns_security_error()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var handler = LinkedHandler(
+            new List<Display> { display },
+            new List<DisplayWindow>(),
+            new TestCurrentUser
+            {
+                IsAuthenticated = false,
+                UserId = null
+            });
+
+        var result = await handler.Handle(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Linked.Unauthenticated");
+    }
+
+    [Fact]
+    public async Task Available_returns_active_same_branch_windows_and_excludes_only_current_display_links()
+    {
+        var branch1 = Branch(1);
+        var branch2 = Branch(2);
+        var display = Display(10, branch1);
+        var otherDisplay = Display(11, branch1, number: "D-02");
+        var available = Window(
+            10,
+            branch1,
+            number: "W-01",
+            descriptiveName: "Available",
+            ipAddress: "10.1.0.1",
+            enableTicketBooking: true);
+        var linkedToCurrent = Window(
+            20,
+            branch1,
+            number: "W-02",
+            descriptiveName: "Current",
+            ipAddress: "10.1.0.2");
+        var linkedToOtherDisplay = Window(
+            30,
+            branch1,
+            number: "W-03",
+            descriptiveName: "Shared",
+            ipAddress: "10.1.0.3",
+            enableDirectCall: true);
+        var deleted = Window(
+            40,
+            branch1,
+            number: "W-04",
+            descriptiveName: "Deleted",
+            ipAddress: "10.1.0.4",
+            isDeleted: true);
+        var otherBranch = Window(
+            50,
+            branch2,
+            number: "W-05",
+            descriptiveName: "Other Branch",
+            ipAddress: "10.2.0.1");
+        var displayWindows = new List<DisplayWindow>
+        {
+            Link(1, display, linkedToCurrent),
+            Link(2, otherDisplay, linkedToOtherDisplay)
+        };
+        var windows = new List<Window>
+        {
+            available,
+            linkedToCurrent,
+            linkedToOtherDisplay,
+            deleted,
+            otherBranch
+        };
+        var handler = AvailableHandler(
+            new List<Display> { display, otherDisplay },
+            windows);
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalItems);
+        Assert.Equal(
+            new[] { available.Id, linkedToOtherDisplay.Id },
+            result.Value.Data.Select(x => x.Id).ToArray());
+        Assert.DoesNotContain(
+            result.Value.Data,
+            item =>
+                item.Id == linkedToCurrent.Id ||
+                item.Id == deleted.Id ||
+                item.Id == otherBranch.Id);
+        Assert.True(result.Value.Data[0].EnableTicketBooking);
+        Assert.True(result.Value.Data[1].EnableDirectCall);
+        Assert.Equal(
+            available.WaitingArea.Number,
+            result.Value.Data[0].WaitingAreaNumber);
+        Assert.Equal(
+            typeof(AvailableWindowResponse),
+            result.Value.Data[0].GetType());
+        Assert.Equal(2, displayWindows.Count);
+    }
+
+    [Fact]
+    public async Task Available_missing_display_returns_not_found()
+    {
+        var handler = AvailableHandler(
+            new List<Display>(),
+            new List<Window>());
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = 99,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Available.DisplayNotFound");
+    }
+
+    [Fact]
+    public async Task Available_soft_deleted_display_returns_conflict()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch, isDeleted: true);
+        var handler = AvailableHandler(
+            new List<Display> { display },
+            new List<Window>());
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Available.DisplayDeleted");
+    }
+
+    [Theory]
+    [InlineData("W-02")]
+    [InlineData("Beta")]
+    [InlineData("10.1.0.2")]
+    public async Task Available_searches_number_descriptive_name_and_ip_address(
+        string search)
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var matching = Window(
+            20,
+            branch,
+            number: "W-02",
+            descriptiveName: "Beta",
+            ipAddress: "10.1.0.2");
+        var nonMatching = Window(
+            30,
+            branch,
+            number: "W-03",
+            descriptiveName: "Gamma",
+            ipAddress: "10.1.0.3");
+        var handler = AvailableHandler(
+            new List<Display> { display },
+            new List<Window> { matching, nonMatching });
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = display.Id,
+                Search = $" {search} ",
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(matching.Id, result.Value.Data[0].Id);
+        Assert.Equal(1, result.Value.TotalItems);
+    }
+
+    [Fact]
+    public async Task Available_paginates_and_reports_total_count()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var first = Window(10, branch, number: "W-01");
+        var second = Window(20, branch, number: "W-02");
+        var third = Window(30, branch, number: "W-03");
+        var handler = AvailableHandler(
+            new List<Display> { display },
+            new List<Window> { first, second, third });
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 2,
+                PageSize = 1
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Single(result.Value.Data);
+        Assert.Equal(second.Id, result.Value.Data[0].Id);
+    }
+
+    [Fact]
+    public async Task Available_authentication_failure_returns_security_error()
+    {
+        var branch = Branch(1);
+        var display = Display(10, branch);
+        var handler = AvailableHandler(
+            new List<Display> { display },
+            new List<Window>(),
+            new TestCurrentUser
+            {
+                IsAuthenticated = false,
+                UserId = null
+            });
+
+        var result = await handler.Handle(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = display.Id,
+                PageNumber = 1,
+                PageSize = 10
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "DisplayWindows.Available.Unauthenticated");
+    }
+
+    private static GetDisplayLinkedWindowsQueryHandler LinkedHandler(
+        List<Display> displays,
+        List<DisplayWindow> displayWindows,
+        TestCurrentUser? currentUser = null)
+        => new(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<DisplayWindow>(displayWindows),
+            currentUser ?? new TestCurrentUser());
+
+    private static GetDisplayAvailableWindowsQueryHandler AvailableHandler(
+        List<Display> displays,
+        List<Window> windows,
+        TestCurrentUser? currentUser = null)
+        => new(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<Window>(windows),
+            currentUser ?? new TestCurrentUser());
+
+    private static Branch Branch(int id)
+        => EntityTestFactory.Branch(id);
+
+    private static WaitingArea WaitingArea(int id, Branch branch)
+        => EntityTestFactory.WaitingArea(
+            id,
+            branch.Id,
+            id,
+            branch,
+            descriptiveName: $"Area {id}");
+
+    private static Window Window(
+        int id,
+        Branch branch,
+        string number = "W-01",
+        string? descriptiveName = null,
+        string? ipAddress = null,
+        bool enableTicketBooking = false,
+        bool enableDirectCall = false,
+        bool isDeleted = false)
+    {
+        var waitingArea = WaitingArea(id, branch);
+
+        return EntityTestFactory.Window(
+            id,
+            waitingArea.Id,
+            number,
+            waitingArea,
+            descriptiveName,
+            ipAddress,
+            enableTicketBooking,
+            enableDirectCall,
+            isDeleted);
+    }
+
+    private static Display Display(
+        int id,
+        Branch branch,
+        string number = "D-01",
+        bool isDeleted = false)
+        => EntityTestFactory.Display(
+            id,
+            branch.Id,
+            number,
+            ipAddress: $"192.168.1.{id}",
+            serialNo: $"DISPLAY-SN-{id}",
+            type: "LED Display",
+            branch,
+            isDeleted);
+
+    private static DisplayWindow Link(
+        int id,
+        Display display,
+        Window window)
+        => EntityTestFactory.DisplayWindow(
+            id,
+            display.Id,
+            window.Id,
+            display,
+            window);
+}
+ 
+// ==================== E:\QControl\QControl.Application.Tests\DisplayWindows\DisplayWindowValidatorTests.cs ==================== 
+using Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
+
+namespace QControl.Application.Tests.DisplayWindows;
+
+public sealed class DisplayWindowValidatorTests
+{
+    [Fact]
+    public void Assign_validator_rejects_invalid_ids_and_accepts_valid_command()
+    {
+        var validator = new AssignWindowToDisplayCommandValidator();
+
+        var invalid = validator.Validate(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = 0,
+                WindowId = 0
+            });
+        var valid = validator.Validate(
+            new AssignWindowToDisplayCommand
+            {
+                DisplayId = 1,
+                WindowId = 2
+            });
+
+        Assert.False(invalid.IsValid);
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(AssignWindowToDisplayCommand.DisplayId));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(AssignWindowToDisplayCommand.WindowId));
+        Assert.True(valid.IsValid);
+    }
+
+    [Fact]
+    public void Unassign_validator_rejects_invalid_ids_and_accepts_valid_command()
+    {
+        var validator = new UnassignWindowFromDisplayCommandValidator();
+
+        var invalid = validator.Validate(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = -1,
+                WindowId = -1
+            });
+        var valid = validator.Validate(
+            new UnassignWindowFromDisplayCommand
+            {
+                DisplayId = 1,
+                WindowId = 2
+            });
+
+        Assert.False(invalid.IsValid);
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(UnassignWindowFromDisplayCommand.DisplayId));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(UnassignWindowFromDisplayCommand.WindowId));
+        Assert.True(valid.IsValid);
+    }
+
+    [Fact]
+    public void Linked_query_validator_rejects_invalid_pagination_and_accepts_valid_query()
+    {
+        var validator = new GetDisplayLinkedWindowsQueryValidator();
+
+        var invalid = validator.Validate(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+        var invalidPageSize = validator.Validate(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = 1,
+                PageNumber = 1,
+                PageSize = 0
+            });
+        var valid = validator.Validate(
+            new GetDisplayLinkedWindowsQuery
+            {
+                DisplayId = 1,
+                PageNumber = 1,
+                PageSize = 100
+            });
+
+        Assert.False(invalid.IsValid);
+        Assert.False(invalidPageSize.IsValid);
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayLinkedWindowsQuery.DisplayId));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayLinkedWindowsQuery.PageNumber));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayLinkedWindowsQuery.PageSize));
+        Assert.Contains(
+            invalidPageSize.Errors,
+            error => error.PropertyName == nameof(GetDisplayLinkedWindowsQuery.PageSize));
+        Assert.True(valid.IsValid);
+    }
+
+    [Fact]
+    public void Available_query_validator_rejects_invalid_pagination_and_accepts_valid_query()
+    {
+        var validator = new GetDisplayAvailableWindowsQueryValidator();
+
+        var invalid = validator.Validate(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = 0,
+                PageNumber = 0,
+                PageSize = 101
+            });
+        var invalidPageSize = validator.Validate(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = 1,
+                PageNumber = 1,
+                PageSize = 0
+            });
+        var valid = validator.Validate(
+            new GetDisplayAvailableWindowsQuery
+            {
+                DisplayId = 1,
+                PageNumber = 1,
+                PageSize = 100
+            });
+
+        Assert.False(invalid.IsValid);
+        Assert.False(invalidPageSize.IsValid);
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayAvailableWindowsQuery.DisplayId));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayAvailableWindowsQuery.PageNumber));
+        Assert.Contains(
+            invalid.Errors,
+            error => error.PropertyName == nameof(GetDisplayAvailableWindowsQuery.PageSize));
+        Assert.Contains(
+            invalidPageSize.Errors,
+            error => error.PropertyName == nameof(GetDisplayAvailableWindowsQuery.PageSize));
+        Assert.True(valid.IsValid);
     }
 }
  
@@ -21409,7 +23748,103 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("Display_Update_Success", resourceCulture);
             }
         }
-        
+
+        public static string DisplayWindow_Assign_AlreadyLinked {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_AlreadyLinked", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_DifferentBranch {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_DifferentBranch", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_DisplayDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_DisplayDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_Success {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_Success", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_WindowDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_WindowDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Authentication_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Authentication_Required", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Available_DisplayDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Available_DisplayDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Display_NotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Display_NotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_DisplayId_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_DisplayId_Required", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Unassign_LinkNotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Unassign_LinkNotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Unassign_Success {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Unassign_Success", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Window_NotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Window_NotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_WindowId_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_WindowId_Required", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
         /// </summary>
@@ -30340,6 +32775,18 @@ internal static class SeedConstants
         public const string DisplaysDeletePermanent =
             "Displays.DeletePermanent";
 
+        public const string DisplayWindowsViewLinked =
+            "DisplayWindows.ViewLinked";
+
+        public const string DisplayWindowsViewAvailable =
+            "DisplayWindows.ViewAvailable";
+
+        public const string DisplayWindowsAssign =
+            "DisplayWindows.Assign";
+
+        public const string DisplayWindowsUnassign =
+            "DisplayWindows.Unassign";
+
         public const string GlobalConfigurationsViewAll =
             "GlobalConfigurations.ViewAll";
 
@@ -30518,6 +32965,22 @@ internal static class SeedConstants
             public static readonly Guid DisplaysDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000038");
+
+            public static readonly Guid DisplayWindowsViewLinked =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000039");
+
+            public static readonly Guid DisplayWindowsViewAvailable =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000040");
+
+            public static readonly Guid DisplayWindowsAssign =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000041");
+
+            public static readonly Guid DisplayWindowsUnassign =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000042");
         }
     }
 
@@ -30667,6 +33130,22 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplaysDeletePermanent,
                     PermissionNames.DisplaysDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsViewLinked,
+                    PermissionNames.DisplayWindowsViewLinked),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsViewAvailable,
+                    PermissionNames.DisplayWindowsViewAvailable),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsAssign,
+                    PermissionNames.DisplayWindowsAssign),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.DisplayWindowsUnassign,
+                    PermissionNames.DisplayWindowsUnassign),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsViewAll,
