@@ -486,6 +486,54 @@
   <data name="Display_Update_Success" xml:space="preserve">
     <value>The display was updated successfully.</value>
   </data>
+  <data name="DisplayWindow_Assign_AlreadyLinked" xml:space="preserve">
+    <value>Display is already linked to this Window.</value>
+  </data>
+  <data name="DisplayWindow_Assign_DifferentBranch" xml:space="preserve">
+    <value>Display and Window must belong to the same Branch.</value>
+  </data>
+  <data name="DisplayWindow_Assign_DisplayDeleted" xml:space="preserve">
+    <value>Deleted Display cannot be linked to a Window.</value>
+  </data>
+  <data name="DisplayWindow_Assign_Success" xml:space="preserve">
+    <value>Window linked to Display successfully.</value>
+  </data>
+  <data name="DisplayWindow_Assign_WindowDeleted" xml:space="preserve">
+    <value>Deleted Window cannot be linked to a Display.</value>
+  </data>
+  <data name="DisplayWindow_Authentication_Required" xml:space="preserve">
+    <value>Authentication is required.</value>
+  </data>
+  <data name="DisplayWindow_Available_DisplayDeleted" xml:space="preserve">
+    <value>Available Windows cannot be retrieved for a deleted Display.</value>
+  </data>
+  <data name="DisplayWindow_Display_NotFound" xml:space="preserve">
+    <value>Display was not found.</value>
+  </data>
+  <data name="DisplayWindow_DisplayId_Required" xml:space="preserve">
+    <value>Display ID must be greater than zero.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>Page number must be at least 1.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>Page size must be at least 1.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageSize_Max" xml:space="preserve">
+    <value>Page size must not exceed 100.</value>
+  </data>
+  <data name="DisplayWindow_Unassign_LinkNotFound" xml:space="preserve">
+    <value>Display and Window link was not found.</value>
+  </data>
+  <data name="DisplayWindow_Unassign_Success" xml:space="preserve">
+    <value>Window unlinked from Display successfully.</value>
+  </data>
+  <data name="DisplayWindow_Window_NotFound" xml:space="preserve">
+    <value>Window was not found.</value>
+  </data>
+  <data name="DisplayWindow_WindowId_Required" xml:space="preserve">
+    <value>Window ID must be greater than zero.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>The user profile could not be found.</value>
   </data>

@@ -3,6 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Displays;
+using Qcontrol.Application.Features.DisplayWindows.Command.AssignWindowToDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDisplay;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
+using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
 using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
 using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
 using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
@@ -73,6 +77,82 @@ public sealed class DisplaysController : ControllerBase
 
         var result = await sender.Send(
             query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{displayId:int}/windows")]
+    [Permission("DisplayWindows.ViewLinked")]
+    public async Task<IActionResult> GetLinkedWindows(
+        int displayId,
+        [FromQuery] GetDisplayLinkedWindowsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDisplayLinkedWindowsQuery();
+        query.DisplayId = displayId;
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{displayId:int}/available-windows")]
+    [Permission("DisplayWindows.ViewAvailable")]
+    public async Task<IActionResult> GetAvailableWindows(
+        int displayId,
+        [FromQuery] GetDisplayAvailableWindowsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetDisplayAvailableWindowsQuery();
+        query.DisplayId = displayId;
+        query.Search ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{displayId:int}/windows/{windowId:int}")]
+    [Permission("DisplayWindows.Assign")]
+    public async Task<IActionResult> AssignWindow(
+        int displayId,
+        int windowId,
+        CancellationToken cancellationToken)
+    {
+        var command = new AssignWindowToDisplayCommand
+        {
+            DisplayId = displayId,
+            WindowId = windowId
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{displayId:int}/windows/{windowId:int}")]
+    [Permission("DisplayWindows.Unassign")]
+    public async Task<IActionResult> UnassignWindow(
+        int displayId,
+        int windowId,
+        CancellationToken cancellationToken)
+    {
+        var command = new UnassignWindowFromDisplayCommand
+        {
+            DisplayId = displayId,
+            WindowId = windowId
+        };
+
+        var result = await sender.Send(
+            command,
             cancellationToken);
 
         return result.ToIActionResult();

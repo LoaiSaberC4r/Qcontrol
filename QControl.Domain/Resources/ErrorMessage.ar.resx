@@ -486,6 +486,54 @@
   <data name="Display_Update_Success" xml:space="preserve">
     <value>تم تحديث الشاشة بنجاح.</value>
   </data>
+  <data name="DisplayWindow_Assign_AlreadyLinked" xml:space="preserve">
+    <value>الشاشة مرتبطة بالفعل بهذا الشباك.</value>
+  </data>
+  <data name="DisplayWindow_Assign_DifferentBranch" xml:space="preserve">
+    <value>يجب أن تتبع الشاشة والشباك نفس الفرع.</value>
+  </data>
+  <data name="DisplayWindow_Assign_DisplayDeleted" xml:space="preserve">
+    <value>لا يمكن ربط شاشة محذوفة بشباك.</value>
+  </data>
+  <data name="DisplayWindow_Assign_Success" xml:space="preserve">
+    <value>تم ربط الشباك بالشاشة بنجاح.</value>
+  </data>
+  <data name="DisplayWindow_Assign_WindowDeleted" xml:space="preserve">
+    <value>لا يمكن ربط شباك محذوف بشاشة.</value>
+  </data>
+  <data name="DisplayWindow_Authentication_Required" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
+  <data name="DisplayWindow_Available_DisplayDeleted" xml:space="preserve">
+    <value>لا يمكن عرض الشبابيك المتاحة لشاشة محذوفة.</value>
+  </data>
+  <data name="DisplayWindow_Display_NotFound" xml:space="preserve">
+    <value>الشاشة غير موجودة.</value>
+  </data>
+  <data name="DisplayWindow_DisplayId_Required" xml:space="preserve">
+    <value>معرف الشاشة يجب أن يكون أكبر من صفر.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="DisplayWindow_Pagination_PageSize_Max" xml:space="preserve">
+    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+  </data>
+  <data name="DisplayWindow_Unassign_LinkNotFound" xml:space="preserve">
+    <value>رابط الشاشة والشباك غير موجود.</value>
+  </data>
+  <data name="DisplayWindow_Unassign_Success" xml:space="preserve">
+    <value>تم فك ارتباط الشباك من الشاشة بنجاح.</value>
+  </data>
+  <data name="DisplayWindow_Window_NotFound" xml:space="preserve">
+    <value>الشباك غير موجود.</value>
+  </data>
+  <data name="DisplayWindow_WindowId_Required" xml:space="preserve">
+    <value>معرف الشباك يجب أن يكون أكبر من صفر.</value>
+  </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
     <value>تعذر العثور على ملف المستخدم.</value>
   </data>

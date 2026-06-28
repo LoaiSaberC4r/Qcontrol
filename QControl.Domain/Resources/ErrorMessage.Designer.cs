@@ -980,7 +980,103 @@ namespace Qcontrol.Domain.Resources {
                 return ResourceManager.GetString("Display_Update_Success", resourceCulture);
             }
         }
-        
+
+        public static string DisplayWindow_Assign_AlreadyLinked {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_AlreadyLinked", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_DifferentBranch {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_DifferentBranch", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_DisplayDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_DisplayDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_Success {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_Success", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Assign_WindowDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Assign_WindowDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Authentication_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Authentication_Required", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Available_DisplayDeleted {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Available_DisplayDeleted", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Display_NotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Display_NotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_DisplayId_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_DisplayId_Required", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageNumber_Invalid {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageNumber_Invalid", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageSize_Invalid {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageSize_Invalid", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Pagination_PageSize_Max {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Pagination_PageSize_Max", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Unassign_LinkNotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Unassign_LinkNotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Unassign_Success {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Unassign_Success", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_Window_NotFound {
+            get {
+                return ResourceManager.GetString("DisplayWindow_Window_NotFound", resourceCulture);
+            }
+        }
+
+        public static string DisplayWindow_WindowId_Required {
+            get {
+                return ResourceManager.GetString("DisplayWindow_WindowId_Required", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The user profile could not be found..
         /// </summary>
