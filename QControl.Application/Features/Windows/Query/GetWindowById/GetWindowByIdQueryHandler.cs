@@ -35,7 +35,7 @@ internal sealed class GetWindowByIdQueryHandler
                 new Error(
                     Code: "Windows.Details.Unauthenticated",
                     Message: ErrorMessage.Window_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         var window =

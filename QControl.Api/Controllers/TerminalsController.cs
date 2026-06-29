@@ -4,11 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Terminals;
 using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
-using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
-using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.ReactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
-using Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
 using Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
 using Qcontrol.Application.Features.Terminals.Query.GetTerminals;
 using QControl.Api.Attribute;
@@ -35,22 +34,6 @@ public sealed class TerminalsController : ControllerBase
         CancellationToken cancellationToken)
     {
         query ??= new GetTerminalsQuery();
-        query.Search ??= string.Empty;
-
-        var result = await sender.Send(
-            query,
-            cancellationToken);
-
-        return result.ToIActionResult();
-    }
-
-    [HttpGet("deleted")]
-    [Permission("Terminals.ViewDeleted")]
-    public async Task<IActionResult> GetDeleted(
-        [FromQuery] GetDeletedTerminalsQuery query,
-        CancellationToken cancellationToken)
-    {
-        query ??= new GetDeletedTerminalsQuery();
         query.Search ??= string.Empty;
 
         var result = await sender.Send(
@@ -110,11 +93,11 @@ public sealed class TerminalsController : ControllerBase
         var command = new UpdateTerminalCommand
         {
             Id = terminalId,
-            RequestId = request.Id,
             Number = request.Number,
             IPAddress = request.IPAddress,
             SerialNo = request.SerialNo,
-            Type = request.Type
+            Type = request.Type,
+            RowVersion = request.RowVersion
         };
 
         var result = await sender.Send(
@@ -124,15 +107,17 @@ public sealed class TerminalsController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpDelete("{terminalId:int}")]
-    [Permission("Terminals.Delete")]
-    public async Task<IActionResult> Delete(
+    [HttpPost("{terminalId:int}/deactivate")]
+    [Permission("Terminals.Deactivate")]
+    public async Task<IActionResult> Deactivate(
         int terminalId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteTerminalCommand
+        var command = new DeactivateTerminalCommand
         {
-            Id = terminalId
+            Id = terminalId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
@@ -142,15 +127,17 @@ public sealed class TerminalsController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpPost("{terminalId:int}/restore")]
-    [Permission("Terminals.Restore")]
-    public async Task<IActionResult> Restore(
+    [HttpPost("{terminalId:int}/reactivate")]
+    [Permission("Terminals.Reactivate")]
+    public async Task<IActionResult> Reactivate(
         int terminalId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new RestoreTerminalCommand
+        var command = new ReactivateTerminalCommand
         {
-            Id = terminalId
+            Id = terminalId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
@@ -164,11 +151,13 @@ public sealed class TerminalsController : ControllerBase
     [Permission("Terminals.DeletePermanent")]
     public async Task<IActionResult> DeletePermanently(
         int terminalId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
         var command = new PermanentDeleteTerminalCommand
         {
-            Id = terminalId
+            Id = terminalId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(

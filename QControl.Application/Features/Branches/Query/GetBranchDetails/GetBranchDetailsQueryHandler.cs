@@ -1,4 +1,4 @@
-﻿using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Domain.Resources;
@@ -33,7 +33,7 @@ internal sealed class GetBranchDetailsQueryHandler
             return Result<GetBranchDetailsResponse>.Fail(new Error(
                 Code: "Branches.Details.Unauthenticated",
                 Message: ErrorMessage.Branch_Authentication_Required,
-                Type: ErrorType.Security));
+                Type: ErrorType.Unauthorized));
         }
 
         var branch = await _branchReadRepository.FirstOrDefaultAsync(

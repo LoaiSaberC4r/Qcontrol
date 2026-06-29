@@ -1,5 +1,6 @@
-﻿using BuildingBlock.Domain.Specification;
+using BuildingBlock.Domain.Specification;
 using Qcontrol.Application.Features.Branches.Shared;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Branches.Query.GetBranchDetails;
@@ -18,9 +19,10 @@ internal sealed class GetBranchDetailsSpec
             ArabicName = x.ArabicName,
             EnglishName = x.EnglishName,
             IPAddress = x.IPAddress,
-            IsUpdatesAvailable = x.IsUpdatesAvailable,
-            LastUpdated = x.LastUpdated,
             License = x.License,
+            IsActive = x.IsActive,
+            EffectiveIsActive = x.IsActive,
+            RowVersion = RowVersionConverter.ToBase64(x.RowVersion),
             Location = new BranchLocationResponse
             {
                 Id = x.Location.Id,
@@ -28,8 +30,8 @@ internal sealed class GetBranchDetailsSpec
                 City = x.Location.City,
                 Area = x.Location.Area,
                 Address = x.Location.Address,
-                Longitude = x.Location.Longitude,
-                Latitude = x.Location.Latitude
+                Latitude = x.Location.Latitude,
+                Longitude = x.Location.Longitude
             },
             CreatedBy = new BranchAuditUserResponse
             {

@@ -16,8 +16,7 @@ internal sealed class GetWindowForAssignmentSpec
         Select(x => new WindowAssignmentCandidate
         {
             Id = x.Id,
-            BranchId = x.WaitingArea.BranchId,
-            IsDeleted = x.IsDeleted
+            BranchId = x.BranchId
         });
     }
 }

@@ -36,7 +36,7 @@ internal sealed class GetDisplaysQueryHandler
                 new Error(
                     Code: "Displays.Pagination.Unauthenticated",
                     Message: ErrorMessage.Display_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         request.Search ??= string.Empty;

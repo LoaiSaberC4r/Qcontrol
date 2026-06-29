@@ -2,8 +2,6 @@ namespace Qcontrol.Api.Contracts.Windows;
 
 public sealed class UpdateWindowRequest
 {
-    public int Id { get; init; }
-
     public string Number { get; init; } = string.Empty;
 
     public string? DescriptiveName { get; init; }
@@ -13,4 +11,6 @@ public sealed class UpdateWindowRequest
     public bool EnableTicketBooking { get; init; }
 
     public bool EnableDirectCall { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
 }

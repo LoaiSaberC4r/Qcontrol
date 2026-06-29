@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Windows;
 using Qcontrol.Application.Features.Windows.Command.CreateWindow;
-using Qcontrol.Application.Features.Windows.Command.DeleteWindow;
+using Qcontrol.Application.Features.Windows.Command.DeactivateWindow;
 using Qcontrol.Application.Features.Windows.Command.PermanentDeleteWindow;
+using Qcontrol.Application.Features.Windows.Command.ReactivateWindow;
 using Qcontrol.Application.Features.Windows.Command.UpdateWindow;
-using Qcontrol.Application.Features.Windows.Query.GetDeletedWindows;
 using Qcontrol.Application.Features.Windows.Query.GetWindowById;
 using Qcontrol.Application.Features.Windows.Query.GetWindows;
 using QControl.Api.Attribute;
@@ -34,22 +34,6 @@ public sealed class WindowsController : ControllerBase
         CancellationToken cancellationToken)
     {
         query ??= new GetWindowsQuery();
-        query.Search ??= string.Empty;
-
-        var result = await sender.Send(
-            query,
-            cancellationToken);
-
-        return result.ToIActionResult();
-    }
-
-    [HttpGet("deleted")]
-    [Permission("Windows.ViewDeleted")]
-    public async Task<IActionResult> GetDeleted(
-        [FromQuery] GetDeletedWindowsQuery query,
-        CancellationToken cancellationToken)
-    {
-        query ??= new GetDeletedWindowsQuery();
         query.Search ??= string.Empty;
 
         var result = await sender.Send(
@@ -110,12 +94,12 @@ public sealed class WindowsController : ControllerBase
         var command = new UpdateWindowCommand
         {
             Id = windowId,
-            RequestId = request.Id,
             Number = request.Number,
             DescriptiveName = request.DescriptiveName,
             IPAddress = request.IPAddress,
             EnableTicketBooking = request.EnableTicketBooking,
-            EnableDirectCall = request.EnableDirectCall
+            EnableDirectCall = request.EnableDirectCall,
+            RowVersion = request.RowVersion
         };
 
         var result = await sender.Send(
@@ -125,15 +109,37 @@ public sealed class WindowsController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpDelete("{windowId:int}")]
-    [Permission("Windows.Delete")]
-    public async Task<IActionResult> Delete(
+    [HttpPost("{windowId:int}/deactivate")]
+    [Permission("Windows.Deactivate")]
+    public async Task<IActionResult> Deactivate(
         int windowId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteWindowCommand
+        var command = new DeactivateWindowCommand
         {
-            Id = windowId
+            Id = windowId,
+            RowVersion = rowVersion
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{windowId:int}/reactivate")]
+    [Permission("Windows.Reactivate")]
+    public async Task<IActionResult> Reactivate(
+        int windowId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
+        CancellationToken cancellationToken)
+    {
+        var command = new ReactivateWindowCommand
+        {
+            Id = windowId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
@@ -147,11 +153,13 @@ public sealed class WindowsController : ControllerBase
     [Permission("Windows.DeletePermanent")]
     public async Task<IActionResult> DeletePermanently(
         int windowId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
         var command = new PermanentDeleteWindowCommand
         {
-            Id = windowId
+            Id = windowId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(

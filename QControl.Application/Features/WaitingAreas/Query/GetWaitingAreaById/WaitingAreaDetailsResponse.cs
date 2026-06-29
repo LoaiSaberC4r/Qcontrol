@@ -17,4 +17,10 @@ public sealed record WaitingAreaDetailsResponse
     public string? ControlDevice { get; init; }
 
     public string? DescriptiveName { get; init; }
+
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
 }

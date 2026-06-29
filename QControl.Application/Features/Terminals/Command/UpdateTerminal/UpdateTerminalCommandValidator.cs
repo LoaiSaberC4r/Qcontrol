@@ -1,6 +1,6 @@
 using FluentValidation;
-using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
 
@@ -12,14 +12,6 @@ internal sealed class UpdateTerminalCommandValidator
         RuleFor(x => x.Id)
             .GreaterThan(0)
             .WithMessage(ErrorMessage.Terminal_Id_Required);
-
-        RuleFor(x => x.RequestId)
-            .GreaterThan(0)
-            .WithMessage(ErrorMessage.Terminal_Id_Required);
-
-        RuleFor(x => x)
-            .Must(x => x.Id == x.RequestId)
-            .WithMessage(ErrorMessage.Terminal_Id_Mismatch);
 
         RuleFor(x => x.Number)
             .Cascade(CascadeMode.Stop)
@@ -34,7 +26,7 @@ internal sealed class UpdateTerminalCommandValidator
             .WithMessage(ErrorMessage.Terminal_IPAddress_Required)
             .MaximumLength(45)
             .WithMessage(ErrorMessage.Terminal_IPAddress_MaxLength)
-            .Must(TerminalIPAddressValidation.BeValidIPv4)
+            .Must(value => IPAddressNormalizer.TryNormalize(value, out _))
             .WithMessage(ErrorMessage.Terminal_IPAddress_Invalid);
 
         RuleFor(x => x.SerialNo)
@@ -50,5 +42,11 @@ internal sealed class UpdateTerminalCommandValidator
             .WithMessage(ErrorMessage.Terminal_Type_Required)
             .MaximumLength(100)
             .WithMessage(ErrorMessage.Terminal_Type_MaxLength);
+
+        RuleFor(x => x.RowVersion)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.RowVersion_Required)
+            .Must(value => RowVersionConverter.TryDecode(value, out _))
+            .WithMessage(ErrorMessage.RowVersion_Invalid);
     }
 }

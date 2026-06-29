@@ -17,5 +17,10 @@ internal sealed class GetBranchesPaginationQueryValidator
             .WithMessage(ErrorMessage.Branch_Pagination_PageSize_Invalid)
             .LessThanOrEqualTo(100)
             .WithMessage(ErrorMessage.Branch_Pagination_PageSize_Max);
+
+        RuleFor(x => x.SearchText)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.SearchTerm_MaxLength)
+            .When(x => !string.IsNullOrWhiteSpace(x.SearchText));
     }
 }

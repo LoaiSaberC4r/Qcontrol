@@ -25,5 +25,10 @@ internal sealed class GetWaitingAreasQueryValidator
             .LessThanOrEqualTo(100)
             .WithMessage(
                 ErrorMessage.WaitingArea_Pagination_PageSize_Max);
+
+        RuleFor(x => x.Search)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.SearchTerm_MaxLength)
+            .When(x => !string.IsNullOrWhiteSpace(x.Search));
     }
 }

@@ -14,6 +14,12 @@ public sealed record UpdateWaitingAreaResponse
 
     public string? DescriptiveName { get; init; }
 
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
+
     public Guid? LastModifiedByApplicationUserId { get; init; }
 
     public DateTime? ModifiedOnUtc { get; init; }

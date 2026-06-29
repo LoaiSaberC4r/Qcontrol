@@ -1,9 +1,11 @@
 using BuildingBlock.Application.Abstraction;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
 
 public sealed record CreateDisplayCommand
-    : ICommand<CreateDisplayResponse>
+    : ICommand<CreateDisplayResponse>,
+      ICacheInvalidator
 {
     public int BranchId { get; init; }
 
@@ -14,4 +16,11 @@ public sealed record CreateDisplayCommand
     public string SerialNo { get; init; } = string.Empty;
 
     public string Type { get; init; } = string.Empty;
+
+    public IEnumerable<string> Tags => new[]
+    {
+        OperationalCacheTags.Displays,
+        OperationalCacheTags.Branch(BranchId),
+        OperationalCacheTags.DisplayWindows
+    };
 }

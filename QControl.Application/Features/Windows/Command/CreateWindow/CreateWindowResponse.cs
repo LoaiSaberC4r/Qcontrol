@@ -6,6 +6,8 @@ public sealed record CreateWindowResponse
 
     public int WaitingAreaId { get; init; }
 
+    public int BranchId { get; init; }
+
     public string Number { get; init; } = string.Empty;
 
     public string? DescriptiveName { get; init; }
@@ -15,6 +17,12 @@ public sealed record CreateWindowResponse
     public bool EnableTicketBooking { get; init; }
 
     public bool EnableDirectCall { get; init; }
+
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
 
     public Guid CreatedByApplicationUserId { get; init; }
 

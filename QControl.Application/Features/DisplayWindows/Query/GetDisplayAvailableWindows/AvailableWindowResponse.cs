@@ -19,4 +19,8 @@ public sealed record AvailableWindowResponse
     public bool EnableTicketBooking { get; init; }
 
     public bool EnableDirectCall { get; init; }
+
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
 }

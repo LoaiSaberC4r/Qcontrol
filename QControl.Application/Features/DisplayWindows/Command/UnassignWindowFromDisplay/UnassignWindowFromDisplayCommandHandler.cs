@@ -44,7 +44,7 @@ internal sealed class UnassignWindowFromDisplayCommandHandler
             return Failure(
                 "DisplayWindows.Unassign.Unauthenticated",
                 ErrorMessage.DisplayWindow_Authentication_Required,
-                ErrorType.Security);
+                ErrorType.Unauthorized);
         }
 
         var displayWindow =

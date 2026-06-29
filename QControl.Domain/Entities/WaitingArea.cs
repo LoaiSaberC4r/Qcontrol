@@ -19,6 +19,10 @@ public sealed class WaitingArea : AggregateRoot<int>
 
     public string? DescriptiveName { get; private set; }
 
+    public bool IsActive { get; private set; } = true;
+
+    public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
+
     public Guid CreatedByApplicationUserId { get; private set; }
 
     public ApplicationUser CreatedByApplicationUser { get; private set; } = null!;
@@ -26,6 +30,18 @@ public sealed class WaitingArea : AggregateRoot<int>
     public Guid? LastModifiedByApplicationUserId { get; private set; }
 
     public ApplicationUser? LastModifiedByApplicationUser { get; private set; }
+
+    public DateTime? DeactivatedOnUtc { get; private set; }
+
+    public Guid? DeactivatedByApplicationUserId { get; private set; }
+
+    public ApplicationUser? DeactivatedByApplicationUser { get; private set; }
+
+    public DateTime? ReactivatedOnUtc { get; private set; }
+
+    public Guid? ReactivatedByApplicationUserId { get; private set; }
+
+    public ApplicationUser? ReactivatedByApplicationUser { get; private set; }
 
     public IReadOnlyCollection<Window> Windows =>
         _windows.AsReadOnly();
@@ -49,26 +65,47 @@ public sealed class WaitingArea : AggregateRoot<int>
             AudioDevice = NormalizeOptional(audioDevice),
             ControlDevice = NormalizeOptional(controlDevice),
             DescriptiveName = NormalizeOptional(descriptiveName),
+            IsActive = true,
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
     }
 
     public void Update(
-        int branchId,
         int number,
         string? audioDevice,
         string? controlDevice,
         string? descriptiveName,
         Guid lastModifiedByApplicationUserId)
     {
-        BranchId = branchId;
         Number = number;
         AudioDevice = NormalizeOptional(audioDevice);
         ControlDevice = NormalizeOptional(controlDevice);
         DescriptiveName = NormalizeOptional(descriptiveName);
         LastModifiedByApplicationUserId =
             lastModifiedByApplicationUserId;
+    }
+
+    public void Deactivate(
+        DateTime deactivatedOnUtc,
+        Guid deactivatedByApplicationUserId)
+    {
+        IsActive = false;
+        DeactivatedOnUtc = deactivatedOnUtc;
+        DeactivatedByApplicationUserId = deactivatedByApplicationUserId;
+        LastModifiedByApplicationUserId =
+            deactivatedByApplicationUserId;
+    }
+
+    public void Reactivate(
+        DateTime reactivatedOnUtc,
+        Guid reactivatedByApplicationUserId)
+    {
+        IsActive = true;
+        ReactivatedOnUtc = reactivatedOnUtc;
+        ReactivatedByApplicationUserId = reactivatedByApplicationUserId;
+        LastModifiedByApplicationUserId =
+            reactivatedByApplicationUserId;
     }
 
     private static string? NormalizeOptional(string? value)

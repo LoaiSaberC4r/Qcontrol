@@ -13,36 +13,28 @@ public sealed class DisplayWindow : Entity<int>
 
     public Window Window { get; private set; } = null!;
 
+    public int BranchId { get; private set; }
+
     public Guid CreatedByApplicationUserId { get; private set; }
 
     public ApplicationUser CreatedByApplicationUser { get; private set; } = null!;
-
-    public Guid? LastModifiedByApplicationUserId { get; private set; }
-
-    public ApplicationUser? LastModifiedByApplicationUser { get; private set; }
 
     private DisplayWindow()
     {
     }
 
     public static DisplayWindow Create(
+        int branchId,
         int displayId,
         int windowId,
         Guid createdByApplicationUserId)
     {
         return new DisplayWindow
         {
+            BranchId = branchId,
             DisplayId = displayId,
             WindowId = windowId,
-            CreatedByApplicationUserId = createdByApplicationUserId,
-            LastModifiedByApplicationUserId = null
+            CreatedByApplicationUserId = createdByApplicationUserId
         };
-    }
-
-    public void MarkModified(
-        Guid lastModifiedByApplicationUserId)
-    {
-        LastModifiedByApplicationUserId =
-            lastModifiedByApplicationUserId;
     }
 }

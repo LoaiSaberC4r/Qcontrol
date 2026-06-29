@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,441 +118,495 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Branch_Address_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز العنوان 500 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø¹Ù†ÙˆØ§Ù† 500 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_ArabicName_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم الفرع بالعربية 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„ÙØ±Ø¹ Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠØ© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_Area_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم المنطقة 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„Ù…Ù†Ø·Ù‚Ø© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_Authentication_Required" xml:space="preserve">
-    <value>يجب تسجيل الدخول لتنفيذ العملية.</value>
+    <value>ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„ØªÙ†ÙÙŠØ° Ø§Ù„Ø¹Ù…Ù„ÙŠØ©.</value>
   </data>
   <data name="Branch_City_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم المدينة 100 حرف.</value>
-  </data>
-  <data name="Branch_Delete_HasRelatedData" xml:space="preserve">
-    <value>لا يمكن حذف الفرع لوجود مناطق انتظار أو شاشات مرتبطة به.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„Ù…Ø¯ÙŠÙ†Ø© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_EnglishName_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم الفرع بالإنجليزية 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„ÙØ±Ø¹ Ø¨Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_Governorate_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم المحافظة 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Branch_Id_Required" xml:space="preserve">
-    <value>معرف فرع صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù ÙØ±Ø¹ ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Branch_IPAddress_AlreadyExists" xml:space="preserve">
-    <value>يوجد فرع آخر يستخدم عنوان IP نفسه.</value>
+    <value>ÙŠÙˆØ¬Ø¯ ÙØ±Ø¹ Ø¢Ø®Ø± ÙŠØ³ØªØ®Ø¯Ù… Ø¹Ù†ÙˆØ§Ù† IP Ù†ÙØ³Ù‡.</value>
   </data>
   <data name="Branch_IPAddress_Invalid" xml:space="preserve">
-    <value>يجب أن يكون عنوان IP الخاص بالفرع عنوان IPv4 أو IPv6 صحيحًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø¹Ù†ÙˆØ§Ù† IP Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„ÙØ±Ø¹ Ø¹Ù†ÙˆØ§Ù† IPv4 Ø£Ùˆ IPv6 ØµØ­ÙŠØ­Ù‹Ø§.</value>
   </data>
   <data name="Branch_IPAddress_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز عنوان IP الخاص بالفرع 45 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¹Ù†ÙˆØ§Ù† IP Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„ÙØ±Ø¹ 45 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Branch_IPAddress_Required" xml:space="preserve">
-    <value>عنوان IP الخاص بالفرع مطلوب.</value>
+    <value>Ø¹Ù†ÙˆØ§Ù† IP Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„ÙØ±Ø¹ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Branch_Latitude_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز خط العرض 50 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø®Ø· Ø§Ù„Ø¹Ø±Ø¶ 50 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Branch_Longitude_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز خط الطول 50 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø®Ø· Ø§Ù„Ø·ÙˆÙ„ 50 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Branch_Name_Required" xml:space="preserve">
-    <value>يجب إدخال اسم الفرع بالعربية أو الإنجليزية على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„ÙØ±Ø¹ Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠØ© Ø£Ùˆ Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ© Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Branch_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الفرع.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Branch_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Branch_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Branch_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="WaitingArea_Authentication_Required" xml:space="preserve">
-    <value>يجب تسجيل الدخول لتنفيذ العملية.</value>
+    <value>ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„ØªÙ†ÙÙŠØ° Ø§Ù„Ø¹Ù…Ù„ÙŠØ©.</value>
   </data>
   <data name="WaitingArea_AudioDevice_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز جهاز الصوت 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¬Ù‡Ø§Ø² Ø§Ù„ØµÙˆØª 100 Ø­Ø±Ù.</value>
   </data>
   <data name="WaitingArea_Branch_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الفرع المحدد.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ÙØ±Ø¹ Ø§Ù„Ù…Ø­Ø¯Ø¯.</value>
   </data>
   <data name="WaitingArea_BranchId_Required" xml:space="preserve">
-    <value>معرف فرع صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù ÙØ±Ø¹ ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="WaitingArea_ControlDevice_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز جهاز التحكم 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¬Ù‡Ø§Ø² Ø§Ù„ØªØ­ÙƒÙ… 100 Ø­Ø±Ù.</value>
   </data>
   <data name="WaitingArea_Create_Success" xml:space="preserve">
-    <value>تم إنشاء منطقة الانتظار بنجاح.</value>
-  </data>
-  <data name="WaitingArea_Delete_HasWindows" xml:space="preserve">
-    <value>لا يمكن حذف منطقة الانتظار لوجود شبابيك مرتبطة بها.</value>
-  </data>
-  <data name="WaitingArea_Delete_Success" xml:space="preserve">
-    <value>تم حذف منطقة الانتظار بنجاح.</value>
+    <value>ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="WaitingArea_DescriptiveName_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز الاسم الوصفي 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙˆØµÙÙŠ 100 Ø­Ø±Ù.</value>
   </data>
   <data name="WaitingArea_Id_Mismatch" xml:space="preserve">
-    <value>يجب أن يطابق معرف منطقة الانتظار في المسار معرفها في الطلب.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ·Ø§Ø¨Ù‚ Ù…Ø¹Ø±Ù Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± ÙÙŠ Ø§Ù„Ù…Ø³Ø§Ø± Ù…Ø¹Ø±ÙÙ‡Ø§ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨.</value>
   </data>
   <data name="WaitingArea_Id_Required" xml:space="preserve">
-    <value>معرف منطقة انتظار صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù Ù…Ù†Ø·Ù‚Ø© Ø§Ù†ØªØ¸Ø§Ø± ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="WaitingArea_NotFound" xml:space="preserve">
-    <value>تعذر العثور على منطقة الانتظار.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±.</value>
   </data>
   <data name="WaitingArea_Number_AlreadyExistsInBranch" xml:space="preserve">
-    <value>توجد منطقة انتظار أخرى في هذا الفرع تستخدم الرقم نفسه.</value>
+    <value>ØªÙˆØ¬Ø¯ Ù…Ù†Ø·Ù‚Ø© Ø§Ù†ØªØ¸Ø§Ø± Ø£Ø®Ø±Ù‰ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹ ØªØ³ØªØ®Ø¯Ù… Ø§Ù„Ø±Ù‚Ù… Ù†ÙØ³Ù‡.</value>
   </data>
   <data name="WaitingArea_Number_Required" xml:space="preserve">
-    <value>يجب أن يكون رقم منطقة الانتظار أكبر من صفر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ø£ÙƒØ¨Ø± Ù…Ù† ØµÙØ±.</value>
   </data>
   <data name="WaitingArea_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="WaitingArea_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="WaitingArea_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="WaitingArea_Update_Success" xml:space="preserve">
-    <value>تم تحديث منطقة الانتظار بنجاح.</value>
+    <value>ØªÙ… ØªØ­Ø¯ÙŠØ« Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Window_Authentication_Required" xml:space="preserve">
-    <value>يجب تسجيل الدخول لتنفيذ العملية.</value>
+    <value>ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„ØªÙ†ÙÙŠØ° Ø§Ù„Ø¹Ù…Ù„ÙŠØ©.</value>
   </data>
   <data name="Window_Create_Success" xml:space="preserve">
-    <value>تم إنشاء الشباك بنجاح.</value>
-  </data>
-  <data name="Window_Delete_Success" xml:space="preserve">
-    <value>تم حذف الشباك بنجاح.</value>
+    <value>ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø´Ø¨Ø§Ùƒ Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Window_DescriptiveName_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز الاسم الوصفي للشباك 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙˆØµÙÙŠ Ù„Ù„Ø´Ø¨Ø§Ùƒ 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Window_Id_Mismatch" xml:space="preserve">
-    <value>يجب أن يطابق معرف الشباك في المسار معرفه في الطلب.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ·Ø§Ø¨Ù‚ Ù…Ø¹Ø±Ù Ø§Ù„Ø´Ø¨Ø§Ùƒ ÙÙŠ Ø§Ù„Ù…Ø³Ø§Ø± Ù…Ø¹Ø±ÙÙ‡ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨.</value>
   </data>
   <data name="Window_Id_Required" xml:space="preserve">
-    <value>معرف شباك صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù Ø´Ø¨Ø§Ùƒ ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Window_IPAddress_AlreadyExistsInWaitingArea" xml:space="preserve">
-    <value>يوجد شباك آخر في منطقة الانتظار هذه يستخدم عنوان IP نفسه.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø´Ø¨Ø§Ùƒ Ø¢Ø®Ø± ÙÙŠ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ù‡Ø°Ù‡ ÙŠØ³ØªØ®Ø¯Ù… Ø¹Ù†ÙˆØ§Ù† IP Ù†ÙØ³Ù‡.</value>
   </data>
   <data name="Window_IPAddress_Invalid" xml:space="preserve">
-    <value>يجب أن يكون عنوان IP الخاص بالشباك عنوان IPv4 أو IPv6 صحيحًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø¹Ù†ÙˆØ§Ù† IP Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„Ø´Ø¨Ø§Ùƒ Ø¹Ù†ÙˆØ§Ù† IPv4 Ø£Ùˆ IPv6 ØµØ­ÙŠØ­Ù‹Ø§.</value>
   </data>
   <data name="Window_IPAddress_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز عنوان IP الخاص بالشباك 45 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¹Ù†ÙˆØ§Ù† IP Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„Ø´Ø¨Ø§Ùƒ 45 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Window_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الشباك.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„Ø´Ø¨Ø§Ùƒ.</value>
   </data>
   <data name="Window_Number_AlreadyExistsInWaitingArea" xml:space="preserve">
-    <value>يوجد شباك آخر في منطقة الانتظار هذه يستخدم الرقم نفسه.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø´Ø¨Ø§Ùƒ Ø¢Ø®Ø± ÙÙŠ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ù‡Ø°Ù‡ ÙŠØ³ØªØ®Ø¯Ù… Ø§Ù„Ø±Ù‚Ù… Ù†ÙØ³Ù‡.</value>
   </data>
   <data name="Window_Number_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز رقم الشباك 20 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø±Ù‚Ù… Ø§Ù„Ø´Ø¨Ø§Ùƒ 20 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Window_Number_Required" xml:space="preserve">
-    <value>رقم الشباك مطلوب.</value>
+    <value>Ø±Ù‚Ù… Ø§Ù„Ø´Ø¨Ø§Ùƒ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Window_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Window_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Window_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="Window_PermanentDelete_HasRelatedRecords" xml:space="preserve">
-    <value>لا يمكن حذف الشباك نهائيًا لوجود سجلات مرتبطة به.</value>
-  </data>
-  <data name="Window_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
-    <value>يجب حذف الشباك حذفًا منطقيًا قبل حذفه نهائيًا.</value>
+    <value>Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø§Ù„Ø´Ø¨Ø§Ùƒ Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ù„ÙˆØ¬ÙˆØ¯ Ø³Ø¬Ù„Ø§Øª Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ù‡.</value>
   </data>
   <data name="Window_PermanentDelete_Success" xml:space="preserve">
-    <value>تم حذف الشباك نهائيًا بنجاح.</value>
-  </data>
-  <data name="Window_Update_Deleted" xml:space="preserve">
-    <value>لا يمكن تحديث الشباك لأنه محذوف.</value>
+    <value>ØªÙ… Ø­Ø°Ù Ø§Ù„Ø´Ø¨Ø§Ùƒ Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Window_Update_Success" xml:space="preserve">
-    <value>تم تحديث الشباك بنجاح.</value>
+    <value>ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø´Ø¨Ø§Ùƒ Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Window_WaitingArea_NotFound" xml:space="preserve">
-    <value>تعذر العثور على منطقة الانتظار المحددة.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø­Ø¯Ø¯Ø©.</value>
   </data>
   <data name="Window_WaitingAreaId_Required" xml:space="preserve">
-    <value>معرف منطقة انتظار صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù Ù…Ù†Ø·Ù‚Ø© Ø§Ù†ØªØ¸Ø§Ø± ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_AlreadyActive" xml:space="preserve">
-    <value>الوحدة الطرفية نشطة بالفعل.</value>
+    <value>Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ù†Ø´Ø·Ø© Ø¨Ø§Ù„ÙØ¹Ù„.</value>
   </data>
   <data name="Terminal_Authentication_Required" xml:space="preserve">
-    <value>المصادقة مطلوبة.</value>
+    <value>Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© Ù…Ø·Ù„ÙˆØ¨Ø©.</value>
   </data>
   <data name="Terminal_Create_Success" xml:space="preserve">
-    <value>تم إنشاء الوحدة الطرفية بنجاح.</value>
-  </data>
-  <data name="Terminal_Delete_Success" xml:space="preserve">
-    <value>تم حذف الوحدة الطرفية بنجاح.</value>
+    <value>ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Terminal_Id_Mismatch" xml:space="preserve">
-    <value>يجب أن يطابق معرف الوحدة الطرفية في المسار معرفها في الطلب.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ·Ø§Ø¨Ù‚ Ù…Ø¹Ø±Ù Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© ÙÙŠ Ø§Ù„Ù…Ø³Ø§Ø± Ù…Ø¹Ø±ÙÙ‡Ø§ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨.</value>
   </data>
   <data name="Terminal_Id_Required" xml:space="preserve">
-    <value>معرف وحدة طرفية صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù ÙˆØ­Ø¯Ø© Ø·Ø±ÙÙŠØ© ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_IPAddress_AlreadyExistsInBranch" xml:space="preserve">
-    <value>يوجد عنوان IP نفسه في هذا الفرع.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø¹Ù†ÙˆØ§Ù† IP Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Terminal_IPAddress_Invalid" xml:space="preserve">
-    <value>يجب أن يكون عنوان IP عنوان IPv4 صحيحًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø¹Ù†ÙˆØ§Ù† IP Ø¹Ù†ÙˆØ§Ù† IPv4 ØµØ­ÙŠØ­Ù‹Ø§.</value>
   </data>
   <data name="Terminal_IPAddress_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز عنوان IP 45 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¹Ù†ÙˆØ§Ù† IP 45 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Terminal_IPAddress_Required" xml:space="preserve">
-    <value>عنوان IP مطلوب.</value>
+    <value>Ø¹Ù†ÙˆØ§Ù† IP Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الوحدة الطرفية.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ©.</value>
   </data>
   <data name="Terminal_Number_AlreadyExistsInWindow" xml:space="preserve">
-    <value>يوجد رقم الوحدة الطرفية نفسه في هذا الشباك.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø±Ù‚Ù… Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„Ø´Ø¨Ø§Ùƒ.</value>
   </data>
   <data name="Terminal_Number_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز رقم الوحدة الطرفية 20 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø±Ù‚Ù… Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© 20 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Terminal_Number_Required" xml:space="preserve">
-    <value>رقم الوحدة الطرفية مطلوب.</value>
+    <value>Ø±Ù‚Ù… Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Terminal_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Terminal_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="Terminal_PermanentDelete_HasRelatedRecords" xml:space="preserve">
-    <value>لا يمكن حذف الوحدة الطرفية نهائيًا لوجود سجلات مرتبطة بها.</value>
-  </data>
-  <data name="Terminal_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
-    <value>يجب حذف الوحدة الطرفية حذفًا منطقيًا قبل حذفها نهائيًا.</value>
+    <value>Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ù„ÙˆØ¬ÙˆØ¯ Ø³Ø¬Ù„Ø§Øª Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ù‡Ø§.</value>
   </data>
   <data name="Terminal_PermanentDelete_Success" xml:space="preserve">
-    <value>تم حذف الوحدة الطرفية نهائيًا بنجاح.</value>
-  </data>
-  <data name="Terminal_Restore_Success" xml:space="preserve">
-    <value>تمت استعادة الوحدة الطرفية بنجاح.</value>
-  </data>
-  <data name="Terminal_Restore_WindowDeleted" xml:space="preserve">
-    <value>لا يمكن استعادة الوحدة الطرفية لأن الشباك الخاص بها محذوف.</value>
+    <value>ØªÙ… Ø­Ø°Ù Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Terminal_SerialNo_AlreadyExistsInBranch" xml:space="preserve">
-    <value>يوجد الرقم التسلسلي نفسه في هذا الفرع.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Terminal_SerialNo_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز الرقم التسلسلي 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Terminal_SerialNo_Required" xml:space="preserve">
-    <value>الرقم التسلسلي مطلوب.</value>
+    <value>Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_Type_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز نوع الوحدة 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ù†ÙˆØ¹ Ø§Ù„ÙˆØ­Ø¯Ø© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Terminal_Type_Required" xml:space="preserve">
-    <value>نوع الوحدة مطلوب.</value>
+    <value>Ù†ÙˆØ¹ Ø§Ù„ÙˆØ­Ø¯Ø© Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Terminal_Update_Success" xml:space="preserve">
-    <value>تم تحديث الوحدة الطرفية بنجاح.</value>
-  </data>
-  <data name="Terminal_Window_Deleted" xml:space="preserve">
-    <value>لا يمكن إنشاء وحدة طرفية داخل شباك محذوف.</value>
+    <value>ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„ÙˆØ­Ø¯Ø© Ø§Ù„Ø·Ø±ÙÙŠØ© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Terminal_Window_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الشباك المحدد.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„Ø´Ø¨Ø§Ùƒ Ø§Ù„Ù…Ø­Ø¯Ø¯.</value>
   </data>
   <data name="Terminal_WindowId_Required" xml:space="preserve">
-    <value>معرف شباك صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù Ø´Ø¨Ø§Ùƒ ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_AlreadyActive" xml:space="preserve">
-    <value>الشاشة نشطة بالفعل.</value>
+    <value>Ø§Ù„Ø´Ø§Ø´Ø© Ù†Ø´Ø·Ø© Ø¨Ø§Ù„ÙØ¹Ù„.</value>
   </data>
   <data name="Display_Authentication_Required" xml:space="preserve">
-    <value>المصادقة مطلوبة.</value>
+    <value>Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© Ù…Ø·Ù„ÙˆØ¨Ø©.</value>
   </data>
   <data name="Display_Branch_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الفرع المحدد.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ÙØ±Ø¹ Ø§Ù„Ù…Ø­Ø¯Ø¯.</value>
   </data>
   <data name="Display_BranchId_Required" xml:space="preserve">
-    <value>معرف فرع صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù ÙØ±Ø¹ ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_Create_Success" xml:space="preserve">
-    <value>تم إنشاء الشاشة بنجاح.</value>
-  </data>
-  <data name="Display_Delete_Success" xml:space="preserve">
-    <value>تم حذف الشاشة بنجاح.</value>
+    <value>ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø´Ø§Ø´Ø© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Display_Id_Mismatch" xml:space="preserve">
-    <value>يجب أن يطابق معرف الشاشة في المسار معرفها في الطلب.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ·Ø§Ø¨Ù‚ Ù…Ø¹Ø±Ù Ø§Ù„Ø´Ø§Ø´Ø© ÙÙŠ Ø§Ù„Ù…Ø³Ø§Ø± Ù…Ø¹Ø±ÙÙ‡Ø§ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨.</value>
   </data>
   <data name="Display_Id_Required" xml:space="preserve">
-    <value>معرف شاشة صحيح مطلوب.</value>
+    <value>Ù…Ø¹Ø±Ù Ø´Ø§Ø´Ø© ØµØ­ÙŠØ­ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_IPAddress_AlreadyExistsInBranch" xml:space="preserve">
-    <value>يوجد عنوان IP نفسه في هذا الفرع.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø¹Ù†ÙˆØ§Ù† IP Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Display_IPAddress_Invalid" xml:space="preserve">
-    <value>يجب أن يكون عنوان IP عنوان IPv4 صحيحًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø¹Ù†ÙˆØ§Ù† IP Ø¹Ù†ÙˆØ§Ù† IPv4 ØµØ­ÙŠØ­Ù‹Ø§.</value>
   </data>
   <data name="Display_IPAddress_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز عنوان IP 45 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø¹Ù†ÙˆØ§Ù† IP 45 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Display_IPAddress_Required" xml:space="preserve">
-    <value>عنوان IP مطلوب.</value>
+    <value>Ø¹Ù†ÙˆØ§Ù† IP Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_NotFound" xml:space="preserve">
-    <value>تعذر العثور على الشاشة.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„Ø´Ø§Ø´Ø©.</value>
   </data>
   <data name="Display_Number_AlreadyExistsInBranch" xml:space="preserve">
-    <value>يوجد رقم الشاشة نفسه في هذا الفرع.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø±Ù‚Ù… Ø§Ù„Ø´Ø§Ø´Ø© Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Display_Number_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز رقم الشاشة 20 حرفًا.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø±Ù‚Ù… Ø§Ù„Ø´Ø§Ø´Ø© 20 Ø­Ø±ÙÙ‹Ø§.</value>
   </data>
   <data name="Display_Number_Required" xml:space="preserve">
-    <value>رقم الشاشة مطلوب.</value>
+    <value>Ø±Ù‚Ù… Ø§Ù„Ø´Ø§Ø´Ø© Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Display_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="Display_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="Display_PermanentDelete_HasDisplayWindowLinks" xml:space="preserve">
-    <value>لا يمكن حذف الشاشة نهائيًا لأنها مرتبطة بشبابيك.</value>
+    <value>Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø§Ù„Ø´Ø§Ø´Ø© Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ù„Ø£Ù†Ù‡Ø§ Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ø´Ø¨Ø§Ø¨ÙŠÙƒ.</value>
   </data>
   <data name="Display_PermanentDelete_HasRelatedRecords" xml:space="preserve">
-    <value>لا يمكن حذف الشاشة نهائيًا لوجود سجلات مرتبطة بها.</value>
-  </data>
-  <data name="Display_PermanentDelete_MustBeSoftDeleted" xml:space="preserve">
-    <value>يجب حذف الشاشة حذفًا منطقيًا قبل حذفها نهائيًا.</value>
+    <value>Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø§Ù„Ø´Ø§Ø´Ø© Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ù„ÙˆØ¬ÙˆØ¯ Ø³Ø¬Ù„Ø§Øª Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ù‡Ø§.</value>
   </data>
   <data name="Display_PermanentDelete_Success" xml:space="preserve">
-    <value>تم حذف الشاشة نهائيًا بنجاح.</value>
-  </data>
-  <data name="Display_Restore_Success" xml:space="preserve">
-    <value>تمت استعادة الشاشة بنجاح.</value>
+    <value>ØªÙ… Ø­Ø°Ù Ø§Ù„Ø´Ø§Ø´Ø© Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="Display_SerialNo_AlreadyExistsInBranch" xml:space="preserve">
-    <value>يوجد الرقم التسلسلي نفسه في هذا الفرع.</value>
+    <value>ÙŠÙˆØ¬Ø¯ Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ Ù†ÙØ³Ù‡ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Display_SerialNo_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز الرقم التسلسلي 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Display_SerialNo_Required" xml:space="preserve">
-    <value>الرقم التسلسلي مطلوب.</value>
+    <value>Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ØªØ³Ù„Ø³Ù„ÙŠ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_Type_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز نوع الشاشة 100 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ù†ÙˆØ¹ Ø§Ù„Ø´Ø§Ø´Ø© 100 Ø­Ø±Ù.</value>
   </data>
   <data name="Display_Type_Required" xml:space="preserve">
-    <value>نوع الشاشة مطلوب.</value>
+    <value>Ù†ÙˆØ¹ Ø§Ù„Ø´Ø§Ø´Ø© Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Display_UniqueConstraint_Conflict" xml:space="preserve">
-    <value>توجد شاشة بالقيمة الفريدة نفسها في هذا الفرع.</value>
+    <value>ØªÙˆØ¬Ø¯ Ø´Ø§Ø´Ø© Ø¨Ø§Ù„Ù‚ÙŠÙ…Ø© Ø§Ù„ÙØ±ÙŠØ¯Ø© Ù†ÙØ³Ù‡Ø§ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="Display_Update_Success" xml:space="preserve">
-    <value>تم تحديث الشاشة بنجاح.</value>
+    <value>ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø´Ø§Ø´Ø© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="DisplayWindow_Assign_AlreadyLinked" xml:space="preserve">
-    <value>الشاشة مرتبطة بالفعل بهذا الشباك.</value>
+    <value>Ø§Ù„Ø´Ø§Ø´Ø© Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ø§Ù„ÙØ¹Ù„ Ø¨Ù‡Ø°Ø§ Ø§Ù„Ø´Ø¨Ø§Ùƒ.</value>
   </data>
   <data name="DisplayWindow_Assign_DifferentBranch" xml:space="preserve">
-    <value>يجب أن تتبع الشاشة والشباك نفس الفرع.</value>
-  </data>
-  <data name="DisplayWindow_Assign_DisplayDeleted" xml:space="preserve">
-    <value>لا يمكن ربط شاشة محذوفة بشباك.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ØªØªØ¨Ø¹ Ø§Ù„Ø´Ø§Ø´Ø© ÙˆØ§Ù„Ø´Ø¨Ø§Ùƒ Ù†ÙØ³ Ø§Ù„ÙØ±Ø¹.</value>
   </data>
   <data name="DisplayWindow_Assign_Success" xml:space="preserve">
-    <value>تم ربط الشباك بالشاشة بنجاح.</value>
-  </data>
-  <data name="DisplayWindow_Assign_WindowDeleted" xml:space="preserve">
-    <value>لا يمكن ربط شباك محذوف بشاشة.</value>
+    <value>ØªÙ… Ø±Ø¨Ø· Ø§Ù„Ø´Ø¨Ø§Ùƒ Ø¨Ø§Ù„Ø´Ø§Ø´Ø© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="DisplayWindow_Authentication_Required" xml:space="preserve">
-    <value>المصادقة مطلوبة.</value>
-  </data>
-  <data name="DisplayWindow_Available_DisplayDeleted" xml:space="preserve">
-    <value>لا يمكن عرض الشبابيك المتاحة لشاشة محذوفة.</value>
+    <value>Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© Ù…Ø·Ù„ÙˆØ¨Ø©.</value>
   </data>
   <data name="DisplayWindow_Display_NotFound" xml:space="preserve">
-    <value>الشاشة غير موجودة.</value>
+    <value>Ø§Ù„Ø´Ø§Ø´Ø© ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯Ø©.</value>
   </data>
   <data name="DisplayWindow_DisplayId_Required" xml:space="preserve">
-    <value>معرف الشاشة يجب أن يكون أكبر من صفر.</value>
+    <value>Ù…Ø¹Ø±Ù Ø§Ù„Ø´Ø§Ø´Ø© ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø£ÙƒØ¨Ø± Ù…Ù† ØµÙØ±.</value>
   </data>
   <data name="DisplayWindow_Pagination_PageNumber_Invalid" xml:space="preserve">
-    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø±Ù‚Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="DisplayWindow_Pagination_PageSize_Invalid" xml:space="preserve">
-    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 1 Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.</value>
   </data>
   <data name="DisplayWindow_Pagination_PageSize_Max" xml:space="preserve">
-    <value>يجب ألا يتجاوز حجم الصفحة 100 عنصر.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø­Ø¬Ù… Ø§Ù„ØµÙØ­Ø© 100 Ø¹Ù†ØµØ±.</value>
   </data>
   <data name="DisplayWindow_Unassign_LinkNotFound" xml:space="preserve">
-    <value>رابط الشاشة والشباك غير موجود.</value>
+    <value>Ø±Ø§Ø¨Ø· Ø§Ù„Ø´Ø§Ø´Ø© ÙˆØ§Ù„Ø´Ø¨Ø§Ùƒ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯.</value>
   </data>
   <data name="DisplayWindow_Unassign_Success" xml:space="preserve">
-    <value>تم فك ارتباط الشباك من الشاشة بنجاح.</value>
+    <value>ØªÙ… ÙÙƒ Ø§Ø±ØªØ¨Ø§Ø· Ø§Ù„Ø´Ø¨Ø§Ùƒ Ù…Ù† Ø§Ù„Ø´Ø§Ø´Ø© Ø¨Ù†Ø¬Ø§Ø­.</value>
   </data>
   <data name="DisplayWindow_Window_NotFound" xml:space="preserve">
-    <value>الشباك غير موجود.</value>
+    <value>Ø§Ù„Ø´Ø¨Ø§Ùƒ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯.</value>
   </data>
   <data name="DisplayWindow_WindowId_Required" xml:space="preserve">
-    <value>معرف الشباك يجب أن يكون أكبر من صفر.</value>
+    <value>Ù…Ø¹Ø±Ù Ø§Ù„Ø´Ø¨Ø§Ùƒ ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø£ÙƒØ¨Ø± Ù…Ù† ØµÙØ±.</value>
   </data>
   <data name="Login_ActorProfile_NotFound" xml:space="preserve">
-    <value>تعذر العثور على ملف المستخدم.</value>
+    <value>ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ù…Ù„Ù Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù….</value>
   </data>
   <data name="Login_InvalidCredentials" xml:space="preserve">
-    <value>اسم المستخدم أو البريد الإلكتروني أو كلمة المرور غير صحيحة.</value>
+    <value>Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø£Ùˆ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± ØµØ­ÙŠØ­Ø©.</value>
   </data>
   <data name="Login_Password_MaxLength" xml:space="preserve">
-    <value>يجب ألا تتجاوز كلمة المرور 200 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ØªØªØ¬Ø§ÙˆØ² ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± 200 Ø­Ø±Ù.</value>
   </data>
   <data name="Login_Password_Required" xml:space="preserve">
-    <value>كلمة المرور مطلوبة.</value>
+    <value>ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ù…Ø·Ù„ÙˆØ¨Ø©.</value>
   </data>
   <data name="Login_UserNameOrEmail_MaxLength" xml:space="preserve">
-    <value>يجب ألا يتجاوز اسم المستخدم أو البريد الإلكتروني 200 حرف.</value>
+    <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ 200 Ø­Ø±Ù.</value>
   </data>
   <data name="Login_UserNameOrEmail_Required" xml:space="preserve">
-    <value>اسم المستخدم أو البريد الإلكتروني مطلوب.</value>
+    <value>Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ù…Ø·Ù„ÙˆØ¨.</value>
   </data>
   <data name="Login_UserRoles_NotFound" xml:space="preserve">
-    <value>لا يوجد دور مسند إلى هذا المستخدم.</value>
+    <value>Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø¯ÙˆØ± Ù…Ø³Ù†Ø¯ Ø¥Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù….</value>
+  </data>
+  <data name="Branch_Address_Required" xml:space="preserve">
+    <value>The branch address is required.</value>
+  </data>
+  <data name="Branch_AlreadyActive" xml:space="preserve">
+    <value>The branch is already active.</value>
+  </data>
+  <data name="Branch_AlreadyInactive" xml:space="preserve">
+    <value>The branch is already inactive.</value>
+  </data>
+  <data name="Branch_ArabicName_Required" xml:space="preserve">
+    <value>The Arabic branch name is required.</value>
+  </data>
+  <data name="Branch_Area_Required" xml:space="preserve">
+    <value>The branch area is required.</value>
+  </data>
+  <data name="Branch_City_Required" xml:space="preserve">
+    <value>The branch city is required.</value>
+  </data>
+  <data name="Branch_Deactivate_Success" xml:space="preserve">
+    <value>The branch was deactivated successfully.</value>
+  </data>
+  <data name="Branch_EnglishName_Required" xml:space="preserve">
+    <value>The English branch name is required.</value>
+  </data>
+  <data name="Branch_Governorate_Required" xml:space="preserve">
+    <value>The branch governorate is required.</value>
+  </data>
+  <data name="Branch_Latitude_Invalid" xml:space="preserve">
+    <value>Latitude must be between -90 and 90.</value>
+  </data>
+  <data name="Branch_Longitude_Invalid" xml:space="preserve">
+    <value>Longitude must be between -180 and 180.</value>
+  </data>
+  <data name="Branch_PermanentDelete_Success" xml:space="preserve">
+    <value>The branch was permanently deleted successfully.</value>
+  </data>
+  <data name="Branch_Reactivate_Success" xml:space="preserve">
+    <value>The branch was reactivated successfully.</value>
+  </data>
+  <data name="Concurrency_Conflict" xml:space="preserve">
+    <value>The record was modified by another request. Refresh and try again.</value>
+  </data>
+  <data name="Display_AlreadyInactive" xml:space="preserve">
+    <value>The display is already inactive.</value>
+  </data>
+  <data name="Display_Deactivate_Success" xml:space="preserve">
+    <value>The display was deactivated successfully.</value>
+  </data>
+  <data name="Display_Reactivate_Success" xml:space="preserve">
+    <value>The display was reactivated successfully.</value>
+  </data>
+  <data name="PermanentDelete_RequiresInactive" xml:space="preserve">
+    <value>The record must be inactive before permanent deletion.</value>
+  </data>
+  <data name="RowVersion_Invalid" xml:space="preserve">
+    <value>The row version is invalid.</value>
+  </data>
+  <data name="RowVersion_Required" xml:space="preserve">
+    <value>The row version is required.</value>
+  </data>
+  <data name="SearchTerm_MaxLength" xml:space="preserve">
+    <value>Search text must not exceed 200 characters.</value>
+  </data>
+  <data name="Terminal_AlreadyInactive" xml:space="preserve">
+    <value>The terminal is already inactive.</value>
+  </data>
+  <data name="Terminal_Deactivate_Success" xml:space="preserve">
+    <value>The terminal was deactivated successfully.</value>
+  </data>
+  <data name="Terminal_Reactivate_Success" xml:space="preserve">
+    <value>The terminal was reactivated successfully.</value>
+  </data>
+  <data name="WaitingArea_AlreadyActive" xml:space="preserve">
+    <value>The waiting area is already active.</value>
+  </data>
+  <data name="WaitingArea_AlreadyInactive" xml:space="preserve">
+    <value>The waiting area is already inactive.</value>
+  </data>
+  <data name="WaitingArea_Deactivate_Success" xml:space="preserve">
+    <value>The waiting area was deactivated successfully.</value>
+  </data>
+  <data name="WaitingArea_PermanentDelete_Success" xml:space="preserve">
+    <value>The waiting area was permanently deleted successfully.</value>
+  </data>
+  <data name="WaitingArea_Reactivate_Success" xml:space="preserve">
+    <value>The waiting area was reactivated successfully.</value>
+  </data>
+  <data name="Window_AlreadyActive" xml:space="preserve">
+    <value>The window is already active.</value>
+  </data>
+  <data name="Window_AlreadyInactive" xml:space="preserve">
+    <value>The window is already inactive.</value>
+  </data>
+  <data name="Window_Deactivate_Success" xml:space="preserve">
+    <value>The window was deactivated successfully.</value>
+  </data>
+  <data name="Window_Reactivate_Success" xml:space="preserve">
+    <value>The window was reactivated successfully.</value>
+  </data>
+  <data name="Branch_PermanentDelete_HasRelatedData" xml:space="preserve">
+    <value>The branch cannot be permanently deleted because it has related waiting areas or displays.</value>
+  </data>
+  <data name="WaitingArea_PermanentDelete_HasWindows" xml:space="preserve">
+    <value>The waiting area cannot be permanently deleted because it contains windows.</value>
   </data>
 </root>

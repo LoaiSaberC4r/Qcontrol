@@ -1,4 +1,5 @@
 using BuildingBlock.Domain.Specification;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Displays.Query.GetDisplays;
@@ -14,15 +15,28 @@ internal sealed class GetDisplaysSpec
             AddCriteria(x => x.BranchId == branchId);
         }
 
+        if (query.IsActive.HasValue)
+        {
+            var isActive = query.IsActive.Value;
+            AddCriteria(x => x.IsActive == isActive);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var searchText = query.Search.Trim();
 
-            AddCriteria(x =>
-                x.Number.Contains(searchText) ||
-                x.IPAddress.Contains(searchText) ||
-                x.SerialNo.Contains(searchText) ||
-                x.Type.Contains(searchText));
+            if (StatusSearchTerm.TryParse(searchText, out var status))
+            {
+                AddCriteria(x => x.IsActive == status);
+            }
+            else
+            {
+                AddCriteria(x =>
+                    x.Number.Contains(searchText) ||
+                    x.IPAddress.Contains(searchText) ||
+                    x.SerialNo.Contains(searchText) ||
+                    x.Type.Contains(searchText));
+            }
         }
 
         AddOrderBy(x => x.BranchId);
@@ -46,7 +60,10 @@ internal sealed class GetDisplaysSpec
             Number = x.Number,
             IPAddress = x.IPAddress,
             SerialNo = x.SerialNo,
-            Type = x.Type
+            Type = x.Type,
+            IsActive = x.IsActive,
+            EffectiveIsActive = x.Branch.IsActive && x.IsActive,
+            RowVersion = RowVersionConverter.ToBase64(x.RowVersion)
         });
     }
 }

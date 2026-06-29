@@ -1,6 +1,6 @@
 using FluentValidation;
-using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
 
@@ -26,7 +26,7 @@ internal sealed class CreateTerminalCommandValidator
             .WithMessage(ErrorMessage.Terminal_IPAddress_Required)
             .MaximumLength(45)
             .WithMessage(ErrorMessage.Terminal_IPAddress_MaxLength)
-            .Must(TerminalIPAddressValidation.BeValidIPv4)
+            .Must(value => IPAddressNormalizer.TryNormalize(value, out _))
             .WithMessage(ErrorMessage.Terminal_IPAddress_Invalid);
 
         RuleFor(x => x.SerialNo)

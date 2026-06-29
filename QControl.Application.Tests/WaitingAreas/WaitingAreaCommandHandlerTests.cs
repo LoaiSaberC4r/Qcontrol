@@ -1,5 +1,7 @@
 using Qcontrol.Application.Features.WaitingAreas.Command.CreateWaitingArea;
-using Qcontrol.Application.Features.WaitingAreas.Command.DeleteWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.DeactivateWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.PermanentDeleteWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.ReactivateWaitingArea;
 using Qcontrol.Application.Features.WaitingAreas.Command.UpdateWaitingArea;
 using QControl.Application.Tests.TestSupport;
 using QControl.Domain.Entities;
@@ -8,6 +10,9 @@ namespace QControl.Application.Tests.WaitingAreas;
 
 public sealed class WaitingAreaCommandHandlerTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
     public async Task Create_creates_waiting_area_successfully_and_commits_once()
     {
@@ -40,45 +45,18 @@ public sealed class WaitingAreaCommandHandlerTests
         Assert.Equal("speaker", result.Value.AudioDevice);
         Assert.Equal("tablet", result.Value.ControlDevice);
         Assert.Equal("Main", result.Value.DescriptiveName);
+        Assert.True(result.Value.IsActive);
         Assert.Equal(1, writeRepository.AddCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task Create_returns_branch_not_found_when_branch_does_not_exist()
-    {
-        var waitingAreas = new List<WaitingArea>();
-        var unitOfWork = new TestUnitOfWork();
-        var handler = CreateHandler(
-            new List<Branch>(),
-            waitingAreas,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new CreateWaitingAreaCommand
-            {
-                BranchId = 99,
-                Number = 1
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error => error.Code == "WaitingAreas.Create.BranchNotFound");
-        Assert.Empty(waitingAreas);
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Create_returns_conflict_when_number_exists_in_branch()
+    public async Task Create_returns_conflict_when_number_exists_in_branch_including_inactive()
     {
         var branch = EntityTestFactory.Branch(1);
-        var waitingAreas = new List<WaitingArea>
-        {
-            EntityTestFactory.WaitingArea(10, 1, 7, branch)
-        };
+        var existing = EntityTestFactory.WaitingArea(10, 1, 7, branch);
+        existing.Deactivate(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var waitingAreas = new List<WaitingArea> { existing };
         var unitOfWork = new TestUnitOfWork();
         var handler = CreateHandler(
             new List<Branch> { branch },
@@ -97,44 +75,13 @@ public sealed class WaitingAreaCommandHandlerTests
         Assert.True(result.IsFailure);
         Assert.Contains(
             result.Errors,
-            error =>
-                error.Code ==
-                "WaitingAreas.Create.NumberAlreadyExistsInBranch");
+            error => error.Code == "WaitingAreas.Create.NumberAlreadyExistsInBranch");
         Assert.Single(waitingAreas);
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task Create_allows_same_number_in_another_branch()
-    {
-        var branch1 = EntityTestFactory.Branch(1);
-        var branch2 = EntityTestFactory.Branch(2);
-        var waitingAreas = new List<WaitingArea>
-        {
-            EntityTestFactory.WaitingArea(10, 2, 7, branch2)
-        };
-        var unitOfWork = new TestUnitOfWork();
-        var handler = CreateHandler(
-            new List<Branch> { branch1, branch2 },
-            waitingAreas,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new CreateWaitingAreaCommand
-            {
-                BranchId = 1,
-                Number = 7
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2, waitingAreas.Count);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Update_updates_successfully_and_commits_once()
+    public async Task Update_updates_fields_without_changing_branch()
     {
         var branch1 = EntityTestFactory.Branch(1);
         var branch2 = EntityTestFactory.Branch(2);
@@ -154,17 +101,16 @@ public sealed class WaitingAreaCommandHandlerTests
             new UpdateWaitingAreaCommand
             {
                 Id = 10,
-                RequestId = 10,
-                BranchId = 2,
                 Number = 8,
                 AudioDevice = "speaker 2",
                 ControlDevice = "control 2",
-                DescriptiveName = "secondary"
+                DescriptiveName = "secondary",
+                RowVersion = ValidRowVersion
             },
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(2, waitingArea.BranchId);
+        Assert.Equal(branch1.Id, waitingArea.BranchId);
         Assert.Equal(8, waitingArea.Number);
         Assert.Equal("speaker 2", waitingArea.AudioDevice);
         Assert.Equal("control 2", waitingArea.ControlDevice);
@@ -175,110 +121,13 @@ public sealed class WaitingAreaCommandHandlerTests
     }
 
     [Fact]
-    public async Task Update_returns_waiting_area_not_found()
-    {
-        var branch = EntityTestFactory.Branch(1);
-        var waitingAreas = new List<WaitingArea>();
-        var unitOfWork = new TestUnitOfWork();
-        var handler = UpdateHandler(
-            new List<Branch> { branch },
-            waitingAreas,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new UpdateWaitingAreaCommand
-            {
-                Id = 10,
-                RequestId = 10,
-                BranchId = 1,
-                Number = 5
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error =>
-                error.Code ==
-                "WaitingAreas.Update.WaitingAreaNotFound");
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Update_returns_branch_not_found()
-    {
-        var branch = EntityTestFactory.Branch(1);
-        var waitingArea =
-            EntityTestFactory.WaitingArea(10, 1, 5, branch);
-        var waitingAreas = new List<WaitingArea> { waitingArea };
-        var unitOfWork = new TestUnitOfWork();
-        var handler = UpdateHandler(
-            new List<Branch>(),
-            waitingAreas,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new UpdateWaitingAreaCommand
-            {
-                Id = 10,
-                RequestId = 10,
-                BranchId = 99,
-                Number = 5
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error => error.Code == "WaitingAreas.Update.BranchNotFound");
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Update_returns_conflict_for_duplicate_branch_number()
-    {
-        var branch1 = EntityTestFactory.Branch(1);
-        var branch2 = EntityTestFactory.Branch(2);
-        var waitingAreas = new List<WaitingArea>
-        {
-            EntityTestFactory.WaitingArea(10, 1, 5, branch1),
-            EntityTestFactory.WaitingArea(11, 2, 8, branch2)
-        };
-        var unitOfWork = new TestUnitOfWork();
-        var handler = UpdateHandler(
-            new List<Branch> { branch1, branch2 },
-            waitingAreas,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new UpdateWaitingAreaCommand
-            {
-                Id = 10,
-                RequestId = 10,
-                BranchId = 2,
-                Number = 8
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error =>
-                error.Code ==
-                "WaitingAreas.Update.NumberAlreadyExistsInBranch");
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Update_allows_keeping_existing_number_for_same_waiting_area()
+    public async Task Update_returns_conflict_for_duplicate_number_in_same_branch()
     {
         var branch = EntityTestFactory.Branch(1);
         var waitingAreas = new List<WaitingArea>
         {
-            EntityTestFactory.WaitingArea(10, 1, 5, branch)
+            EntityTestFactory.WaitingArea(10, 1, 5, branch),
+            EntityTestFactory.WaitingArea(11, 1, 8, branch)
         };
         var unitOfWork = new TestUnitOfWork();
         var handler = UpdateHandler(
@@ -291,96 +140,126 @@ public sealed class WaitingAreaCommandHandlerTests
             new UpdateWaitingAreaCommand
             {
                 Id = 10,
-                RequestId = 10,
-                BranchId = 1,
-                Number = 5
+                Number = 8,
+                RowVersion = ValidRowVersion
             },
             CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "WaitingAreas.Update.NumberAlreadyExistsInBranch");
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task Delete_deletes_successfully_when_no_windows_exist()
+    public async Task Deactivate_and_reactivate_transition_waiting_area_state()
     {
         var branch = EntityTestFactory.Branch(1);
-        var waitingArea =
-            EntityTestFactory.WaitingArea(10, 1, 5, branch);
+        var waitingArea = EntityTestFactory.WaitingArea(10, 1, 5, branch);
         var waitingAreas = new List<WaitingArea> { waitingArea };
-        var windows = new List<Window>();
-        var unitOfWork = new TestUnitOfWork();
+        var branches = new List<Branch> { branch };
         var writeRepository =
             new InMemoryWriteRepository<WaitingArea>(waitingAreas);
-        var handler = DeleteHandler(
-            waitingAreas,
-            windows,
-            writeRepository,
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new DeleteWaitingAreaCommand { Id = 10 },
-            CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Empty(waitingAreas);
-        Assert.Equal(1, writeRepository.DeleteCallCount);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Delete_returns_waiting_area_not_found()
-    {
-        var waitingAreas = new List<WaitingArea>();
-        var windows = new List<Window>();
         var unitOfWork = new TestUnitOfWork();
-        var handler = DeleteHandler(
-            waitingAreas,
-            windows,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
+        var deactivateHandler = new DeactivateWaitingAreaCommandHandler(
+            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
+            new InMemoryWriteReadRepository<Branch>(branches),
+            writeRepository,
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            new TestDateTimeProvider(),
+            unitOfWork);
+        var reactivateHandler = new ReactivateWaitingAreaCommandHandler(
+            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
+            new InMemoryWriteReadRepository<Branch>(branches),
+            writeRepository,
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            new TestDateTimeProvider(),
             unitOfWork);
 
-        var result = await handler.Handle(
-            new DeleteWaitingAreaCommand { Id = 10 },
+        var deactivateResult = await deactivateHandler.Handle(
+            new DeactivateWaitingAreaCommand
+            {
+                Id = waitingArea.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+        var reactivateResult = await reactivateHandler.Handle(
+            new ReactivateWaitingAreaCommand
+            {
+                Id = waitingArea.Id,
+                RowVersion = ValidRowVersion
+            },
             CancellationToken.None);
 
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error =>
-                error.Code ==
-                "WaitingAreas.Delete.WaitingAreaNotFound");
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.True(deactivateResult.IsSuccess);
+        Assert.True(reactivateResult.IsSuccess);
+        Assert.True(waitingArea.IsActive);
+        Assert.NotNull(waitingArea.DeactivatedOnUtc);
+        Assert.NotNull(waitingArea.ReactivatedOnUtc);
+        Assert.Equal(2, writeRepository.UpdateCallCount);
+        Assert.Equal(2, unitOfWork.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task Delete_returns_conflict_when_related_windows_exist()
+    public async Task Permanent_delete_requires_inactive_and_no_windows()
     {
         var branch = EntityTestFactory.Branch(1);
-        var waitingArea =
-            EntityTestFactory.WaitingArea(10, 1, 5, branch);
-        var waitingAreas = new List<WaitingArea> { waitingArea };
-        var windows = new List<Window>
-        {
-            EntityTestFactory.Window(100, 10, waitingArea: waitingArea)
-        };
+        var active = EntityTestFactory.WaitingArea(10, 1, 5, branch);
+        var linkedInactive = EntityTestFactory.WaitingArea(11, 1, 6, branch);
+        linkedInactive.Deactivate(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var inactive = EntityTestFactory.WaitingArea(12, 1, 7, branch);
+        inactive.Deactivate(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var window = EntityTestFactory.Window(100, linkedInactive.Id, waitingArea: linkedInactive);
+        var waitingAreas = new List<WaitingArea> { active, linkedInactive, inactive };
+        var windows = new List<Window> { window };
+        var writeRepository =
+            new InMemoryWriteRepository<WaitingArea>(waitingAreas);
         var unitOfWork = new TestUnitOfWork();
-        var handler = DeleteHandler(
-            waitingAreas,
-            windows,
-            new InMemoryWriteRepository<WaitingArea>(waitingAreas),
+        var handler = new PermanentDeleteWaitingAreaCommandHandler(
+            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
+            new InMemoryWriteReadRepository<Window>(windows),
+            writeRepository,
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
             unitOfWork);
 
-        var result = await handler.Handle(
-            new DeleteWaitingAreaCommand { Id = 10 },
+        var activeResult = await handler.Handle(
+            new PermanentDeleteWaitingAreaCommand
+            {
+                Id = active.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+        var linkedResult = await handler.Handle(
+            new PermanentDeleteWaitingAreaCommand
+            {
+                Id = linkedInactive.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+        var inactiveResult = await handler.Handle(
+            new PermanentDeleteWaitingAreaCommand
+            {
+                Id = inactive.Id,
+                RowVersion = ValidRowVersion
+            },
             CancellationToken.None);
 
-        Assert.True(result.IsFailure);
+        Assert.True(activeResult.IsFailure);
+        Assert.True(linkedResult.IsFailure);
+        Assert.True(inactiveResult.IsSuccess);
         Assert.Contains(
-            result.Errors,
-            error => error.Code == "WaitingAreas.Delete.HasWindows");
-        Assert.Single(waitingAreas);
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+            activeResult.Errors,
+            error => error.Code == "WaitingAreas.PermanentDelete.MustBeInactive");
+        Assert.Contains(
+            linkedResult.Errors,
+            error => error.Code == "WaitingAreas.PermanentDelete.HasWindows");
+        Assert.DoesNotContain(waitingAreas, area => area.Id == inactive.Id);
+        Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
     private static CreateWaitingAreaCommandHandler CreateHandler(
@@ -401,21 +280,10 @@ public sealed class WaitingAreaCommandHandlerTests
         InMemoryWriteRepository<WaitingArea> writeRepository,
         TestUnitOfWork unitOfWork)
         => new(
+            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
             new InMemoryWriteReadRepository<Branch>(branches),
-            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
             writeRepository,
-            new TestCurrentUser(),
-            unitOfWork);
-
-    private static DeleteWaitingAreaCommandHandler DeleteHandler(
-        List<WaitingArea> waitingAreas,
-        List<Window> windows,
-        InMemoryWriteRepository<WaitingArea> writeRepository,
-        TestUnitOfWork unitOfWork)
-        => new(
-            new InMemoryWriteReadRepository<WaitingArea>(waitingAreas),
-            writeRepository,
-            new InMemoryWriteReadRepository<Window>(windows),
+            new TestConcurrencyTokenManager(),
             new TestCurrentUser(),
             unitOfWork);
 }

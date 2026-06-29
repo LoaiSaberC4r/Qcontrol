@@ -1,8 +1,10 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
@@ -11,83 +13,90 @@ internal sealed class PermanentDeleteTerminalCommandHandler
     : ICommandHandler<PermanentDeleteTerminalCommand, PermanentDeleteTerminalResponse>
 {
     private readonly IWriteReadRepository<Terminal> _terminalReadRepository;
-    private readonly ITerminalPermanentDeleteRepository _permanentDeleteRepository;
+    private readonly IWriteRepository<Terminal> _terminalWriteRepository;
+    private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
 
     public PermanentDeleteTerminalCommandHandler(
         IWriteReadRepository<Terminal> terminalReadRepository,
-        ITerminalPermanentDeleteRepository permanentDeleteRepository,
-        ICurrentUser currentUser)
+        IWriteRepository<Terminal> terminalWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
     {
         _terminalReadRepository = terminalReadRepository
             ?? throw new ArgumentNullException(nameof(terminalReadRepository));
-
-        _permanentDeleteRepository = permanentDeleteRepository
-            ?? throw new ArgumentNullException(nameof(permanentDeleteRepository));
-
+        _terminalWriteRepository = terminalWriteRepository
+            ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
+        _concurrencyTokenManager = concurrencyTokenManager
+            ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<PermanentDeleteTerminalResponse>> Handle(
         PermanentDeleteTerminalCommand request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated ||
-            !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
         {
-            return Result<PermanentDeleteTerminalResponse>.Fail(
-                new Error(
-                    Code: "Terminals.PermanentDelete.Unauthenticated",
-                    Message: ErrorMessage.Terminal_Authentication_Required,
-                    Type: ErrorType.Security));
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.Unauthenticated",
+                ErrorMessage.Terminal_Authentication_Required,
+                ErrorType.Unauthorized));
         }
 
-        var terminal =
-            await _terminalReadRepository.FirstOrDefaultAsync(
-                new GetTerminalForPermanentDeleteSpec(request.Id),
-                cancellationToken);
+        if (!RowVersionConverter.TryDecode(request.RowVersion, out var rowVersion))
+        {
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.InvalidRowVersion",
+                ErrorMessage.RowVersion_Invalid,
+                ErrorType.Validation));
+        }
+
+        var terminal = await _terminalReadRepository.GetByIdTrackedAsync(
+            request.Id,
+            cancellationToken);
 
         if (terminal is null)
         {
-            return Result<PermanentDeleteTerminalResponse>.Fail(
-                new Error(
-                    Code: "Terminals.PermanentDelete.TerminalNotFound",
-                    Message: ErrorMessage.Terminal_NotFound,
-                    Type: ErrorType.NotFound));
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.TerminalNotFound",
+                ErrorMessage.Terminal_NotFound,
+                ErrorType.NotFound));
         }
 
-        if (!terminal.IsDeleted)
+        if (terminal.IsActive)
         {
-            return Result<PermanentDeleteTerminalResponse>.Fail(
-                new Error(
-                    Code: "Terminals.PermanentDelete.MustBeSoftDeleted",
-                    Message:
-                        ErrorMessage
-                            .Terminal_PermanentDelete_MustBeSoftDeleted,
-                    Type: ErrorType.Conflict));
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.MustBeInactive",
+                ErrorMessage.PermanentDelete_RequiresInactive,
+                ErrorType.Conflict));
         }
 
-        int deletedRows;
+        _concurrencyTokenManager.SetOriginalRowVersion(terminal, rowVersion);
+        _terminalWriteRepository.Delete(terminal);
+
         try
         {
-            deletedRows =
-                await _permanentDeleteRepository.DeletePermanentlyAsync(
-                    request.Id,
-                    cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (TerminalPermanentDeleteConflictException)
+        catch (DbUpdateConcurrencyException)
         {
-            return HasRelatedRecords();
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.ConcurrencyConflict",
+                ErrorMessage.Concurrency_Conflict,
+                ErrorType.Conflict));
         }
-
-        if (deletedRows == 0)
+        catch (DbUpdateException)
         {
-            return Result<PermanentDeleteTerminalResponse>.Fail(
-                new Error(
-                    Code: "Terminals.PermanentDelete.TerminalNotFound",
-                    Message: ErrorMessage.Terminal_NotFound,
-                    Type: ErrorType.NotFound));
+            return Result<PermanentDeleteTerminalResponse>.Fail(new Error(
+                "Terminals.PermanentDelete.HasRelatedRecords",
+                ErrorMessage.Terminal_PermanentDelete_HasRelatedRecords,
+                ErrorType.Conflict));
         }
 
         return Result<PermanentDeleteTerminalResponse>.Ok(
@@ -97,13 +106,4 @@ internal sealed class PermanentDeleteTerminalCommandHandler
                 Message = ErrorMessage.Terminal_PermanentDelete_Success
             });
     }
-
-    private static Result<PermanentDeleteTerminalResponse> HasRelatedRecords()
-        => Result<PermanentDeleteTerminalResponse>.Fail(
-            new Error(
-                Code: "Terminals.PermanentDelete.HasRelatedRecords",
-                Message:
-                    ErrorMessage
-                        .Terminal_PermanentDelete_HasRelatedRecords,
-                Type: ErrorType.Conflict));
 }

@@ -1,8 +1,10 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
@@ -12,14 +14,18 @@ internal sealed class PermanentDeleteDisplayCommandHandler
 {
     private readonly IWriteReadRepository<Display> _displayReadRepository;
     private readonly IWriteReadRepository<DisplayWindow> _displayWindowReadRepository;
-    private readonly IDisplayPermanentDeleteRepository _permanentDeleteRepository;
+    private readonly IWriteRepository<Display> _displayWriteRepository;
+    private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
 
     public PermanentDeleteDisplayCommandHandler(
         IWriteReadRepository<Display> displayReadRepository,
         IWriteReadRepository<DisplayWindow> displayWindowReadRepository,
-        IDisplayPermanentDeleteRepository permanentDeleteRepository,
-        ICurrentUser currentUser)
+        IWriteRepository<Display> displayWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
     {
         _displayReadRepository = displayReadRepository
             ?? throw new ArgumentNullException(nameof(displayReadRepository));
@@ -28,11 +34,17 @@ internal sealed class PermanentDeleteDisplayCommandHandler
             ?? throw new ArgumentNullException(
                 nameof(displayWindowReadRepository));
 
-        _permanentDeleteRepository = permanentDeleteRepository
-            ?? throw new ArgumentNullException(nameof(permanentDeleteRepository));
+        _displayWriteRepository = displayWriteRepository
+            ?? throw new ArgumentNullException(nameof(displayWriteRepository));
+
+        _concurrencyTokenManager = concurrencyTokenManager
+            ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
 
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<PermanentDeleteDisplayResponse>> Handle(
@@ -46,12 +58,21 @@ internal sealed class PermanentDeleteDisplayCommandHandler
                 new Error(
                     Code: "Displays.PermanentDelete.Unauthenticated",
                     Message: ErrorMessage.Display_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
+        }
+
+        if (!RowVersionConverter.TryDecode(request.RowVersion, out var rowVersion))
+        {
+            return Result<PermanentDeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.PermanentDelete.InvalidRowVersion",
+                    Message: ErrorMessage.RowVersion_Invalid,
+                    Type: ErrorType.Validation));
         }
 
         var display =
-            await _displayReadRepository.FirstOrDefaultAsync(
-                new GetDisplayForPermanentDeleteSpec(request.Id),
+            await _displayReadRepository.GetByIdTrackedAsync(
+                request.Id,
                 cancellationToken);
 
         if (display is null)
@@ -59,14 +80,12 @@ internal sealed class PermanentDeleteDisplayCommandHandler
             return DisplayNotFound();
         }
 
-        if (!display.IsDeleted)
+        if (display.IsActive)
         {
             return Result<PermanentDeleteDisplayResponse>.Fail(
                 new Error(
-                    Code: "Displays.PermanentDelete.MustBeSoftDeleted",
-                    Message:
-                        ErrorMessage
-                            .Display_PermanentDelete_MustBeSoftDeleted,
+                    Code: "Displays.PermanentDelete.MustBeInactive",
+                    Message: ErrorMessage.PermanentDelete_RequiresInactive,
                     Type: ErrorType.Conflict));
         }
 
@@ -87,22 +106,24 @@ internal sealed class PermanentDeleteDisplayCommandHandler
                     Type: ErrorType.Conflict));
         }
 
-        int deletedRows;
+        _concurrencyTokenManager.SetOriginalRowVersion(display, rowVersion);
+        _displayWriteRepository.Delete(display);
+
         try
         {
-            deletedRows =
-                await _permanentDeleteRepository.DeletePermanentlyAsync(
-                    request.Id,
-                    cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (DisplayPermanentDeleteConflictException)
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<PermanentDeleteDisplayResponse>.Fail(
+                new Error(
+                    Code: "Displays.PermanentDelete.ConcurrencyConflict",
+                    Message: ErrorMessage.Concurrency_Conflict,
+                    Type: ErrorType.Conflict));
+        }
+        catch (DbUpdateException)
         {
             return HasRelatedRecords();
-        }
-
-        if (deletedRows == 0)
-        {
-            return DisplayNotFound();
         }
 
         return Result<PermanentDeleteDisplayResponse>.Ok(

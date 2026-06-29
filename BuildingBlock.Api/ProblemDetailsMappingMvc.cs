@@ -30,8 +30,10 @@ namespace BuildingBlock.Api
         internal static (HttpStatusCode status, string typeUri, string title) Map(ErrorType type) => type switch
         {
             ErrorType.Validation => (HttpStatusCode.UnprocessableEntity, "about:blank#validation", "Validation Error"),
+            ErrorType.Domain => (HttpStatusCode.UnprocessableEntity, "about:blank#domain", "Domain Error"),
             ErrorType.NotFound => (HttpStatusCode.NotFound, "about:blank#not-found", "Resource Not Found"),
             ErrorType.Conflict => (HttpStatusCode.Conflict, "about:blank#conflict", "Conflict"),
+            ErrorType.Unauthorized => (HttpStatusCode.Unauthorized, "about:blank#unauthorized", "Unauthorized"),
             ErrorType.Security => (HttpStatusCode.Forbidden, "about:blank#security", "Security Error"),
             ErrorType.RateLimit => (HttpStatusCode.TooManyRequests, "about:blank#rate-limit", "Too Many Requests"),
             ErrorType.Infrastructure => (HttpStatusCode.ServiceUnavailable, "about:blank#infra", "Infrastructure Error"),

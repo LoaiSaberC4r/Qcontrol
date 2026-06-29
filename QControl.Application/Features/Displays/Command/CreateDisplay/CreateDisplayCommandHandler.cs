@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Displays.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
@@ -27,16 +28,12 @@ internal sealed class CreateDisplayCommandHandler
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
-
         _displayReadRepository = displayReadRepository
             ?? throw new ArgumentNullException(nameof(displayReadRepository));
-
         _displayWriteRepository = displayWriteRepository
             ?? throw new ArgumentNullException(nameof(displayWriteRepository));
-
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -45,18 +42,20 @@ internal sealed class CreateDisplayCommandHandler
         CreateDisplayCommand request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated ||
-            !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
         {
-            return Result<CreateDisplayResponse>.Fail(
-                new Error(
-                    Code: "Displays.Create.Unauthenticated",
-                    Message: ErrorMessage.Display_Authentication_Required,
-                    Type: ErrorType.Security));
+            return Result<CreateDisplayResponse>.Fail(new Error(
+                "Displays.Create.Unauthenticated",
+                ErrorMessage.Display_Authentication_Required,
+                ErrorType.Unauthorized));
         }
 
         var normalizedNumber = request.Number.Trim();
-        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedIPAddress = IPAddressNormalizer.TryNormalize(
+            request.IPAddress,
+            out var canonicalIPAddress)
+            ? canonicalIPAddress
+            : request.IPAddress.Trim();
         var normalizedSerialNo = request.SerialNo.Trim();
         var normalizedType = request.Type.Trim();
 
@@ -67,20 +66,18 @@ internal sealed class CreateDisplayCommandHandler
 
         if (branch is null)
         {
-            return Result<CreateDisplayResponse>.Fail(
-                new Error(
-                    Code: "Displays.Create.BranchNotFound",
-                    Message: ErrorMessage.Display_Branch_NotFound,
-                    Type: ErrorType.NotFound));
+            return Result<CreateDisplayResponse>.Fail(new Error(
+                "Displays.Create.BranchNotFound",
+                ErrorMessage.Display_Branch_NotFound,
+                ErrorType.NotFound));
         }
 
-        var duplicate =
-            await CheckCreateDuplicatesAsync(
-                request.BranchId,
-                normalizedNumber,
-                normalizedIPAddress,
-                normalizedSerialNo,
-                cancellationToken);
+        var duplicate = await CheckCreateDuplicatesAsync(
+            request.BranchId,
+            normalizedNumber,
+            normalizedIPAddress,
+            normalizedSerialNo,
+            cancellationToken);
 
         if (duplicate.IsFailure)
         {
@@ -120,6 +117,9 @@ internal sealed class CreateDisplayCommandHandler
                 IPAddress = display.IPAddress,
                 SerialNo = display.SerialNo,
                 Type = display.Type,
+                IsActive = display.IsActive,
+                EffectiveIsActive = branch.IsActive && display.IsActive,
+                RowVersion = RowVersionConverter.ToBase64(display.RowVersion),
                 CreatedByApplicationUserId =
                     display.CreatedByApplicationUserId,
                 CreatedOnUtc = display.CreatedOnUtc,
@@ -141,14 +141,10 @@ internal sealed class CreateDisplayCommandHandler
 
         if (existingNumberDisplayId > 0)
         {
-            return Result<CreateDisplayResponse>.Fail(
-                new Error(
-                    Code:
-                        "Displays.Create.NumberAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .Display_Number_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateDisplayResponse>.Fail(new Error(
+                "Displays.Create.NumberAlreadyExistsInBranch",
+                ErrorMessage.Display_Number_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         var existingIPAddressDisplayId =
@@ -158,14 +154,10 @@ internal sealed class CreateDisplayCommandHandler
 
         if (existingIPAddressDisplayId > 0)
         {
-            return Result<CreateDisplayResponse>.Fail(
-                new Error(
-                    Code:
-                        "Displays.Create.IPAddressAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .Display_IPAddress_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateDisplayResponse>.Fail(new Error(
+                "Displays.Create.IPAddressAlreadyExistsInBranch",
+                ErrorMessage.Display_IPAddress_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         var existingSerialNoDisplayId =
@@ -175,14 +167,10 @@ internal sealed class CreateDisplayCommandHandler
 
         if (existingSerialNoDisplayId > 0)
         {
-            return Result<CreateDisplayResponse>.Fail(
-                new Error(
-                    Code:
-                        "Displays.Create.SerialNoAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .Display_SerialNo_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateDisplayResponse>.Fail(new Error(
+                "Displays.Create.SerialNoAlreadyExistsInBranch",
+                ErrorMessage.Display_SerialNo_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         return Result<CreateDisplayResponse>.Ok(null!);

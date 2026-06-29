@@ -41,7 +41,7 @@ internal sealed class GetDisplayLinkedWindowsQueryHandler
                 new Error(
                     Code: "DisplayWindows.Linked.Unauthenticated",
                     Message: ErrorMessage.DisplayWindow_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         var display =

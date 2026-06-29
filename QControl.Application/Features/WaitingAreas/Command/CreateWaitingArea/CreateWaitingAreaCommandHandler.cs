@@ -3,6 +3,7 @@ using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.WaitingAreas.Command.CreateWaitingArea;
@@ -25,16 +26,12 @@ internal sealed class CreateWaitingAreaCommandHandler
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
-
         _waitingAreaReadRepository = waitingAreaReadRepository
             ?? throw new ArgumentNullException(nameof(waitingAreaReadRepository));
-
         _waitingAreaWriteRepository = waitingAreaWriteRepository
             ?? throw new ArgumentNullException(nameof(waitingAreaWriteRepository));
-
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -43,29 +40,24 @@ internal sealed class CreateWaitingAreaCommandHandler
         CreateWaitingAreaCommand request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated ||
-            !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
         {
-            return Result<CreateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code: "WaitingAreas.Create.Unauthenticated",
-                    Message:
-                        ErrorMessage.WaitingArea_Authentication_Required,
-                    Type: ErrorType.Security));
+            return Result<CreateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Create.Unauthenticated",
+                ErrorMessage.WaitingArea_Authentication_Required,
+                ErrorType.Unauthorized));
         }
 
-        var branchExists =
-            await _branchReadRepository.AnyAsync(
-                x => x.Id == request.BranchId,
-                cancellationToken);
+        var branch = await _branchReadRepository.GetByIdAsync(
+            request.BranchId,
+            cancellationToken);
 
-        if (!branchExists)
+        if (branch is null)
         {
-            return Result<CreateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code: "WaitingAreas.Create.BranchNotFound",
-                    Message: ErrorMessage.WaitingArea_Branch_NotFound,
-                    Type: ErrorType.NotFound));
+            return Result<CreateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Create.BranchNotFound",
+                ErrorMessage.WaitingArea_Branch_NotFound,
+                ErrorType.NotFound));
         }
 
         var numberAlreadyExists =
@@ -77,14 +69,10 @@ internal sealed class CreateWaitingAreaCommandHandler
 
         if (numberAlreadyExists)
         {
-            return Result<CreateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code:
-                        "WaitingAreas.Create.NumberAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .WaitingArea_Number_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Create.NumberAlreadyExistsInBranch",
+                ErrorMessage.WaitingArea_Number_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         var waitingArea = WaitingArea.Create(
@@ -110,6 +98,9 @@ internal sealed class CreateWaitingAreaCommandHandler
                 AudioDevice = waitingArea.AudioDevice,
                 ControlDevice = waitingArea.ControlDevice,
                 DescriptiveName = waitingArea.DescriptiveName,
+                IsActive = waitingArea.IsActive,
+                EffectiveIsActive = branch.IsActive && waitingArea.IsActive,
+                RowVersion = RowVersionConverter.ToBase64(waitingArea.RowVersion),
                 CreatedByApplicationUserId =
                     waitingArea.CreatedByApplicationUserId,
                 CreatedOnUtc = waitingArea.CreatedOnUtc,

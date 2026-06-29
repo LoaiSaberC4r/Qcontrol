@@ -18,5 +18,11 @@ public sealed record WaitingAreaListItemResponse
 
     public string? ControlDevice { get; init; }
 
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
+
     public int WindowsCount { get; init; }
 }

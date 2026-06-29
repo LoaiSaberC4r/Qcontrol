@@ -1,6 +1,6 @@
 using FluentValidation;
-using Qcontrol.Application.Features.Displays.Shared;
 using Qcontrol.Domain.Resources;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Displays.Command.CreateDisplay;
 
@@ -26,7 +26,7 @@ internal sealed class CreateDisplayCommandValidator
             .WithMessage(ErrorMessage.Display_IPAddress_Required)
             .MaximumLength(45)
             .WithMessage(ErrorMessage.Display_IPAddress_MaxLength)
-            .Must(DisplayIPAddressValidation.BeValidIPv4)
+            .Must(value => IPAddressNormalizer.TryNormalize(value, out _))
             .WithMessage(ErrorMessage.Display_IPAddress_Invalid);
 
         RuleFor(x => x.SerialNo)

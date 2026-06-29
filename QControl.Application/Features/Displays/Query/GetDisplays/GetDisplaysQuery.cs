@@ -8,6 +8,8 @@ public sealed class GetDisplaysQuery
 {
     public int? BranchId { get; set; }
 
+    public bool? IsActive { get; set; }
+
     public string? Search { get; set; }
 
     public int PageNumber { get; set; } = 1;

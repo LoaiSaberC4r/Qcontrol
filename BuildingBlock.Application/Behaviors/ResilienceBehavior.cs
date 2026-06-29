@@ -12,9 +12,6 @@ namespace BuildingBlock.Application.Behaviors
         private static readonly AsyncRetryPolicy Retry = Policy
             .Handle<TimeoutRejectedException>()
             .Or<HttpRequestException>()
-#if NET8_0_OR_GREATER
-            .Or<Microsoft.EntityFrameworkCore.DbUpdateException>()
-#endif
             .WaitAndRetryAsync(2, attempt => TimeSpan.FromMilliseconds(200 * attempt));
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)

@@ -20,5 +20,7 @@ public sealed record DisplayLinkedWindowResponse
 
     public bool EnableDirectCall { get; init; }
 
-    public bool IsDeleted { get; init; }
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
 }

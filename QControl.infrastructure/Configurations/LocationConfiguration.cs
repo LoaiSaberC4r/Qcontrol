@@ -11,7 +11,32 @@ internal sealed class LocationConfiguration
 {
     public void Configure(EntityTypeBuilder<Location> builder)
     {
-        builder.ToTable("Location");
+        builder.ToTable("Location", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_Location_Governorate_Required",
+                "NULLIF(LTRIM(RTRIM([Governorate])), N'') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Location_City_Required",
+                "NULLIF(LTRIM(RTRIM([City])), N'') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Location_Area_Required",
+                "NULLIF(LTRIM(RTRIM([Area])), N'') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Location_Address_Required",
+                "NULLIF(LTRIM(RTRIM([Address])), N'') IS NOT NULL");
+
+            table.HasCheckConstraint(
+                "CK_Location_Latitude_Range",
+                "[Latitude] >= -90 AND [Latitude] <= 90");
+
+            table.HasCheckConstraint(
+                "CK_Location_Longitude_Range",
+                "[Longitude] >= -180 AND [Longitude] <= 180");
+        });
 
         builder.HasKey(x => x.Id);
 
@@ -22,55 +47,35 @@ internal sealed class LocationConfiguration
             .IsRequired();
 
         builder.Property(x => x.Governorate)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.City)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Area)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Address)
-            .IsRequired(false)
+            .IsRequired()
             .HasMaxLength(500);
 
-        builder.Property(x => x.Longitude)
-            .IsRequired(false)
-            .HasMaxLength(50);
-
         builder.Property(x => x.Latitude)
-            .IsRequired(false)
-            .HasMaxLength(50);
+            .IsRequired()
+            .HasColumnType("decimal(9,6)");
 
-        builder.Property(x => x.CreatedByApplicationUserId)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedByApplicationUserId)
-            .IsRequired(false);
+        builder.Property(x => x.Longitude)
+            .IsRequired()
+            .HasColumnType("decimal(9,6)");
 
         builder.HasIndex(x => x.BranchId)
             .IsUnique();
 
-        builder.HasIndex(x => x.CreatedByApplicationUserId);
-
-        builder.HasIndex(x => x.LastModifiedByApplicationUserId);
-
         builder.HasOne(x => x.Branch)
             .WithOne(x => x.Location)
             .HasForeignKey<Location>(x => x.BranchId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.CreatedByApplicationUser)
-            .WithMany()
-            .HasForeignKey(x => x.CreatedByApplicationUserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.LastModifiedByApplicationUser)
-            .WithMany()
-            .HasForeignKey(x => x.LastModifiedByApplicationUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

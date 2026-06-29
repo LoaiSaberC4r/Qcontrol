@@ -1,9 +1,10 @@
-﻿using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.Branches.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Branches.Command.CreateBranch;
@@ -24,13 +25,10 @@ internal sealed class CreateBranchCommandHandler
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
-
         _branchWriteRepository = branchWriteRepository
             ?? throw new ArgumentNullException(nameof(branchWriteRepository));
-
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -44,12 +42,14 @@ internal sealed class CreateBranchCommandHandler
             return Result<CreateBranchResponse>.Fail(new Error(
                 Code: "Branches.Create.Unauthenticated",
                 Message: ErrorMessage.Branch_Authentication_Required,
-                Type: ErrorType.Security));
+                Type: ErrorType.Unauthorized));
         }
 
-        var currentApplicationUserId = _currentUser.UserId.Value;
-
-        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedIPAddress = IPAddressNormalizer.TryNormalize(
+            request.IPAddress,
+            out var canonicalIPAddress)
+            ? canonicalIPAddress
+            : request.IPAddress.Trim();
 
         var ipAddressAlreadyExists =
             await _branchReadRepository.AnyAsync(
@@ -73,9 +73,9 @@ internal sealed class CreateBranchCommandHandler
             city: request.City,
             area: request.Area,
             address: request.Address,
-            longitude: request.Longitude,
             latitude: request.Latitude,
-            createdByApplicationUserId: currentApplicationUserId);
+            longitude: request.Longitude,
+            createdByApplicationUserId: _currentUser.UserId.Value);
 
         await _branchWriteRepository.AddAsync(
             branch,
@@ -90,9 +90,10 @@ internal sealed class CreateBranchCommandHandler
             ArabicName = branch.ArabicName,
             EnglishName = branch.EnglishName,
             IPAddress = branch.IPAddress,
-            IsUpdatesAvailable = branch.IsUpdatesAvailable,
-            LastUpdated = branch.LastUpdated,
             License = branch.License,
+            IsActive = branch.IsActive,
+            EffectiveIsActive = branch.IsActive,
+            RowVersion = RowVersionConverter.ToBase64(branch.RowVersion),
             Location = new BranchLocationResponse
             {
                 Id = branch.Location.Id,
@@ -100,8 +101,8 @@ internal sealed class CreateBranchCommandHandler
                 City = branch.Location.City,
                 Area = branch.Location.Area,
                 Address = branch.Location.Address,
-                Longitude = branch.Location.Longitude,
-                Latitude = branch.Location.Latitude
+                Latitude = branch.Location.Latitude,
+                Longitude = branch.Location.Longitude
             },
             CreatedByApplicationUserId = branch.CreatedByApplicationUserId,
             CreatedOnUtc = branch.CreatedOnUtc

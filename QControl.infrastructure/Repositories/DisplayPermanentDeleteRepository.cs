@@ -26,7 +26,7 @@ internal sealed class DisplayPermanentDeleteRepository
         {
             return await _dbContext.Set<Display>()
                 .IgnoreQueryFilters()
-                .Where(x => x.Id == displayId && x.IsDeleted)
+                .Where(x => x.Id == displayId && !x.IsActive)
                 .ExecuteDeleteAsync(cancellationToken);
         }
         catch (DbUpdateException ex)

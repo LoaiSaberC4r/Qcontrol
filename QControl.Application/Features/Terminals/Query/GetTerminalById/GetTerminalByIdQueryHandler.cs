@@ -35,7 +35,7 @@ internal sealed class GetTerminalByIdQueryHandler
                 new Error(
                     Code: "Terminals.Details.Unauthenticated",
                     Message: ErrorMessage.Terminal_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         var terminal =

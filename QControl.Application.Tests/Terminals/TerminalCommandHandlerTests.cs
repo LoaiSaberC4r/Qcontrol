@@ -1,10 +1,8 @@
-using System.Data;
 using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
-using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
-using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.ReactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
-using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Tests.TestSupport;
 using QControl.Domain.Entities;
 
@@ -12,8 +10,11 @@ namespace QControl.Application.Tests.Terminals;
 
 public sealed class TerminalCommandHandlerTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
-    public async Task Create_succeeds_trims_values_and_commits_serializable_transaction()
+    public async Task Create_succeeds_trims_values_and_saves_once()
     {
         var window = Window(id: 1);
         var terminals = new List<Terminal>();
@@ -39,58 +40,49 @@ public sealed class TerminalCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Single(terminals);
+        Assert.Equal(window.BranchId, result.Value.BranchId);
         Assert.Equal("T-01", result.Value.Number);
         Assert.Equal("192.168.1.20", result.Value.IPAddress);
         Assert.Equal("ABC-100", result.Value.SerialNo);
         Assert.Equal("Operator Module", result.Value.Type);
         Assert.Equal(1, writeRepository.AddCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(1, unitOfWork.BeginTransactionCallCount);
-        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
-        Assert.Equal(1, unitOfWork.CommitTransactionCallCount);
-        Assert.Equal(0, unitOfWork.RollbackTransactionCallCount);
+        Assert.Equal(0, unitOfWork.BeginTransactionCallCount);
     }
 
     [Fact]
-    public async Task Create_rejects_deleted_window_and_rolls_back()
+    public async Task Create_allows_inactive_window_and_uses_effective_inactive()
     {
-        var window = Window(id: 1, isDeleted: true);
+        var window = Window(id: 1, isInactive: true);
         var terminals = new List<Terminal>();
         var unitOfWork = new TestUnitOfWork();
-        var writeRepository =
-            new InMemoryWriteRepository<Terminal>(terminals);
         var handler = CreateHandler(
             new List<Window> { window },
             terminals,
-            writeRepository,
+            new InMemoryWriteRepository<Terminal>(terminals),
             unitOfWork);
 
         var result = await handler.Handle(
             ValidCreate(window.Id),
             CancellationToken.None);
 
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error => error.Code == "Terminals.Create.WindowDeleted");
-        Assert.Empty(terminals);
-        Assert.Equal(0, writeRepository.AddCallCount);
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.EffectiveIsActive);
+        Assert.Single(terminals);
     }
 
     [Fact]
-    public async Task Create_rejects_duplicate_number_in_same_window_including_deleted()
+    public async Task Create_rejects_duplicate_number_in_same_window_including_inactive()
     {
         var window = Window(id: 1);
-        var deletedTerminal = Terminal(
+        var inactiveTerminal = Terminal(
             id: 10,
             window,
             number: "T-01",
             ipAddress: "192.168.1.30",
             serialNo: "ABC-200",
-            isDeleted: true);
-        var terminals = new List<Terminal> { deletedTerminal };
+            isInactive: true);
+        var terminals = new List<Terminal> { inactiveTerminal };
         var unitOfWork = new TestUnitOfWork();
         var handler = CreateHandler(
             new List<Window> { window },
@@ -105,12 +97,9 @@ public sealed class TerminalCommandHandlerTests
         Assert.True(result.IsFailure);
         Assert.Contains(
             result.Errors,
-            error =>
-                error.Code ==
-                "Terminals.Create.NumberAlreadyExistsInWindow");
+            error => error.Code == "Terminals.Create.NumberAlreadyExistsInWindow");
         Assert.Single(terminals);
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
     }
 
     [Fact]
@@ -167,18 +156,14 @@ public sealed class TerminalCommandHandlerTests
         Assert.True(otherBranch.IsSuccess);
         Assert.Contains(
             duplicateIp.Errors,
-            error =>
-                error.Code ==
-                "Terminals.Create.IPAddressAlreadyExistsInBranch");
+            error => error.Code == "Terminals.Create.IPAddressAlreadyExistsInBranch");
         Assert.Contains(
             duplicateSerial.Errors,
-            error =>
-                error.Code ==
-                "Terminals.Create.SerialNoAlreadyExistsInBranch");
+            error => error.Code == "Terminals.Create.SerialNoAlreadyExistsInBranch");
     }
 
     [Fact]
-    public async Task Update_succeeds_without_changing_window_and_commits_serializable_transaction()
+    public async Task Update_succeeds_without_changing_window_and_saves_once()
     {
         var window = Window(id: 1);
         var terminal = Terminal(10, window);
@@ -196,178 +181,117 @@ public sealed class TerminalCommandHandlerTests
             new UpdateTerminalCommand
             {
                 Id = terminal.Id,
-                RequestId = terminal.Id,
                 Number = " SELF-01 ",
                 IPAddress = " 10.0.0.25 ",
                 SerialNo = " XYZ-100 ",
-                Type = " Self-Service Module "
+                Type = " Self-Service Module ",
+                RowVersion = ValidRowVersion
             },
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(window.Id, terminal.WindowId);
+        Assert.Equal(window.BranchId, terminal.BranchId);
         Assert.Equal("SELF-01", terminal.Number);
         Assert.Equal("10.0.0.25", terminal.IPAddress);
         Assert.Equal("XYZ-100", terminal.SerialNo);
         Assert.Equal("Self-Service Module", terminal.Type);
         Assert.Equal(1, writeRepository.UpdateCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
-        Assert.Equal(1, unitOfWork.CommitTransactionCallCount);
+        Assert.Equal(0, unitOfWork.BeginTransactionCallCount);
     }
 
     [Fact]
-    public async Task Update_returns_not_found_for_soft_deleted_terminal()
-    {
-        var window = Window(id: 1);
-        var terminal = Terminal(10, window, isDeleted: true);
-        var terminals = new List<Terminal> { terminal };
-        var unitOfWork = new TestUnitOfWork();
-        var handler = UpdateHandler(
-            new List<Window> { window },
-            terminals,
-            new InMemoryWriteRepository<Terminal>(terminals),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new UpdateTerminalCommand
-            {
-                Id = terminal.Id,
-                RequestId = terminal.Id,
-                Number = "T-02",
-                IPAddress = "192.168.1.21",
-                SerialNo = "ABC-200",
-                Type = "Operator Module"
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error => error.Code == "Terminals.Update.TerminalNotFound");
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
-    }
-
-    [Fact]
-    public async Task Delete_soft_deletes_terminal_and_saves_once()
+    public async Task Deactivate_and_reactivate_transition_terminal_state()
     {
         var window = Window(id: 1);
         var terminal = Terminal(10, window);
         var terminals = new List<Terminal> { terminal };
-        var unitOfWork = new TestUnitOfWork();
+        var windows = new List<Window> { window };
         var writeRepository =
             new InMemoryWriteRepository<Terminal>(terminals);
-        var handler = new DeleteTerminalCommandHandler(
+        var unitOfWork = new TestUnitOfWork();
+        var deactivateHandler = new DeactivateTerminalCommandHandler(
             new InMemoryWriteReadRepository<Terminal>(terminals),
+            new InMemoryWriteReadRepository<Window>(windows),
             writeRepository,
+            new TestConcurrencyTokenManager(),
             new TestCurrentUser(),
+            new TestDateTimeProvider(),
             unitOfWork);
-
-        var result = await handler.Handle(
-            new DeleteTerminalCommand { Id = terminal.Id },
-            CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.True(terminal.IsDeleted);
-        Assert.NotNull(terminal.DeletedOnUtc);
-        Assert.Equal(1, writeRepository.DeleteCallCount);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task Restore_deleted_terminal_preserves_values_and_requires_active_window()
-    {
-        var window = Window(id: 1);
-        var terminal = Terminal(
-            10,
-            window,
-            number: "T-01",
-            ipAddress: "192.168.1.20",
-            serialNo: "ABC-100",
-            type: "Operator Module",
-            isDeleted: true);
-        var terminals = new List<Terminal> { terminal };
-        var unitOfWork = new TestUnitOfWork();
-        var writeRepository =
-            new InMemoryWriteRepository<Terminal>(terminals);
-        var handler = RestoreHandler(
-            new List<Window> { window },
-            terminals,
+        var reactivateHandler = new ReactivateTerminalCommandHandler(
+            new InMemoryWriteReadRepository<Terminal>(terminals),
+            new InMemoryWriteReadRepository<Window>(windows),
             writeRepository,
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            new TestDateTimeProvider(),
             unitOfWork);
 
-        var result = await handler.Handle(
-            new RestoreTerminalCommand { Id = terminal.Id },
+        var deactivateResult = await deactivateHandler.Handle(
+            new DeactivateTerminalCommand
+            {
+                Id = terminal.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+        var reactivateResult = await reactivateHandler.Handle(
+            new ReactivateTerminalCommand
+            {
+                Id = terminal.Id,
+                RowVersion = ValidRowVersion
+            },
             CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.False(terminal.IsDeleted);
-        Assert.Equal("T-01", terminal.Number);
-        Assert.Equal("192.168.1.20", terminal.IPAddress);
-        Assert.Equal("ABC-100", terminal.SerialNo);
-        Assert.Equal("Operator Module", terminal.Type);
-        Assert.Equal(1, writeRepository.UpdateCallCount);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(IsolationLevel.Serializable, unitOfWork.LastIsolationLevel);
+        Assert.True(deactivateResult.IsSuccess);
+        Assert.True(reactivateResult.IsSuccess);
+        Assert.True(terminal.IsActive);
+        Assert.NotNull(terminal.DeactivatedOnUtc);
+        Assert.NotNull(terminal.ReactivatedOnUtc);
+        Assert.Equal(2, writeRepository.UpdateCallCount);
+        Assert.Equal(2, unitOfWork.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task Restore_blocks_deleted_parent_window()
-    {
-        var window = Window(id: 1, isDeleted: true);
-        var terminal = Terminal(10, window, isDeleted: true);
-        var terminals = new List<Terminal> { terminal };
-        var unitOfWork = new TestUnitOfWork();
-        var handler = RestoreHandler(
-            new List<Window> { window },
-            terminals,
-            new InMemoryWriteRepository<Terminal>(terminals),
-            unitOfWork);
-
-        var result = await handler.Handle(
-            new RestoreTerminalCommand { Id = terminal.Id },
-            CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(
-            result.Errors,
-            error => error.Code == "Terminals.Restore.WindowDeleted");
-        Assert.True(terminal.IsDeleted);
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
-        Assert.Equal(1, unitOfWork.RollbackTransactionCallCount);
-    }
-
-    [Fact]
-    public async Task Permanent_delete_requires_soft_delete_and_calls_repository_once()
+    public async Task Permanent_delete_requires_inactive_terminal_and_deletes_once()
     {
         var window = Window(id: 1);
         var active = Terminal(10, window);
-        var deleted = Terminal(11, window, number: "T-02", isDeleted: true);
-        var terminals = new List<Terminal> { active, deleted };
-        var permanentRepository =
-            new TestTerminalPermanentDeleteRepository();
+        var inactive = Terminal(11, window, number: "T-02", isInactive: true);
+        var terminals = new List<Terminal> { active, inactive };
+        var writeRepository =
+            new InMemoryWriteRepository<Terminal>(terminals);
+        var unitOfWork = new TestUnitOfWork();
         var handler = new PermanentDeleteTerminalCommandHandler(
             new InMemoryWriteReadRepository<Terminal>(terminals),
-            permanentRepository,
-            new TestCurrentUser());
+            writeRepository,
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            unitOfWork);
 
         var activeResult = await handler.Handle(
-            new PermanentDeleteTerminalCommand { Id = active.Id },
+            new PermanentDeleteTerminalCommand
+            {
+                Id = active.Id,
+                RowVersion = ValidRowVersion
+            },
             CancellationToken.None);
-        var deletedResult = await handler.Handle(
-            new PermanentDeleteTerminalCommand { Id = deleted.Id },
+        var inactiveResult = await handler.Handle(
+            new PermanentDeleteTerminalCommand
+            {
+                Id = inactive.Id,
+                RowVersion = ValidRowVersion
+            },
             CancellationToken.None);
 
         Assert.True(activeResult.IsFailure);
-        Assert.True(deletedResult.IsSuccess);
+        Assert.True(inactiveResult.IsSuccess);
         Assert.Contains(
             activeResult.Errors,
-            error =>
-                error.Code ==
-                "Terminals.PermanentDelete.MustBeSoftDeleted");
-        Assert.Equal(1, permanentRepository.CallCount);
-        Assert.Equal(deleted.Id, permanentRepository.LastTerminalId);
+            error => error.Code == "Terminals.PermanentDelete.MustBeInactive");
+        Assert.DoesNotContain(terminals, terminal => terminal.Id == inactive.Id);
+        Assert.Equal(1, writeRepository.DeleteCallCount);
+        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
     private static CreateTerminalCommand ValidCreate(int windowId)
@@ -398,7 +322,7 @@ public sealed class TerminalCommandHandlerTests
     private static Window Window(
         int id,
         WaitingArea? waitingArea = null,
-        bool isDeleted = false)
+        bool isInactive = false)
     {
         waitingArea ??= WaitingArea(id);
 
@@ -407,7 +331,7 @@ public sealed class TerminalCommandHandlerTests
             waitingArea.Id,
             number: id.ToString(),
             waitingArea,
-            isDeleted: isDeleted);
+            isInactive: isInactive);
     }
 
     private static Terminal Terminal(
@@ -417,7 +341,7 @@ public sealed class TerminalCommandHandlerTests
         string ipAddress = "192.168.1.20",
         string serialNo = "ABC-100",
         string type = "Operator Module",
-        bool isDeleted = false)
+        bool isInactive = false)
         => EntityTestFactory.Terminal(
             id,
             window.Id,
@@ -426,7 +350,7 @@ public sealed class TerminalCommandHandlerTests
             serialNo,
             type,
             window,
-            isDeleted);
+            isInactive);
 
     private static CreateTerminalCommandHandler CreateHandler(
         List<Window> windows,
@@ -449,36 +373,7 @@ public sealed class TerminalCommandHandlerTests
             new InMemoryWriteReadRepository<Window>(windows),
             new InMemoryWriteReadRepository<Terminal>(terminals),
             writeRepository,
+            new TestConcurrencyTokenManager(),
             new TestCurrentUser(),
             unitOfWork);
-
-    private static RestoreTerminalCommandHandler RestoreHandler(
-        List<Window> windows,
-        List<Terminal> terminals,
-        InMemoryWriteRepository<Terminal> writeRepository,
-        TestUnitOfWork unitOfWork)
-        => new(
-            new InMemoryWriteReadRepository<Window>(windows),
-            new InMemoryWriteReadRepository<Terminal>(terminals),
-            writeRepository,
-            new TestCurrentUser(),
-            unitOfWork);
-
-    private sealed class TestTerminalPermanentDeleteRepository
-        : ITerminalPermanentDeleteRepository
-    {
-        public int CallCount { get; private set; }
-
-        public int? LastTerminalId { get; private set; }
-
-        public Task<int> DeletePermanentlyAsync(
-            int terminalId,
-            CancellationToken cancellationToken)
-        {
-            CallCount++;
-            LastTerminalId = terminalId;
-
-            return Task.FromResult(1);
-        }
-    }
 }

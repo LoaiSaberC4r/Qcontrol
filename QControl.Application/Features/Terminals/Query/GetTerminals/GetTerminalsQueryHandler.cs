@@ -36,7 +36,7 @@ internal sealed class GetTerminalsQueryHandler
                 new Error(
                     Code: "Terminals.Pagination.Unauthenticated",
                     Message: ErrorMessage.Terminal_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         request.Search ??= string.Empty;

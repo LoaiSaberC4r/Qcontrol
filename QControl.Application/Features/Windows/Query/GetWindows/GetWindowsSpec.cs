@@ -1,4 +1,5 @@
 using BuildingBlock.Domain.Specification;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Windows.Query.GetWindows;
@@ -14,16 +15,29 @@ internal sealed class GetWindowsSpec
             AddCriteria(x => x.WaitingAreaId == waitingAreaId);
         }
 
+        if (query.IsActive.HasValue)
+        {
+            var isActive = query.IsActive.Value;
+            AddCriteria(x => x.IsActive == isActive);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var searchText = query.Search.Trim();
 
-            AddCriteria(x =>
-                x.Number.Contains(searchText) ||
-                (x.DescriptiveName != null &&
-                    x.DescriptiveName.Contains(searchText)) ||
-                (x.IPAddress != null &&
-                    x.IPAddress.Contains(searchText)));
+            if (StatusSearchTerm.TryParse(searchText, out var status))
+            {
+                AddCriteria(x => x.IsActive == status);
+            }
+            else
+            {
+                AddCriteria(x =>
+                    x.Number.Contains(searchText) ||
+                    (x.DescriptiveName != null &&
+                        x.DescriptiveName.Contains(searchText)) ||
+                    (x.IPAddress != null &&
+                        x.IPAddress.Contains(searchText)));
+            }
         }
 
         AddOrderBy(x => x.WaitingAreaId);
@@ -41,6 +55,7 @@ internal sealed class GetWindowsSpec
         Select(x => new WindowListItemResponse
         {
             Id = x.Id,
+            BranchId = x.BranchId,
             WaitingAreaId = x.WaitingAreaId,
             WaitingAreaNumber = x.WaitingArea.Number,
             WaitingAreaDescriptiveName = x.WaitingArea.DescriptiveName,
@@ -48,7 +63,13 @@ internal sealed class GetWindowsSpec
             DescriptiveName = x.DescriptiveName,
             IPAddress = x.IPAddress,
             EnableTicketBooking = x.EnableTicketBooking,
-            EnableDirectCall = x.EnableDirectCall
+            EnableDirectCall = x.EnableDirectCall,
+            IsActive = x.IsActive,
+            EffectiveIsActive =
+                x.WaitingArea.Branch.IsActive &&
+                x.WaitingArea.IsActive &&
+                x.IsActive,
+            RowVersion = RowVersionConverter.ToBase64(x.RowVersion)
         });
     }
 }

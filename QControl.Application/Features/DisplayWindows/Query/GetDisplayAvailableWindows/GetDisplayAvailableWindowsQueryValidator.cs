@@ -21,5 +21,9 @@ internal sealed class GetDisplayAvailableWindowsQueryValidator
             .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Invalid)
             .LessThanOrEqualTo(100)
             .WithMessage(ErrorMessage.DisplayWindow_Pagination_PageSize_Max);
+
+        RuleFor(x => x.Search)
+            .MaximumLength(200)
+            .WithMessage(ErrorMessage.SearchTerm_MaxLength);
     }
 }

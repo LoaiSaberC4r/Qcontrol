@@ -54,7 +54,7 @@ internal sealed class AssignWindowToDisplayCommandHandler
             return Failure(
                 "DisplayWindows.Assign.Unauthenticated",
                 ErrorMessage.DisplayWindow_Authentication_Required,
-                ErrorType.Security);
+                ErrorType.Unauthorized);
         }
 
         var display =
@@ -70,14 +70,6 @@ internal sealed class AssignWindowToDisplayCommandHandler
                 ErrorType.NotFound);
         }
 
-        if (display.IsDeleted)
-        {
-            return Failure(
-                "DisplayWindows.Assign.DisplayDeleted",
-                ErrorMessage.DisplayWindow_Assign_DisplayDeleted,
-                ErrorType.Conflict);
-        }
-
         var window =
             await _windowReadRepository.FirstOrDefaultAsync(
                 new GetWindowForAssignmentSpec(request.WindowId),
@@ -89,14 +81,6 @@ internal sealed class AssignWindowToDisplayCommandHandler
                 "DisplayWindows.Assign.WindowNotFound",
                 ErrorMessage.DisplayWindow_Window_NotFound,
                 ErrorType.NotFound);
-        }
-
-        if (window.IsDeleted)
-        {
-            return Failure(
-                "DisplayWindows.Assign.WindowDeleted",
-                ErrorMessage.DisplayWindow_Assign_WindowDeleted,
-                ErrorType.Conflict);
         }
 
         if (display.BranchId != window.BranchId)
@@ -123,6 +107,7 @@ internal sealed class AssignWindowToDisplayCommandHandler
         }
 
         var displayWindow = DisplayWindow.Create(
+            display.BranchId,
             request.DisplayId,
             request.WindowId,
             _currentUser.UserId.Value);
