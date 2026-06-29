@@ -15,6 +15,10 @@ public sealed record PermanentDeleteBranchCommand
     {
         OperationalCacheTags.Branches,
         OperationalCacheTags.Branch(BranchId),
+        OperationalCacheTags.BranchBranding,
+        OperationalCacheTags.BranchBrandingForBranch(BranchId),
+        OperationalCacheTags.BranchAdvertisements,
+        OperationalCacheTags.BranchAdvertisementsForBranch(BranchId),
         OperationalCacheTags.WaitingAreas,
         OperationalCacheTags.Displays
     };

@@ -609,4 +609,73 @@
   <data name="WaitingArea_PermanentDelete_HasWindows" xml:space="preserve">
     <value>The waiting area cannot be permanently deleted because it contains windows.</value>
   </data>
+  <data name="BranchBranding_Save_Success" xml:space="preserve">
+    <value>تم حفظ هوية الفرع بنجاح.</value>
+  </data>
+  <data name="BranchBranding_Theme_Save_Success" xml:space="preserve">
+    <value>تم حفظ ألوان الفرع بنجاح.</value>
+  </data>
+  <data name="BranchBranding_Logo_Upload_Success" xml:space="preserve">
+    <value>تم رفع شعار الفرع بنجاح.</value>
+  </data>
+  <data name="BranchBranding_InvalidColor" xml:space="preserve">
+    <value>يجب أن تكون الألوان بصيغة سداسية #RRGGBB.</value>
+  </data>
+  <data name="BranchBranding_Logo_Required" xml:space="preserve">
+    <value>صورة شعار الفرع مطلوبة.</value>
+  </data>
+  <data name="BranchBranding_InvalidImageType" xml:space="preserve">
+    <value>الصور المدعومة فقط هي PNG و JPG و JPEG و WEBP.</value>
+  </data>
+  <data name="BranchBranding_MediaSaveFailed" xml:space="preserve">
+    <value>تعذر حفظ صورة هوية الفرع. يرجى المحاولة مرة أخرى.</value>
+  </data>
+  <data name="BranchAdvertisement_Images_Required" xml:space="preserve">
+    <value>يجب رفع صورة إعلان واحدة على الأقل.</value>
+  </data>
+  <data name="BranchAdvertisement_InvalidImageType" xml:space="preserve">
+    <value>صور الإعلانات المدعومة فقط هي PNG و JPG و JPEG و WEBP.</value>
+  </data>
+  <data name="BranchAdvertisement_LimitExceeded" xml:space="preserve">
+    <value>يمكن أن يحتوي الفرع على 20 صورة إعلان كحد أقصى.</value>
+  </data>
+  <data name="BranchAdvertisement_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الإعلان.</value>
+  </data>
+  <data name="BranchAdvertisement_DoesNotBelongToBranch" xml:space="preserve">
+    <value>الإعلان لا يتبع الفرع المحدد.</value>
+  </data>
+  <data name="BranchAdvertisement_InvalidDisplayOrder" xml:space="preserve">
+    <value>يجب أن يكون ترتيب العرض بين 1 و 20.</value>
+  </data>
+  <data name="BranchAdvertisement_DuplicateDisplayOrder" xml:space="preserve">
+    <value>يجب ألا يتكرر ترتيب عرض الإعلانات.</value>
+  </data>
+  <data name="BranchAdvertisement_IncompleteReorder" xml:space="preserve">
+    <value>يجب أن يحتوي طلب إعادة الترتيب على جميع الإعلانات الحالية بترتيب متصل.</value>
+  </data>
+  <data name="BranchAdvertisement_AlreadyActive" xml:space="preserve">
+    <value>الإعلان مفعل بالفعل.</value>
+  </data>
+  <data name="BranchAdvertisement_AlreadyInactive" xml:space="preserve">
+    <value>الإعلان غير مفعل بالفعل.</value>
+  </data>
+  <data name="BranchAdvertisement_Deactivate_Success" xml:space="preserve">
+    <value>تم إلغاء تفعيل الإعلان بنجاح.</value>
+  </data>
+  <data name="BranchAdvertisement_Reactivate_Success" xml:space="preserve">
+    <value>تم إعادة تفعيل الإعلان بنجاح.</value>
+  </data>
+  <data name="BranchAdvertisement_Delete_Success" xml:space="preserve">
+    <value>تم حذف الإعلان بنجاح.</value>
+  </data>
+  <data name="BranchAdvertisement_MediaSaveFailed" xml:space="preserve">
+    <value>تعذر حفظ صورة الإعلان. يرجى المحاولة مرة أخرى.</value>
+  </data>
+  <data name="BranchAdvertisement_OrderConflict" xml:space="preserve">
+    <value>تعذر حفظ ترتيب الإعلانات لأن طلبا آخر قام بتغيير الترتيب.</value>
+  </data>
+  <data name="BranchAdvertisement_Id_Required" xml:space="preserve">
+    <value>معرف إعلان صالح مطلوب.</value>
+  </data>
 </root>

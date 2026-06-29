@@ -1,7 +1,9 @@
 using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Media;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Shared.Operational;
@@ -17,9 +19,15 @@ internal sealed class PermanentDeleteBranchCommandHandler
     private readonly IWriteRepository<Location> _locationWriteRepository;
     private readonly IWriteReadRepository<WaitingArea> _waitingAreaReadRepository;
     private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<QControl.Domain.Entities.BranchBranding>? _brandingReadRepository;
+    private readonly IWriteRepository<QControl.Domain.Entities.BranchBranding>? _brandingWriteRepository;
+    private readonly IWriteReadRepository<BranchAdvertisement>? _advertisementReadRepository;
+    private readonly IWriteRepository<BranchAdvertisement>? _advertisementWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediaService? _mediaService;
+    private readonly ILogger<PermanentDeleteBranchCommandHandler>? _logger;
 
     public PermanentDeleteBranchCommandHandler(
         IWriteReadRepository<Branch> branchReadRepository,
@@ -29,7 +37,13 @@ internal sealed class PermanentDeleteBranchCommandHandler
         IWriteReadRepository<Display> displayReadRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IWriteReadRepository<QControl.Domain.Entities.BranchBranding>? brandingReadRepository = null,
+        IWriteRepository<QControl.Domain.Entities.BranchBranding>? brandingWriteRepository = null,
+        IWriteReadRepository<BranchAdvertisement>? advertisementReadRepository = null,
+        IWriteRepository<BranchAdvertisement>? advertisementWriteRepository = null,
+        IMediaService? mediaService = null,
+        ILogger<PermanentDeleteBranchCommandHandler>? logger = null)
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
@@ -41,12 +55,18 @@ internal sealed class PermanentDeleteBranchCommandHandler
             ?? throw new ArgumentNullException(nameof(waitingAreaReadRepository));
         _displayReadRepository = displayReadRepository
             ?? throw new ArgumentNullException(nameof(displayReadRepository));
+        _brandingReadRepository = brandingReadRepository;
+        _brandingWriteRepository = brandingWriteRepository;
+        _advertisementReadRepository = advertisementReadRepository;
+        _advertisementWriteRepository = advertisementWriteRepository;
         _concurrencyTokenManager = concurrencyTokenManager
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _mediaService = mediaService;
+        _logger = logger;
     }
 
     public async Task<Result<PermanentDeleteBranchResponse>> Handle(
@@ -107,6 +127,39 @@ internal sealed class PermanentDeleteBranchCommandHandler
 
         _concurrencyTokenManager.SetOriginalRowVersion(branch, rowVersion);
 
+        var branding = _brandingReadRepository is null
+            ? null
+            : await _brandingReadRepository.FirstOrDefaultAsync(
+                new GetBranchBrandingForPermanentDeleteSpec(branch.Id),
+                cancellationToken);
+
+        var advertisements = _advertisementReadRepository is null
+            ? new List<BranchAdvertisement>()
+            : await _advertisementReadRepository.ListAsync(
+                new GetBranchAdvertisementsForPermanentDeleteSpec(branch.Id),
+                cancellationToken);
+
+        var mediaPaths = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(branding?.LogoPath))
+        {
+            mediaPaths.Add(branding.LogoPath);
+        }
+
+        mediaPaths.AddRange(advertisements
+            .Select(x => x.ImagePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path)));
+
+        if (advertisements.Count > 0)
+        {
+            _advertisementWriteRepository?.DeleteRange(advertisements);
+        }
+
+        if (branding is not null)
+        {
+            _brandingWriteRepository?.Delete(branding);
+        }
+
         if (branch.Location is not null)
         {
             _locationWriteRepository.Delete(branch.Location);
@@ -131,6 +184,21 @@ internal sealed class PermanentDeleteBranchCommandHandler
                 "Branches.PermanentDelete.HasRelatedData",
                 ErrorMessage.Branch_PermanentDelete_HasRelatedData,
                 ErrorType.Conflict));
+        }
+
+        if (_mediaService is not null && mediaPaths.Count > 0)
+        {
+            try
+            {
+                _mediaService.RemoveRange(mediaPaths);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(
+                    ex,
+                    "Branch branding media cleanup failed after permanent delete for branch {BranchId}.",
+                    request.BranchId);
+            }
         }
 
         return Result<PermanentDeleteBranchResponse>.Ok(

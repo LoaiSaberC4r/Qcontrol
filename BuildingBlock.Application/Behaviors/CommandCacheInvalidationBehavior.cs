@@ -18,28 +18,22 @@ namespace BuildingBlock.Application.Behaviors
         {
             var response = await next();
 
-            if (request is ICommand && ResultInspector.IsSuccess(response))
+            if (request is ICacheInvalidator invalidator &&
+                ResultInspector.IsSuccess(response))
             {
-                if (request is ICacheInvalidator invalidator)
-                {
-                    var tags = (invalidator.Tags ?? Enumerable.Empty<string>())
-                        .Where(t => !string.IsNullOrWhiteSpace(t))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToArray();
+                var tags = (invalidator.Tags ?? Enumerable.Empty<string>())
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
 
-                    if (tags.Length > 0)
-                    {
-                        await _cache.InvalidateByTagsAsync(tags, ct);
-                        _log.LogInformation("CACHE INVALIDATE tags=[{Tags}]", string.Join(",", tags));
-                    }
-                    else
-                    {
-                        _log.LogWarning("CACHE INVALIDATE skipped: ICacheInvalidator has NO tags.");
-                    }
+                if (tags.Length > 0)
+                {
+                    await _cache.InvalidateByTagsAsync(tags, ct);
+                    _log.LogInformation("CACHE INVALIDATE tags=[{Tags}]", string.Join(",", tags));
                 }
                 else
                 {
-                    _log.LogWarning("CACHE INVALIDATE skipped: ICommand does not implement ICacheInvalidator.");
+                    _log.LogWarning("CACHE INVALIDATE skipped: ICacheInvalidator has NO tags.");
                 }
             }
 

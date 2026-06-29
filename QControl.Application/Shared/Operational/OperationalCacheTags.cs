@@ -8,8 +8,16 @@ internal static class OperationalCacheTags
     public const string Terminals = "terminals";
     public const string Displays = "displays";
     public const string DisplayWindows = "display-windows";
+    public const string BranchBranding = "branch-branding";
+    public const string BranchAdvertisements = "branch-advertisements";
 
     public static string Branch(int branchId) => $"branch:{branchId}";
+
+    public static string BranchBrandingForBranch(int branchId) =>
+        $"branch:{branchId}:branding";
+
+    public static string BranchAdvertisementsForBranch(int branchId) =>
+        $"branch:{branchId}:advertisements";
 
     public static string WaitingArea(int waitingAreaId) =>
         $"waiting-area:{waitingAreaId}";
