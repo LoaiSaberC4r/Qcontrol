@@ -6,6 +6,8 @@ public sealed record CreateTerminalResponse
 
     public int WindowId { get; init; }
 
+    public int BranchId { get; init; }
+
     public string Number { get; init; } = string.Empty;
 
     public string IPAddress { get; init; } = string.Empty;
@@ -13,6 +15,12 @@ public sealed record CreateTerminalResponse
     public string SerialNo { get; init; } = string.Empty;
 
     public string Type { get; init; } = string.Empty;
+
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
 
     public Guid CreatedByApplicationUserId { get; init; }
 

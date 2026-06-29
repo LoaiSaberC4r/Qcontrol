@@ -1,4 +1,4 @@
-﻿using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using BuildingBlock.Domain.SharedDto;
@@ -37,7 +37,7 @@ internal sealed class GetBranchesPaginationQueryHandler
                 new Error(
                     Code: "Branches.Pagination.Unauthenticated",
                     Message: ErrorMessage.Branch_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         request.SearchText ??= string.Empty;

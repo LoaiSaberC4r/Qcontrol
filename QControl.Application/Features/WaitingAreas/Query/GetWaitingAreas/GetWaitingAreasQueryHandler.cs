@@ -37,7 +37,7 @@ internal sealed class GetWaitingAreasQueryHandler
                     Code: "WaitingAreas.Pagination.Unauthenticated",
                     Message:
                         ErrorMessage.WaitingArea_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         request.Search ??= string.Empty;

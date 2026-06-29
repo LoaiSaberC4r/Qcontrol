@@ -1,6 +1,6 @@
 using FluentValidation;
-using Qcontrol.Application.Features.Windows.Shared;
 using Qcontrol.Domain.Resources;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Windows.Command.CreateWindow;
 
@@ -26,7 +26,9 @@ internal sealed class CreateWindowCommandValidator
         RuleFor(x => x.IPAddress)
             .MaximumLength(45)
             .WithMessage(ErrorMessage.Window_IPAddress_MaxLength)
-            .Must(WindowIPAddressValidation.BeValidIPAddress)
+            .Must(value =>
+                string.IsNullOrWhiteSpace(value) ||
+                IPAddressNormalizer.TryNormalize(value, out _))
             .WithMessage(ErrorMessage.Window_IPAddress_Invalid);
     }
 }

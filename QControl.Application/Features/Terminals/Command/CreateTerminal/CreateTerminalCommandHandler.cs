@@ -1,10 +1,10 @@
-using System.Data;
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.Terminals.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
@@ -27,16 +27,12 @@ internal sealed class CreateTerminalCommandHandler
     {
         _windowReadRepository = windowReadRepository
             ?? throw new ArgumentNullException(nameof(windowReadRepository));
-
         _terminalReadRepository = terminalReadRepository
             ?? throw new ArgumentNullException(nameof(terminalReadRepository));
-
         _terminalWriteRepository = terminalWriteRepository
             ?? throw new ArgumentNullException(nameof(terminalWriteRepository));
-
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -45,32 +41,22 @@ internal sealed class CreateTerminalCommandHandler
         CreateTerminalCommand request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated ||
-            !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
         {
-            return Result<CreateTerminalResponse>.Fail(
-                new Error(
-                    Code: "Terminals.Create.Unauthenticated",
-                    Message: ErrorMessage.Terminal_Authentication_Required,
-                    Type: ErrorType.Security));
+            return Result<CreateTerminalResponse>.Fail(new Error(
+                "Terminals.Create.Unauthenticated",
+                ErrorMessage.Terminal_Authentication_Required,
+                ErrorType.Unauthorized));
         }
 
         var normalizedNumber = request.Number.Trim();
-        var normalizedIPAddress = request.IPAddress.Trim();
+        var normalizedIPAddress = IPAddressNormalizer.TryNormalize(
+            request.IPAddress,
+            out var canonicalIPAddress)
+            ? canonicalIPAddress
+            : request.IPAddress.Trim();
         var normalizedSerialNo = request.SerialNo.Trim();
         var normalizedType = request.Type.Trim();
-
-        await using var transaction =
-            await _unitOfWork.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-
-        async Task<Result<CreateTerminalResponse>> RollbackFailure(
-            Error error)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            return Result<CreateTerminalResponse>.Fail(error);
-        }
 
         var windowContext =
             await _windowReadRepository.FirstOrDefaultAsync(
@@ -79,20 +65,10 @@ internal sealed class CreateTerminalCommandHandler
 
         if (windowContext is null)
         {
-            return await RollbackFailure(
-                new Error(
-                    Code: "Terminals.Create.WindowNotFound",
-                    Message: ErrorMessage.Terminal_Window_NotFound,
-                    Type: ErrorType.NotFound));
-        }
-
-        if (windowContext.WindowIsDeleted)
-        {
-            return await RollbackFailure(
-                new Error(
-                    Code: "Terminals.Create.WindowDeleted",
-                    Message: ErrorMessage.Terminal_Window_Deleted,
-                    Type: ErrorType.Conflict));
+            return Result<CreateTerminalResponse>.Fail(new Error(
+                "Terminals.Create.WindowNotFound",
+                ErrorMessage.Terminal_Window_NotFound,
+                ErrorType.NotFound));
         }
 
         var existingNumberTerminalId =
@@ -104,12 +80,10 @@ internal sealed class CreateTerminalCommandHandler
 
         if (existingNumberTerminalId > 0)
         {
-            return await RollbackFailure(
-                new Error(
-                    Code: "Terminals.Create.NumberAlreadyExistsInWindow",
-                    Message:
-                        ErrorMessage.Terminal_Number_AlreadyExistsInWindow,
-                    Type: ErrorType.Conflict));
+            return Result<CreateTerminalResponse>.Fail(new Error(
+                "Terminals.Create.NumberAlreadyExistsInWindow",
+                ErrorMessage.Terminal_Number_AlreadyExistsInWindow,
+                ErrorType.Conflict));
         }
 
         var existingIPAddressTerminalId =
@@ -121,14 +95,10 @@ internal sealed class CreateTerminalCommandHandler
 
         if (existingIPAddressTerminalId > 0)
         {
-            return await RollbackFailure(
-                new Error(
-                    Code:
-                        "Terminals.Create.IPAddressAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .Terminal_IPAddress_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateTerminalResponse>.Fail(new Error(
+                "Terminals.Create.IPAddressAlreadyExistsInBranch",
+                ErrorMessage.Terminal_IPAddress_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         var existingSerialNoTerminalId =
@@ -140,17 +110,14 @@ internal sealed class CreateTerminalCommandHandler
 
         if (existingSerialNoTerminalId > 0)
         {
-            return await RollbackFailure(
-                new Error(
-                    Code:
-                        "Terminals.Create.SerialNoAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .Terminal_SerialNo_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<CreateTerminalResponse>.Fail(new Error(
+                "Terminals.Create.SerialNoAlreadyExistsInBranch",
+                ErrorMessage.Terminal_SerialNo_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
         var terminal = Terminal.Create(
+            branchId: windowContext.BranchId,
             windowId: request.WindowId,
             number: normalizedNumber,
             ipAddress: normalizedIPAddress,
@@ -163,17 +130,24 @@ internal sealed class CreateTerminalCommandHandler
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
 
         return Result<CreateTerminalResponse>.Ok(
             new CreateTerminalResponse
             {
                 Id = terminal.Id,
+                BranchId = terminal.BranchId,
                 WindowId = terminal.WindowId,
                 Number = terminal.Number,
                 IPAddress = terminal.IPAddress,
                 SerialNo = terminal.SerialNo,
                 Type = terminal.Type,
+                IsActive = terminal.IsActive,
+                EffectiveIsActive =
+                    windowContext.BranchIsActive &&
+                    windowContext.WaitingAreaIsActive &&
+                    windowContext.WindowIsActive &&
+                    terminal.IsActive,
+                RowVersion = RowVersionConverter.ToBase64(terminal.RowVersion),
                 CreatedByApplicationUserId =
                     terminal.CreatedByApplicationUserId,
                 CreatedOnUtc = terminal.CreatedOnUtc,

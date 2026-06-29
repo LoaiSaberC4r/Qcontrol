@@ -12,5 +12,9 @@ internal sealed record TerminalWindowContext
 
     public int WaitingAreaNumber { get; init; }
 
-    public bool WindowIsDeleted { get; init; }
+    public bool BranchIsActive { get; init; }
+
+    public bool WaitingAreaIsActive { get; init; }
+
+    public bool WindowIsActive { get; init; }
 }

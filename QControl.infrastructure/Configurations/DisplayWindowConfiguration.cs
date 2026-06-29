@@ -24,11 +24,13 @@ internal sealed class DisplayWindowConfiguration
         builder.Property(x => x.WindowId)
             .IsRequired();
 
+        builder.Property(x => x.BranchId)
+            .IsRequired();
+
         builder.Property(x => x.CreatedByApplicationUserId)
             .IsRequired();
 
-        builder.Property(x => x.LastModifiedByApplicationUserId)
-            .IsRequired(false);
+        builder.HasIndex(x => x.BranchId);
 
         builder.HasIndex(x => x.DisplayId);
 
@@ -43,26 +45,37 @@ internal sealed class DisplayWindowConfiguration
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 
-        builder.HasIndex(x => x.LastModifiedByApplicationUserId);
-
         builder.HasOne(x => x.Display)
             .WithMany(x => x.DisplayWindows)
-            .HasForeignKey(x => x.DisplayId)
+            .HasForeignKey(x => new
+            {
+                x.DisplayId,
+                x.BranchId
+            })
+            .HasPrincipalKey(x => new
+            {
+                x.Id,
+                x.BranchId
+            })
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.Window)
             .WithMany(x => x.DisplayWindows)
-            .HasForeignKey(x => x.WindowId)
+            .HasForeignKey(x => new
+            {
+                x.WindowId,
+                x.BranchId
+            })
+            .HasPrincipalKey(x => new
+            {
+                x.Id,
+                x.BranchId
+            })
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.CreatedByApplicationUser)
             .WithMany()
             .HasForeignKey(x => x.CreatedByApplicationUserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.LastModifiedByApplicationUser)
-            .WithMany()
-            .HasForeignKey(x => x.LastModifiedByApplicationUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

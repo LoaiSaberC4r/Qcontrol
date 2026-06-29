@@ -22,5 +22,10 @@ internal sealed class GetDisplaysQueryValidator
             .WithMessage(ErrorMessage.Display_Pagination_PageSize_Invalid)
             .LessThanOrEqualTo(100)
             .WithMessage(ErrorMessage.Display_Pagination_PageSize_Max);
+
+        RuleFor(x => x.Search)
+            .MaximumLength(100)
+            .WithMessage(ErrorMessage.SearchTerm_MaxLength)
+            .When(x => !string.IsNullOrWhiteSpace(x.Search));
     }
 }

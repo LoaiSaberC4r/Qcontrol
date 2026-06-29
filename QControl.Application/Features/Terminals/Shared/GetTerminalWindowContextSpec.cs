@@ -17,10 +17,12 @@ internal sealed class GetTerminalWindowContextSpec
         {
             WindowId = x.Id,
             WaitingAreaId = x.WaitingAreaId,
-            BranchId = x.WaitingArea.BranchId,
+            BranchId = x.BranchId,
             WindowNumber = x.Number,
             WaitingAreaNumber = x.WaitingArea.Number,
-            WindowIsDeleted = x.IsDeleted
+            BranchIsActive = x.WaitingArea.Branch.IsActive,
+            WaitingAreaIsActive = x.WaitingArea.IsActive,
+            WindowIsActive = x.IsActive
         });
     }
 }

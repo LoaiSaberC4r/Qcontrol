@@ -1,9 +1,11 @@
 using BuildingBlock.Application.Abstraction;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.WaitingAreas.Command.CreateWaitingArea;
 
 public sealed record CreateWaitingAreaCommand
-    : ICommand<CreateWaitingAreaResponse>
+    : ICommand<CreateWaitingAreaResponse>,
+      ICacheInvalidator
 {
     public int BranchId { get; init; }
 
@@ -14,4 +16,10 @@ public sealed record CreateWaitingAreaCommand
     public string? ControlDevice { get; init; }
 
     public string? DescriptiveName { get; init; }
+
+    public IEnumerable<string> Tags => new[]
+    {
+        OperationalCacheTags.WaitingAreas,
+        OperationalCacheTags.Branch(BranchId)
+    };
 }

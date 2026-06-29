@@ -27,16 +27,6 @@ internal static class DisplayUniqueConstraintErrorMapper
             "Displays.Update.SerialNoAlreadyExistsInBranch",
             out error);
 
-    public static bool TryMapRestore(
-        DbUpdateException exception,
-        out Error error)
-        => TryMap(
-            exception,
-            "Displays.Restore.NumberConflict",
-            "Displays.Restore.IPAddressConflict",
-            "Displays.Restore.SerialNoConflict",
-            out error);
-
     private static bool TryMap(
         DbUpdateException exception,
         string numberCode,

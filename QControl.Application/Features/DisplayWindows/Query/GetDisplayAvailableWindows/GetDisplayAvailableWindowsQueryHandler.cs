@@ -40,7 +40,7 @@ internal sealed class GetDisplayAvailableWindowsQueryHandler
             return Failure(
                 "DisplayWindows.Available.Unauthenticated",
                 ErrorMessage.DisplayWindow_Authentication_Required,
-                ErrorType.Security);
+                ErrorType.Unauthorized);
         }
 
         var display =
@@ -54,14 +54,6 @@ internal sealed class GetDisplayAvailableWindowsQueryHandler
                 "DisplayWindows.Available.DisplayNotFound",
                 ErrorMessage.DisplayWindow_Display_NotFound,
                 ErrorType.NotFound);
-        }
-
-        if (display.IsDeleted)
-        {
-            return Failure(
-                "DisplayWindows.Available.DisplayDeleted",
-                ErrorMessage.DisplayWindow_Available_DisplayDeleted,
-                ErrorType.Conflict);
         }
 
         request.Search ??= string.Empty;

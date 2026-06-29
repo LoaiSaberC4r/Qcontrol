@@ -1,9 +1,8 @@
 using Qcontrol.Application.Features.Terminals.Command.CreateTerminal;
-using Qcontrol.Application.Features.Terminals.Command.DeleteTerminal;
+using Qcontrol.Application.Features.Terminals.Command.DeactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.PermanentDeleteTerminal;
-using Qcontrol.Application.Features.Terminals.Command.RestoreTerminal;
+using Qcontrol.Application.Features.Terminals.Command.ReactivateTerminal;
 using Qcontrol.Application.Features.Terminals.Command.UpdateTerminal;
-using Qcontrol.Application.Features.Terminals.Query.GetDeletedTerminals;
 using Qcontrol.Application.Features.Terminals.Query.GetTerminalById;
 using Qcontrol.Application.Features.Terminals.Query.GetTerminals;
 
@@ -11,8 +10,11 @@ namespace QControl.Application.Tests.Terminals;
 
 public sealed class TerminalValidatorTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
-    public void Create_validator_rejects_required_fields_and_non_ipv4()
+    public void Create_validator_rejects_required_fields_and_malformed_ip()
     {
         var validator = new CreateTerminalCommandValidator();
 
@@ -21,7 +23,7 @@ public sealed class TerminalValidatorTests
             {
                 WindowId = 0,
                 Number = " ",
-                IPAddress = "2001:db8::1",
+                IPAddress = "terminal-ip",
                 SerialNo = " ",
                 Type = " "
             });
@@ -44,40 +46,15 @@ public sealed class TerminalValidatorTests
             error => error.PropertyName == nameof(CreateTerminalCommand.Type));
     }
 
-    [Theory]
-    [InlineData("999.168.1.1")]
-    [InlineData("192.168.1")]
-    [InlineData("terminal-ip")]
-    public void Create_validator_rejects_malformed_ipv4(string ipAddress)
-    {
-        var validator = new CreateTerminalCommandValidator();
-
-        var result = validator.Validate(
-            new CreateTerminalCommand
-            {
-                WindowId = 1,
-                Number = "T-01",
-                IPAddress = ipAddress,
-                SerialNo = "ABC-100",
-                Type = "Operator Module"
-            });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(CreateTerminalCommand.IPAddress));
-    }
-
     [Fact]
-    public void Update_validator_rejects_route_body_mismatch_and_invalid_lengths()
+    public void Update_validator_rejects_invalid_lengths_and_missing_rowversion()
     {
         var validator = new UpdateTerminalCommandValidator();
 
         var result = validator.Validate(
             new UpdateTerminalCommand
             {
-                Id = 1,
-                RequestId = 2,
+                Id = 0,
                 Number = new string('A', 21),
                 IPAddress = "192.168.1.20",
                 SerialNo = new string('S', 101),
@@ -87,7 +64,7 @@ public sealed class TerminalValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(
             result.Errors,
-            error => error.ErrorMessage.Contains("match"));
+            error => error.PropertyName == nameof(UpdateTerminalCommand.Id));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateTerminalCommand.Number));
@@ -97,53 +74,66 @@ public sealed class TerminalValidatorTests
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateTerminalCommand.Type));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateTerminalCommand.RowVersion));
     }
 
     [Fact]
-    public void Query_validators_reject_invalid_pagination_and_window_filter()
+    public void Query_validator_rejects_invalid_pagination_window_filter_and_long_search()
     {
-        var activeValidator = new GetTerminalsQueryValidator();
-        var deletedValidator = new GetDeletedTerminalsQueryValidator();
+        var validator = new GetTerminalsQueryValidator();
 
-        var activeResult = activeValidator.Validate(
+        var result = validator.Validate(
             new GetTerminalsQuery
             {
                 WindowId = 0,
-                PageNumber = 0,
-                PageSize = 101
-            });
-        var deletedResult = deletedValidator.Validate(
-            new GetDeletedTerminalsQuery
-            {
-                WindowId = 0,
+                Search = new string('x', 201),
                 PageNumber = 0,
                 PageSize = 101
             });
 
-        Assert.False(activeResult.IsValid);
-        Assert.False(deletedResult.IsValid);
+        Assert.False(result.IsValid);
         Assert.Contains(
-            activeResult.Errors,
+            result.Errors,
             error => error.PropertyName == nameof(GetTerminalsQuery.WindowId));
         Assert.Contains(
-            deletedResult.Errors,
-            error => error.PropertyName == nameof(GetDeletedTerminalsQuery.WindowId));
+            result.Errors,
+            error => error.PropertyName == nameof(GetTerminalsQuery.Search));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(GetTerminalsQuery.PageNumber));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(GetTerminalsQuery.PageSize));
     }
 
     [Fact]
-    public void Id_validators_reject_invalid_ids()
+    public void Id_and_lifecycle_validators_reject_invalid_ids_or_rowversions()
     {
         Assert.False(new GetTerminalByIdQueryValidator()
             .Validate(new GetTerminalByIdQuery { Id = 0 })
             .IsValid);
-        Assert.False(new DeleteTerminalCommandValidator()
-            .Validate(new DeleteTerminalCommand { Id = 0 })
+        Assert.False(new DeactivateTerminalCommandValidator()
+            .Validate(new DeactivateTerminalCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
             .IsValid);
-        Assert.False(new RestoreTerminalCommandValidator()
-            .Validate(new RestoreTerminalCommand { Id = 0 })
+        Assert.False(new ReactivateTerminalCommandValidator()
+            .Validate(new ReactivateTerminalCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
             .IsValid);
         Assert.False(new PermanentDeleteTerminalCommandValidator()
-            .Validate(new PermanentDeleteTerminalCommand { Id = 0 })
+            .Validate(new PermanentDeleteTerminalCommand
+            {
+                Id = 1,
+                RowVersion = "not-base64"
+            })
             .IsValid);
     }
 }

@@ -26,7 +26,7 @@ internal sealed class TerminalPermanentDeleteRepository
         {
             return await _dbContext.Set<Terminal>()
                 .IgnoreQueryFilters()
-                .Where(x => x.Id == terminalId && x.IsDeleted)
+                .Where(x => x.Id == terminalId && !x.IsActive)
                 .ExecuteDeleteAsync(cancellationToken);
         }
         catch (DbUpdateException ex)

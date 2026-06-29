@@ -1,4 +1,5 @@
 using BuildingBlock.Domain.Specification;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
@@ -13,19 +14,31 @@ internal sealed class GetDisplayAvailableWindowsSpec
         UseNoTracking();
 
         AddCriteria(x =>
-            x.WaitingArea.BranchId == branchId &&
+            x.BranchId == branchId &&
             !x.DisplayWindows.Any(link => link.DisplayId == query.DisplayId));
+
+        if (query.IsActive.HasValue)
+        {
+            AddCriteria(x => x.IsActive == query.IsActive.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var searchText = query.Search.Trim();
 
-            AddCriteria(x =>
-                x.Number.Contains(searchText) ||
-                (x.DescriptiveName != null &&
-                    x.DescriptiveName.Contains(searchText)) ||
-                (x.IPAddress != null &&
-                    x.IPAddress.Contains(searchText)));
+            if (StatusSearchTerm.TryParse(searchText, out var status))
+            {
+                AddCriteria(x => x.IsActive == status);
+            }
+            else
+            {
+                AddCriteria(x =>
+                    x.Number.Contains(searchText) ||
+                    (x.DescriptiveName != null &&
+                        x.DescriptiveName.Contains(searchText)) ||
+                    (x.IPAddress != null &&
+                        x.IPAddress.Contains(searchText)));
+            }
         }
 
         AddOrderBy(x => x.WaitingAreaId);
@@ -49,7 +62,12 @@ internal sealed class GetDisplayAvailableWindowsSpec
             DescriptiveName = x.DescriptiveName,
             IPAddress = x.IPAddress,
             EnableTicketBooking = x.EnableTicketBooking,
-            EnableDirectCall = x.EnableDirectCall
+            EnableDirectCall = x.EnableDirectCall,
+            IsActive = x.IsActive,
+            EffectiveIsActive =
+                x.WaitingArea.Branch.IsActive &&
+                x.WaitingArea.IsActive &&
+                x.IsActive
         });
     }
 }

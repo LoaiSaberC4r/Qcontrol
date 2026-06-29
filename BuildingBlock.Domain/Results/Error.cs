@@ -7,6 +7,7 @@
         NotFound,
         Conflict,
         Infrastructure,
+        Unauthorized,
         Security,
         RateLimit,
         Unknown
@@ -34,6 +35,9 @@
 
         public static Error Security(string code, string message, string? details = null, string? source = null)
             => new(code, message, ErrorType.Security, details, source);
+
+        public static Error Unauthorized(string code, string message, string? details = null, string? source = null)
+            => new(code, message, ErrorType.Unauthorized, details, source);
 
         public static Error Infra(string code, string message, string? details = null, string? source = null, TimeSpan? retryAfter = null)
             => new(code, message, ErrorType.Infrastructure, details, source, null, retryAfter);

@@ -1,8 +1,8 @@
 using Qcontrol.Application.Features.Windows.Command.CreateWindow;
-using Qcontrol.Application.Features.Windows.Command.DeleteWindow;
+using Qcontrol.Application.Features.Windows.Command.DeactivateWindow;
 using Qcontrol.Application.Features.Windows.Command.PermanentDeleteWindow;
+using Qcontrol.Application.Features.Windows.Command.ReactivateWindow;
 using Qcontrol.Application.Features.Windows.Command.UpdateWindow;
-using Qcontrol.Application.Features.Windows.Query.GetDeletedWindows;
 using Qcontrol.Application.Features.Windows.Query.GetWindowById;
 using Qcontrol.Application.Features.Windows.Query.GetWindows;
 
@@ -10,6 +10,9 @@ namespace QControl.Application.Tests.Windows;
 
 public sealed class WindowValidatorTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
     public void Create_validator_rejects_invalid_fields()
     {
@@ -75,15 +78,14 @@ public sealed class WindowValidatorTests
     }
 
     [Fact]
-    public void Update_validator_rejects_invalid_fields_and_id_mismatch()
+    public void Update_validator_rejects_invalid_fields_and_missing_rowversion()
     {
         var validator = new UpdateWindowCommandValidator();
 
         var result = validator.Validate(
             new UpdateWindowCommand
             {
-                Id = 1,
-                RequestId = 2,
+                Id = 0,
                 Number = "",
                 DescriptiveName = new string('a', 101),
                 IPAddress = "bad-ip"
@@ -92,7 +94,7 @@ public sealed class WindowValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(
             result.Errors,
-            error => error.PropertyName == string.Empty);
+            error => error.PropertyName == nameof(UpdateWindowCommand.Id));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateWindowCommand.Number));
@@ -102,56 +104,35 @@ public sealed class WindowValidatorTests
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateWindowCommand.IPAddress));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateWindowCommand.RowVersion));
     }
 
     [Fact]
-    public void Update_validator_rejects_missing_ids()
+    public void Lifecycle_validators_reject_invalid_id_or_rowversion()
     {
-        var validator = new UpdateWindowCommandValidator();
-
-        var result = validator.Validate(
-            new UpdateWindowCommand
+        Assert.False(new DeactivateWindowCommandValidator()
+            .Validate(new DeactivateWindowCommand
             {
                 Id = 0,
-                RequestId = 0,
-                Number = "1"
-            });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(UpdateWindowCommand.Id));
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(UpdateWindowCommand.RequestId));
-    }
-
-    [Fact]
-    public void Delete_validator_rejects_invalid_id()
-    {
-        var validator = new DeleteWindowCommandValidator();
-
-        var result = validator.Validate(
-            new DeleteWindowCommand { Id = 0 });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(DeleteWindowCommand.Id));
-    }
-
-    [Fact]
-    public void Permanent_delete_validator_rejects_invalid_id()
-    {
-        var validator = new PermanentDeleteWindowCommandValidator();
-
-        var result = validator.Validate(
-            new PermanentDeleteWindowCommand { Id = 0 });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(PermanentDeleteWindowCommand.Id));
+                RowVersion = ValidRowVersion
+            })
+            .IsValid);
+        Assert.False(new ReactivateWindowCommandValidator()
+            .Validate(new ReactivateWindowCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
+            .IsValid);
+        Assert.False(new PermanentDeleteWindowCommandValidator()
+            .Validate(new PermanentDeleteWindowCommand
+            {
+                Id = 1,
+                RowVersion = "not-base64"
+            })
+            .IsValid);
     }
 
     [Fact]
@@ -169,7 +150,7 @@ public sealed class WindowValidatorTests
     }
 
     [Fact]
-    public void Active_pagination_validator_rejects_invalid_filters_and_paging()
+    public void Pagination_validator_rejects_invalid_filters_paging_and_long_search()
     {
         var validator = new GetWindowsQueryValidator();
 
@@ -177,6 +158,7 @@ public sealed class WindowValidatorTests
             new GetWindowsQuery
             {
                 WaitingAreaId = 0,
+                Search = new string('x', 201),
                 PageNumber = 0,
                 PageSize = 101
             });
@@ -187,34 +169,12 @@ public sealed class WindowValidatorTests
             error => error.PropertyName == nameof(GetWindowsQuery.WaitingAreaId));
         Assert.Contains(
             result.Errors,
+            error => error.PropertyName == nameof(GetWindowsQuery.Search));
+        Assert.Contains(
+            result.Errors,
             error => error.PropertyName == nameof(GetWindowsQuery.PageNumber));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(GetWindowsQuery.PageSize));
-    }
-
-    [Fact]
-    public void Deleted_pagination_validator_rejects_invalid_filters_and_paging()
-    {
-        var validator = new GetDeletedWindowsQueryValidator();
-
-        var result = validator.Validate(
-            new GetDeletedWindowsQuery
-            {
-                WaitingAreaId = 0,
-                PageNumber = 0,
-                PageSize = 101
-            });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(GetDeletedWindowsQuery.WaitingAreaId));
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(GetDeletedWindowsQuery.PageNumber));
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(GetDeletedWindowsQuery.PageSize));
     }
 }

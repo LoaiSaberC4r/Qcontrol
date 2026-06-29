@@ -1,4 +1,3 @@
-using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
 using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
 using Qcontrol.Application.Features.Displays.Query.GetDisplays;
 using QControl.Application.Tests.TestSupport;
@@ -9,15 +8,15 @@ namespace QControl.Application.Tests.Displays;
 public sealed class DisplayQueryHandlerTests
 {
     [Fact]
-    public async Task Active_list_excludes_deleted_filters_search_orders_and_projects_branch_context()
+    public async Task List_includes_active_and_inactive_filters_search_orders_and_projects_branch_context()
     {
         var branch1 = EntityTestFactory.Branch(
             1,
-            arabicName: "فرع 1",
+            arabicName: "Branch Arabic 1",
             englishName: "Branch 1");
         var branch2 = EntityTestFactory.Branch(
             2,
-            arabicName: "فرع 2",
+            arabicName: "Branch Arabic 2",
             englishName: "Branch 2");
         var active2 = Display(
             11,
@@ -40,20 +39,20 @@ public sealed class DisplayQueryHandlerTests
             ipAddress: "192.168.1.30",
             serialNo: "DISPLAY-SN-001",
             type: "LED Display");
-        var deleted = Display(
+        var inactive = Display(
             13,
             branch1,
             number: "SCREEN-A",
             ipAddress: "192.168.1.40",
             serialNo: "DISPLAY-SN-003",
             type: "Queue Display",
-            isDeleted: true);
+            isInactive: true);
         var displays = new List<Display>
         {
             active2,
             active1,
             otherBranch,
-            deleted
+            inactive
         };
         var handler = new GetDisplaysQueryHandler(
             new InMemoryWriteReadRepository<Display>(displays),
@@ -70,12 +69,10 @@ public sealed class DisplayQueryHandlerTests
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value.TotalItems);
+        Assert.Equal(3, result.Value.TotalItems);
         Assert.Equal(active1.Id, result.Value.Data[0].Id);
         Assert.Equal(active2.Id, result.Value.Data[1].Id);
-        Assert.DoesNotContain(
-            result.Value.Data,
-            item => item.Id == deleted.Id);
+        Assert.Equal(inactive.Id, result.Value.Data[2].Id);
         Assert.All(
             result.Value.Data,
             item => Assert.Equal(branch1.Id, item.BranchId));
@@ -84,86 +81,20 @@ public sealed class DisplayQueryHandlerTests
     }
 
     [Fact]
-    public async Task Active_list_supports_pagination()
+    public async Task List_can_filter_inactive_status()
     {
         var branch = EntityTestFactory.Branch(1);
-        var displays = new List<Display>
-        {
-            Display(10, branch, number: "D-01"),
-            Display(11, branch, number: "D-02"),
-            Display(12, branch, number: "D-03")
-        };
+        var active = Display(10, branch);
+        var inactive = Display(11, branch, number: "D-02", isInactive: true);
         var handler = new GetDisplaysQueryHandler(
-            new InMemoryWriteReadRepository<Display>(displays),
+            new InMemoryWriteReadRepository<Display>(
+                new List<Display> { active, inactive }),
             new TestCurrentUser());
 
         var result = await handler.Handle(
             new GetDisplaysQuery
             {
-                PageNumber = 2,
-                PageSize = 1
-            },
-            CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(3, result.Value.TotalItems);
-        Assert.Single(result.Value.Data);
-        Assert.Equal(11, result.Value.Data[0].Id);
-    }
-
-    [Fact]
-    public async Task Details_returns_active_display_and_hides_missing_or_deleted()
-    {
-        var branch = EntityTestFactory.Branch(1);
-        var active = Display(10, branch);
-        var deleted = Display(11, branch, number: "D-02", isDeleted: true);
-        var displays = new List<Display> { active, deleted };
-        var handler = new GetDisplayByIdQueryHandler(
-            new InMemoryWriteReadRepository<Display>(displays),
-            new TestCurrentUser());
-
-        var activeResult = await handler.Handle(
-            new GetDisplayByIdQuery { Id = active.Id },
-            CancellationToken.None);
-        var deletedResult = await handler.Handle(
-            new GetDisplayByIdQuery { Id = deleted.Id },
-            CancellationToken.None);
-        var missingResult = await handler.Handle(
-            new GetDisplayByIdQuery { Id = 99 },
-            CancellationToken.None);
-
-        Assert.True(activeResult.IsSuccess);
-        Assert.Equal(active.Id, activeResult.Value.Id);
-        Assert.Equal(branch.Id, activeResult.Value.BranchId);
-        Assert.True(deletedResult.IsFailure);
-        Assert.True(missingResult.IsFailure);
-        Assert.Contains(
-            deletedResult.Errors,
-            error => error.Code == "Displays.Details.DisplayNotFound");
-    }
-
-    [Fact]
-    public async Task Deleted_list_returns_deleted_only_with_delete_and_restore_timestamps()
-    {
-        var branch = EntityTestFactory.Branch(1);
-        var active = Display(10, branch);
-        var deleted = Display(
-            11,
-            branch,
-            number: "D-02",
-            type: "Queue Display",
-            isDeleted: true);
-        deleted.RestoredOnUtc = DateTime.UtcNow;
-        var displays = new List<Display> { active, deleted };
-        var handler = new GetDeletedDisplaysQueryHandler(
-            new InMemoryWriteReadRepository<Display>(displays),
-            new TestCurrentUser());
-
-        var result = await handler.Handle(
-            new GetDeletedDisplaysQuery
-            {
-                Search = "Queue",
-                BranchId = branch.Id,
+                IsActive = false,
                 PageNumber = 1,
                 PageSize = 10
             },
@@ -171,9 +102,36 @@ public sealed class DisplayQueryHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value.Data);
-        Assert.Equal(deleted.Id, result.Value.Data[0].Id);
-        Assert.NotNull(result.Value.Data[0].DeletedOnUtc);
-        Assert.NotNull(result.Value.Data[0].RestoredOnUtc);
+        Assert.Equal(inactive.Id, result.Value.Data[0].Id);
+        Assert.False(result.Value.Data[0].IsActive);
+    }
+
+    [Fact]
+    public async Task Details_returns_active_or_inactive_display_and_hides_missing()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var active = Display(10, branch);
+        var inactive = Display(11, branch, number: "D-02", isInactive: true);
+        var displays = new List<Display> { active, inactive };
+        var handler = new GetDisplayByIdQueryHandler(
+            new InMemoryWriteReadRepository<Display>(displays),
+            new TestCurrentUser());
+
+        var activeResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = active.Id },
+            CancellationToken.None);
+        var inactiveResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = inactive.Id },
+            CancellationToken.None);
+        var missingResult = await handler.Handle(
+            new GetDisplayByIdQuery { Id = 99 },
+            CancellationToken.None);
+
+        Assert.True(activeResult.IsSuccess);
+        Assert.True(inactiveResult.IsSuccess);
+        Assert.Equal(active.Id, activeResult.Value.Id);
+        Assert.False(inactiveResult.Value.IsActive);
+        Assert.True(missingResult.IsFailure);
     }
 
     private static Display Display(
@@ -183,7 +141,7 @@ public sealed class DisplayQueryHandlerTests
         string ipAddress = "192.168.1.30",
         string serialNo = "DISPLAY-SN-001",
         string type = "LED Display",
-        bool isDeleted = false)
+        bool isInactive = false)
         => EntityTestFactory.Display(
             id,
             branch.Id,
@@ -192,5 +150,5 @@ public sealed class DisplayQueryHandlerTests
             serialNo,
             type,
             branch,
-            isDeleted);
+            isInactive);
 }

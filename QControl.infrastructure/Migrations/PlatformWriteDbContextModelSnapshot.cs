@@ -31,6 +31,7 @@ namespace Qcontrol.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ArabicName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -40,7 +41,14 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
                     b.Property<string>("EnglishName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -50,7 +58,7 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
 
-                    b.Property<bool>("IsUpdatesAvailable")
+                    b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
@@ -58,29 +66,48 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("datetime2(3)");
-
                     b.Property<string>("License")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("DeactivatedByApplicationUserId");
 
                     b.HasIndex("IPAddress")
                         .IsUnique();
 
                     b.HasIndex("LastModifiedByApplicationUserId");
 
+                    b.HasIndex("ReactivatedByApplicationUserId");
+
                     b.ToTable("Branch", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Branch_ArabicName_Required", "NULLIF(LTRIM(RTRIM([ArabicName])), N'') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Branch_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
+                            t.HasCheckConstraint("CK_Branch_EnglishName_Required", "NULLIF(LTRIM(RTRIM([EnglishName])), N'') IS NOT NULL");
+
                             t.HasCheckConstraint("CK_Branch_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Branch_NameRequired", "NULLIF(LTRIM(RTRIM([ArabicName])), N'') IS NOT NULL OR NULLIF(LTRIM(RTRIM([EnglishName])), N'') IS NOT NULL");
+                            t.HasCheckConstraint("CK_Branch_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
                         });
                 });
 
@@ -101,8 +128,11 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeletedOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
 
                     b.Property<string>("IPAddress")
                         .IsRequired()
@@ -110,8 +140,10 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -125,8 +157,17 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<DateTime?>("RestoredOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("SerialNo")
                         .IsRequired()
@@ -144,7 +185,11 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasIndex("CreatedByApplicationUserId");
 
+                    b.HasIndex("DeactivatedByApplicationUserId");
+
                     b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("ReactivatedByApplicationUserId");
 
                     b.HasIndex("BranchId", "IPAddress")
                         .IsUnique();
@@ -157,9 +202,13 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.ToTable("Display", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Display_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
                             t.HasCheckConstraint("CK_Display_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Display_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Display_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
 
                             t.HasCheckConstraint("CK_Display_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
 
@@ -175,6 +224,9 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("CreatedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -184,9 +236,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<int>("DisplayId")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
 
@@ -195,16 +244,20 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("CreatedByApplicationUserId");
 
                     b.HasIndex("DisplayId");
 
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
                     b.HasIndex("WindowId");
+
+                    b.HasIndex("DisplayId", "BranchId");
 
                     b.HasIndex("DisplayId", "WindowId")
                         .IsUnique();
+
+                    b.HasIndex("WindowId", "BranchId");
 
                     b.ToTable("DisplayWindow", (string)null);
                 });
@@ -218,10 +271,12 @@ namespace Qcontrol.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Area")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -229,29 +284,23 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("City")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Governorate")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<decimal>("Latitude")
+                        .HasColumnType("decimal(9,6)");
 
-                    b.Property<string>("Latitude")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Longitude")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<decimal>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
@@ -261,11 +310,20 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.HasIndex("BranchId")
                         .IsUnique();
 
-                    b.HasIndex("CreatedByApplicationUserId");
+                    b.ToTable("Location", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Location_Address_Required", "NULLIF(LTRIM(RTRIM([Address])), N'') IS NOT NULL");
 
-                    b.HasIndex("LastModifiedByApplicationUserId");
+                            t.HasCheckConstraint("CK_Location_Area_Required", "NULLIF(LTRIM(RTRIM([Area])), N'') IS NOT NULL");
 
-                    b.ToTable("Location", (string)null);
+                            t.HasCheckConstraint("CK_Location_City_Required", "NULLIF(LTRIM(RTRIM([City])), N'') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Location_Governorate_Required", "NULLIF(LTRIM(RTRIM([Governorate])), N'') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Location_Latitude_Range", "[Latitude] >= -90 AND [Latitude] <= 90");
+
+                            t.HasCheckConstraint("CK_Location_Longitude_Range", "[Longitude] >= -180 AND [Longitude] <= 180");
+                        });
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
@@ -276,14 +334,20 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("CreatedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeletedOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
 
                     b.Property<string>("IPAddress")
                         .IsRequired()
@@ -291,8 +355,10 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -306,8 +372,17 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<DateTime?>("RestoredOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("SerialNo")
                         .IsRequired()
@@ -324,24 +399,38 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("CreatedByApplicationUserId");
 
-                    b.HasIndex("IPAddress");
+                    b.HasIndex("DeactivatedByApplicationUserId");
 
                     b.HasIndex("LastModifiedByApplicationUserId");
 
-                    b.HasIndex("SerialNo");
+                    b.HasIndex("ReactivatedByApplicationUserId");
 
                     b.HasIndex("WindowId");
+
+                    b.HasIndex("BranchId", "IPAddress")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "SerialNo")
+                        .IsUnique();
+
+                    b.HasIndex("WindowId", "BranchId");
 
                     b.HasIndex("WindowId", "Number")
                         .IsUnique();
 
                     b.ToTable("Terminal", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Terminal_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
                             t.HasCheckConstraint("CK_Terminal_IPAddress_NotBlank", "NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Terminal_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Terminal_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
 
                             t.HasCheckConstraint("CK_Terminal_SerialNo_NotBlank", "NULLIF(LTRIM(RTRIM([SerialNo])), '') IS NOT NULL");
 
@@ -374,9 +463,20 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
                     b.Property<string>("DescriptiveName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -387,20 +487,40 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
 
                     b.HasIndex("CreatedByApplicationUserId");
 
+                    b.HasIndex("DeactivatedByApplicationUserId");
+
                     b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("ReactivatedByApplicationUserId");
 
                     b.HasIndex("BranchId", "Number")
                         .IsUnique();
 
                     b.ToTable("WaitingArea", null, t =>
                         {
+                            t.HasCheckConstraint("CK_WaitingArea_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
                             t.HasCheckConstraint("CK_WaitingArea_Number_Positive", "[Number] > 0");
+
+                            t.HasCheckConstraint("CK_WaitingArea_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
                         });
                 });
 
@@ -412,14 +532,20 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("CreatedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeletedOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
 
                     b.Property<string>("DescriptiveName")
                         .HasMaxLength(100)
@@ -440,10 +566,10 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(true);
 
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -456,19 +582,36 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<DateTime?>("RestoredOnUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("WaitingAreaId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("DeactivatedByApplicationUserId");
 
                     b.HasIndex("LastModifiedByApplicationUserId");
 
+                    b.HasIndex("ReactivatedByApplicationUserId");
+
                     b.HasIndex("WaitingAreaId");
+
+                    b.HasIndex("WaitingAreaId", "BranchId");
 
                     b.HasIndex("WaitingAreaId", "IPAddress")
                         .IsUnique()
@@ -481,9 +624,13 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.ToTable("Window", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Window_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
                             t.HasCheckConstraint("CK_Window_IPAddress_NotBlank", "[IPAddress] IS NULL OR NULLIF(LTRIM(RTRIM([IPAddress])), '') IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Window_Number_NotBlank", "NULLIF(LTRIM(RTRIM([Number])), N'') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_Window_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
                         });
                 });
 
@@ -715,14 +862,28 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("CreatedByApplicationUser");
 
+                    b.Navigation("DeactivatedByApplicationUser");
+
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
@@ -739,16 +900,30 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Branch");
 
                     b.Navigation("CreatedByApplicationUser");
 
+                    b.Navigation("DeactivatedByApplicationUser");
+
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.DisplayWindow", b =>
@@ -761,26 +936,21 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasOne("QControl.Domain.Entities.Display", "Display")
                         .WithMany("DisplayWindows")
-                        .HasForeignKey("DisplayId")
+                        .HasForeignKey("DisplayId", "BranchId")
+                        .HasPrincipalKey("Id", "BranchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("QControl.Domain.Entities.Window", "Window")
                         .WithMany("DisplayWindows")
-                        .HasForeignKey("WindowId")
+                        .HasForeignKey("WindowId", "BranchId")
+                        .HasPrincipalKey("Id", "BranchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("CreatedByApplicationUser");
 
                     b.Navigation("Display");
-
-                    b.Navigation("LastModifiedByApplicationUser");
 
                     b.Navigation("Window");
                 });
@@ -793,22 +963,7 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Branch");
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
@@ -819,20 +974,35 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QControl.Domain.Entities.Window", "Window")
                         .WithMany("Terminals")
-                        .HasForeignKey("WindowId")
+                        .HasForeignKey("WindowId", "BranchId")
+                        .HasPrincipalKey("Id", "BranchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("CreatedByApplicationUser");
 
+                    b.Navigation("DeactivatedByApplicationUser");
+
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
 
                     b.Navigation("Window");
                 });
@@ -851,16 +1021,30 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Branch");
 
                     b.Navigation("CreatedByApplicationUser");
 
+                    b.Navigation("DeactivatedByApplicationUser");
+
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Window", b =>
@@ -871,20 +1055,35 @@ namespace Qcontrol.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QControl.Domain.Entities.WaitingArea", "WaitingArea")
                         .WithMany("Windows")
-                        .HasForeignKey("WaitingAreaId")
+                        .HasForeignKey("WaitingAreaId", "BranchId")
+                        .HasPrincipalKey("Id", "BranchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("CreatedByApplicationUser");
 
+                    b.Navigation("DeactivatedByApplicationUser");
+
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
 
                     b.Navigation("WaitingArea");
                 });

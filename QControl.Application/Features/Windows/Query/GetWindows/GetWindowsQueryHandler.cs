@@ -36,7 +36,7 @@ internal sealed class GetWindowsQueryHandler
                 new Error(
                     Code: "Windows.Pagination.Unauthenticated",
                     Message: ErrorMessage.Window_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         request.Search ??= string.Empty;

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Qcontrol.Domain.Resources;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.WaitingAreas.Command.UpdateWaitingArea;
 
@@ -11,18 +12,6 @@ internal sealed class UpdateWaitingAreaCommandValidator
         RuleFor(x => x.Id)
             .GreaterThan(0)
             .WithMessage(ErrorMessage.WaitingArea_Id_Required);
-
-        RuleFor(x => x.RequestId)
-            .GreaterThan(0)
-            .WithMessage(ErrorMessage.WaitingArea_Id_Required);
-
-        RuleFor(x => x)
-            .Must(x => x.Id == x.RequestId)
-            .WithMessage(ErrorMessage.WaitingArea_Id_Mismatch);
-
-        RuleFor(x => x.BranchId)
-            .GreaterThan(0)
-            .WithMessage(ErrorMessage.WaitingArea_BranchId_Required);
 
         RuleFor(x => x.Number)
             .GreaterThan(0)
@@ -39,5 +28,11 @@ internal sealed class UpdateWaitingAreaCommandValidator
         RuleFor(x => x.DescriptiveName)
             .MaximumLength(100)
             .WithMessage(ErrorMessage.WaitingArea_DescriptiveName_MaxLength);
+
+        RuleFor(x => x.RowVersion)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.RowVersion_Required)
+            .Must(value => RowVersionConverter.TryDecode(value, out _))
+            .WithMessage(ErrorMessage.RowVersion_Invalid);
     }
 }

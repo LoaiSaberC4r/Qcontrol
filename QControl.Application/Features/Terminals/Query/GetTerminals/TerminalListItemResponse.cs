@@ -25,4 +25,10 @@ public sealed record TerminalListItemResponse
     public string SerialNo { get; init; } = string.Empty;
 
     public string Type { get; init; } = string.Empty;
+
+    public bool IsActive { get; init; }
+
+    public bool EffectiveIsActive { get; init; }
+
+    public string RowVersion { get; init; } = string.Empty;
 }

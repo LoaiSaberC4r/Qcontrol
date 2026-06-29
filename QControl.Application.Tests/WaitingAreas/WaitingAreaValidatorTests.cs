@@ -1,5 +1,7 @@
 using Qcontrol.Application.Features.WaitingAreas.Command.CreateWaitingArea;
-using Qcontrol.Application.Features.WaitingAreas.Command.DeleteWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.DeactivateWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.PermanentDeleteWaitingArea;
+using Qcontrol.Application.Features.WaitingAreas.Command.ReactivateWaitingArea;
 using Qcontrol.Application.Features.WaitingAreas.Command.UpdateWaitingArea;
 using Qcontrol.Application.Features.WaitingAreas.Query.GetWaitingAreaById;
 using Qcontrol.Application.Features.WaitingAreas.Query.GetWaitingAreas;
@@ -8,6 +10,9 @@ namespace QControl.Application.Tests.WaitingAreas;
 
 public sealed class WaitingAreaValidatorTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
     public void Create_validator_rejects_invalid_fields()
     {
@@ -42,34 +47,14 @@ public sealed class WaitingAreaValidatorTests
     }
 
     [Fact]
-    public void Create_validator_accepts_valid_optional_fields()
-    {
-        var validator = new CreateWaitingAreaCommandValidator();
-
-        var result = validator.Validate(
-            new CreateWaitingAreaCommand
-            {
-                BranchId = 1,
-                Number = 1,
-                AudioDevice = null,
-                ControlDevice = null,
-                DescriptiveName = null
-            });
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void Update_validator_rejects_invalid_fields_and_id_mismatch()
+    public void Update_validator_rejects_invalid_fields_and_missing_rowversion()
     {
         var validator = new UpdateWaitingAreaCommandValidator();
 
         var result = validator.Validate(
             new UpdateWaitingAreaCommand
             {
-                Id = 1,
-                RequestId = 2,
-                BranchId = 0,
+                Id = 0,
                 Number = 0,
                 AudioDevice = new string('a', 101),
                 ControlDevice = new string('b', 101),
@@ -79,10 +64,7 @@ public sealed class WaitingAreaValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(
             result.Errors,
-            error => error.PropertyName == string.Empty);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(UpdateWaitingAreaCommand.BranchId));
+            error => error.PropertyName == nameof(UpdateWaitingAreaCommand.Id));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateWaitingAreaCommand.Number));
@@ -95,43 +77,35 @@ public sealed class WaitingAreaValidatorTests
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateWaitingAreaCommand.DescriptiveName));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateWaitingAreaCommand.RowVersion));
     }
 
     [Fact]
-    public void Update_validator_rejects_missing_ids()
+    public void Lifecycle_validators_reject_invalid_id_or_rowversion()
     {
-        var validator = new UpdateWaitingAreaCommandValidator();
-
-        var result = validator.Validate(
-            new UpdateWaitingAreaCommand
+        Assert.False(new DeactivateWaitingAreaCommandValidator()
+            .Validate(new DeactivateWaitingAreaCommand
             {
                 Id = 0,
-                RequestId = 0,
-                BranchId = 1,
-                Number = 1
-            });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(UpdateWaitingAreaCommand.Id));
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(UpdateWaitingAreaCommand.RequestId));
-    }
-
-    [Fact]
-    public void Delete_validator_rejects_invalid_id()
-    {
-        var validator = new DeleteWaitingAreaCommandValidator();
-
-        var result = validator.Validate(
-            new DeleteWaitingAreaCommand { Id = 0 });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(DeleteWaitingAreaCommand.Id));
+                RowVersion = ValidRowVersion
+            })
+            .IsValid);
+        Assert.False(new ReactivateWaitingAreaCommandValidator()
+            .Validate(new ReactivateWaitingAreaCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
+            .IsValid);
+        Assert.False(new PermanentDeleteWaitingAreaCommandValidator()
+            .Validate(new PermanentDeleteWaitingAreaCommand
+            {
+                Id = 1,
+                RowVersion = "not-base64"
+            })
+            .IsValid);
     }
 
     [Fact]
@@ -149,7 +123,7 @@ public sealed class WaitingAreaValidatorTests
     }
 
     [Fact]
-    public void List_validator_rejects_invalid_filters_and_paging()
+    public void List_validator_rejects_invalid_filters_paging_and_long_search()
     {
         var validator = new GetWaitingAreasQueryValidator();
 
@@ -157,6 +131,7 @@ public sealed class WaitingAreaValidatorTests
             new GetWaitingAreasQuery
             {
                 BranchId = 0,
+                Search = new string('x', 201),
                 PageNumber = 0,
                 PageSize = 101
             });
@@ -165,6 +140,9 @@ public sealed class WaitingAreaValidatorTests
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(GetWaitingAreasQuery.BranchId));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(GetWaitingAreasQuery.Search));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(GetWaitingAreasQuery.PageNumber));

@@ -267,6 +267,6 @@ internal sealed class LoginCommandHandler
                     ErrorMessage.Login_InvalidCredentials,
 
                 Type:
-                    ErrorType.Security));
+                    ErrorType.Unauthorized));
     }
 }

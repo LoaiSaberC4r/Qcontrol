@@ -4,15 +4,15 @@ public sealed record BranchLocationResponse
 {
     public int Id { get; init; }
 
-    public string? Governorate { get; init; }
+    public string Governorate { get; init; } = string.Empty;
 
-    public string? City { get; init; }
+    public string City { get; init; } = string.Empty;
 
-    public string? Area { get; init; }
+    public string Area { get; init; } = string.Empty;
 
-    public string? Address { get; init; }
+    public string Address { get; init; } = string.Empty;
 
-    public string? Longitude { get; init; }
+    public decimal Latitude { get; init; }
 
-    public string? Latitude { get; init; }
+    public decimal Longitude { get; init; }
 }

@@ -46,8 +46,14 @@ internal static class SeedConstants
         public const string BranchesUpdate =
             "Branches.Update";
 
-        public const string BranchesDelete =
-            "Branches.Delete";
+        public const string BranchesDeactivate =
+            "Branches.Deactivate";
+
+        public const string BranchesReactivate =
+            "Branches.Reactivate";
+
+        public const string BranchesDeletePermanent =
+            "Branches.DeletePermanent";
 
         public const string WaitingAreasViewAll =
             "WaitingAreas.ViewAll";
@@ -61,8 +67,14 @@ internal static class SeedConstants
         public const string WaitingAreasUpdate =
             "WaitingAreas.Update";
 
-        public const string WaitingAreasDelete =
-            "WaitingAreas.Delete";
+        public const string WaitingAreasDeactivate =
+            "WaitingAreas.Deactivate";
+
+        public const string WaitingAreasReactivate =
+            "WaitingAreas.Reactivate";
+
+        public const string WaitingAreasDeletePermanent =
+            "WaitingAreas.DeletePermanent";
 
         public const string WindowsViewAll =
             "Windows.ViewAll";
@@ -76,11 +88,11 @@ internal static class SeedConstants
         public const string WindowsUpdate =
             "Windows.Update";
 
-        public const string WindowsDelete =
-            "Windows.Delete";
+        public const string WindowsDeactivate =
+            "Windows.Deactivate";
 
-        public const string WindowsViewDeleted =
-            "Windows.ViewDeleted";
+        public const string WindowsReactivate =
+            "Windows.Reactivate";
 
         public const string WindowsDeletePermanent =
             "Windows.DeletePermanent";
@@ -97,14 +109,11 @@ internal static class SeedConstants
         public const string TerminalsUpdate =
             "Terminals.Update";
 
-        public const string TerminalsDelete =
-            "Terminals.Delete";
+        public const string TerminalsDeactivate =
+            "Terminals.Deactivate";
 
-        public const string TerminalsViewDeleted =
-            "Terminals.ViewDeleted";
-
-        public const string TerminalsRestore =
-            "Terminals.Restore";
+        public const string TerminalsReactivate =
+            "Terminals.Reactivate";
 
         public const string TerminalsDeletePermanent =
             "Terminals.DeletePermanent";
@@ -121,14 +130,11 @@ internal static class SeedConstants
         public const string DisplaysUpdate =
             "Displays.Update";
 
-        public const string DisplaysDelete =
-            "Displays.Delete";
+        public const string DisplaysDeactivate =
+            "Displays.Deactivate";
 
-        public const string DisplaysViewDeleted =
-            "Displays.ViewDeleted";
-
-        public const string DisplaysRestore =
-            "Displays.Restore";
+        public const string DisplaysReactivate =
+            "Displays.Reactivate";
 
         public const string DisplaysDeletePermanent =
             "Displays.DeletePermanent";
@@ -188,9 +194,17 @@ internal static class SeedConstants
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000004");
 
-            public static readonly Guid BranchesDelete =
+            public static readonly Guid BranchesDeactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000005");
+
+            public static readonly Guid BranchesReactivate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000043");
+
+            public static readonly Guid BranchesDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000044");
 
             public static readonly Guid GlobalConfigurationsViewAll =
                 Guid.Parse(
@@ -228,9 +242,17 @@ internal static class SeedConstants
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000014");
 
-            public static readonly Guid WaitingAreasDelete =
+            public static readonly Guid WaitingAreasDeactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000015");
+
+            public static readonly Guid WaitingAreasReactivate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000045");
+
+            public static readonly Guid WaitingAreasDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000046");
 
             public static readonly Guid WindowsViewAll =
                 Guid.Parse(
@@ -248,11 +270,11 @@ internal static class SeedConstants
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000019");
 
-            public static readonly Guid WindowsDelete =
+            public static readonly Guid WindowsDeactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000020");
 
-            public static readonly Guid WindowsViewDeleted =
+            public static readonly Guid WindowsReactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000021");
 
@@ -276,17 +298,13 @@ internal static class SeedConstants
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000026");
 
-            public static readonly Guid TerminalsDelete =
+            public static readonly Guid TerminalsDeactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000027");
 
-            public static readonly Guid TerminalsViewDeleted =
+            public static readonly Guid TerminalsReactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000028");
-
-            public static readonly Guid TerminalsRestore =
-                Guid.Parse(
-                    "30000000-0000-0000-0000-000000000029");
 
             public static readonly Guid TerminalsDeletePermanent =
                 Guid.Parse(
@@ -308,17 +326,13 @@ internal static class SeedConstants
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000034");
 
-            public static readonly Guid DisplaysDelete =
+            public static readonly Guid DisplaysDeactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000035");
 
-            public static readonly Guid DisplaysViewDeleted =
+            public static readonly Guid DisplaysReactivate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000036");
-
-            public static readonly Guid DisplaysRestore =
-                Guid.Parse(
-                    "30000000-0000-0000-0000-000000000037");
 
             public static readonly Guid DisplaysDeletePermanent =
                 Guid.Parse(
@@ -374,8 +388,16 @@ internal static class SeedConstants
                     PermissionNames.BranchesUpdate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.BranchesDelete,
-                    PermissionNames.BranchesDelete),
+                    SeedIds.Permissions.BranchesDeactivate,
+                    PermissionNames.BranchesDeactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchesReactivate,
+                    PermissionNames.BranchesReactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchesDeletePermanent,
+                    PermissionNames.BranchesDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.WaitingAreasViewAll,
@@ -394,8 +416,16 @@ internal static class SeedConstants
                     PermissionNames.WaitingAreasUpdate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.WaitingAreasDelete,
-                    PermissionNames.WaitingAreasDelete),
+                    SeedIds.Permissions.WaitingAreasDeactivate,
+                    PermissionNames.WaitingAreasDeactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasReactivate,
+                    PermissionNames.WaitingAreasReactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.WaitingAreasDeletePermanent,
+                    PermissionNames.WaitingAreasDeletePermanent),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.WindowsViewAll,
@@ -414,12 +444,12 @@ internal static class SeedConstants
                     PermissionNames.WindowsUpdate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.WindowsDelete,
-                    PermissionNames.WindowsDelete),
+                    SeedIds.Permissions.WindowsDeactivate,
+                    PermissionNames.WindowsDeactivate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.WindowsViewDeleted,
-                    PermissionNames.WindowsViewDeleted),
+                    SeedIds.Permissions.WindowsReactivate,
+                    PermissionNames.WindowsReactivate),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.WindowsDeletePermanent,
@@ -442,16 +472,12 @@ internal static class SeedConstants
                     PermissionNames.TerminalsUpdate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.TerminalsDelete,
-                    PermissionNames.TerminalsDelete),
+                    SeedIds.Permissions.TerminalsDeactivate,
+                    PermissionNames.TerminalsDeactivate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.TerminalsViewDeleted,
-                    PermissionNames.TerminalsViewDeleted),
-
-                new PermissionSeedItem(
-                    SeedIds.Permissions.TerminalsRestore,
-                    PermissionNames.TerminalsRestore),
+                    SeedIds.Permissions.TerminalsReactivate,
+                    PermissionNames.TerminalsReactivate),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.TerminalsDeletePermanent,
@@ -474,16 +500,12 @@ internal static class SeedConstants
                     PermissionNames.DisplaysUpdate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.DisplaysDelete,
-                    PermissionNames.DisplaysDelete),
+                    SeedIds.Permissions.DisplaysDeactivate,
+                    PermissionNames.DisplaysDeactivate),
 
                 new PermissionSeedItem(
-                    SeedIds.Permissions.DisplaysViewDeleted,
-                    PermissionNames.DisplaysViewDeleted),
-
-                new PermissionSeedItem(
-                    SeedIds.Permissions.DisplaysRestore,
-                    PermissionNames.DisplaysRestore),
+                    SeedIds.Permissions.DisplaysReactivate,
+                    PermissionNames.DisplaysReactivate),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplaysDeletePermanent,

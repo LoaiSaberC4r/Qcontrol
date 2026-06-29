@@ -36,7 +36,7 @@ internal sealed class GetWaitingAreaByIdQueryHandler
                     Code: "WaitingAreas.Details.Unauthenticated",
                     Message:
                         ErrorMessage.WaitingArea_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         var waitingArea =

@@ -13,7 +13,7 @@ namespace BuildingBlock.Domain.Exceptions
             KeyNotFoundException knf
                 => Error.NotFound(ErrorCodes.User.NotFound, knf.Message, source: "Exception"),
             UnauthorizedAccessException
-                => Error.Security(ErrorCodes.Common.Unauthorized, "Unauthorized.", source: "Exception"),
+                => Error.Unauthorized(ErrorCodes.Common.Unauthorized, "Unauthorized.", source: "Exception"),
             OperationCanceledException
                 => Error.Infra(ErrorCodes.Common.InfraTimeout, "Request was canceled.", retryAfter: TimeSpan.FromSeconds(1)),
 #if NET8_0_OR_GREATER
@@ -24,8 +24,7 @@ namespace BuildingBlock.Domain.Exceptions
 #endif
             HttpRequestException hex
                 => Error.Infra(ErrorCodes.Common.InfraTimeout, hex.Message, source: "HTTP"),
-            _ => Error.Unknown("Unknown.Exception", ex.ToString(), source: ex.GetType().FullName)
-            //Should be ex.Tostring() unhandled service exception
+            _ => Error.Unknown("Unknown.Exception", "An unexpected error occurred.", source: ex.GetType().FullName)
         };
 
 #if NET8_0_OR_GREATER

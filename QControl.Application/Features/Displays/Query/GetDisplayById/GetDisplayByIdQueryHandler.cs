@@ -35,7 +35,7 @@ internal sealed class GetDisplayByIdQueryHandler
                 new Error(
                     Code: "Displays.Details.Unauthenticated",
                     Message: ErrorMessage.Display_Authentication_Required,
-                    Type: ErrorType.Security));
+                    Type: ErrorType.Unauthorized));
         }
 
         var display =

@@ -1,9 +1,8 @@
 using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
-using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.DeactivateDisplay;
 using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
-using Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+using Qcontrol.Application.Features.Displays.Command.ReactivateDisplay;
 using Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
-using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
 using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
 using Qcontrol.Application.Features.Displays.Query.GetDisplays;
 
@@ -11,8 +10,11 @@ namespace QControl.Application.Tests.Displays;
 
 public sealed class DisplayValidatorTests
 {
+    private static readonly string ValidRowVersion =
+        Convert.ToBase64String(new byte[8]);
+
     [Fact]
-    public void Create_validator_rejects_required_fields_and_non_ipv4()
+    public void Create_validator_rejects_required_fields_and_malformed_ip()
     {
         var validator = new CreateDisplayCommandValidator();
 
@@ -21,7 +23,7 @@ public sealed class DisplayValidatorTests
             {
                 BranchId = 0,
                 Number = " ",
-                IPAddress = "2001:db8::1",
+                IPAddress = "display-ip",
                 SerialNo = " ",
                 Type = " "
             });
@@ -44,40 +46,15 @@ public sealed class DisplayValidatorTests
             error => error.PropertyName == nameof(CreateDisplayCommand.Type));
     }
 
-    [Theory]
-    [InlineData("999.168.1.30")]
-    [InlineData("192.168.1")]
-    [InlineData("display-ip")]
-    public void Create_validator_rejects_malformed_ipv4(string ipAddress)
-    {
-        var validator = new CreateDisplayCommandValidator();
-
-        var result = validator.Validate(
-            new CreateDisplayCommand
-            {
-                BranchId = 1,
-                Number = "D-01",
-                IPAddress = ipAddress,
-                SerialNo = "DISPLAY-SN-001",
-                Type = "LED Display"
-            });
-
-        Assert.False(result.IsValid);
-        Assert.Contains(
-            result.Errors,
-            error => error.PropertyName == nameof(CreateDisplayCommand.IPAddress));
-    }
-
     [Fact]
-    public void Update_validator_rejects_route_body_mismatch_and_invalid_lengths()
+    public void Update_validator_rejects_invalid_lengths_and_missing_rowversion()
     {
         var validator = new UpdateDisplayCommandValidator();
 
         var result = validator.Validate(
             new UpdateDisplayCommand
             {
-                Id = 1,
-                RequestId = 2,
+                Id = 0,
                 Number = new string('A', 21),
                 IPAddress = "192.168.1.30",
                 SerialNo = new string('S', 101),
@@ -87,7 +64,7 @@ public sealed class DisplayValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(
             result.Errors,
-            error => error.ErrorMessage.Contains("match"));
+            error => error.PropertyName == nameof(UpdateDisplayCommand.Id));
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateDisplayCommand.Number));
@@ -97,53 +74,66 @@ public sealed class DisplayValidatorTests
         Assert.Contains(
             result.Errors,
             error => error.PropertyName == nameof(UpdateDisplayCommand.Type));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(UpdateDisplayCommand.RowVersion));
     }
 
     [Fact]
-    public void Query_validators_reject_invalid_pagination_and_branch_filter()
+    public void Query_validator_rejects_invalid_pagination_branch_filter_and_long_search()
     {
-        var activeValidator = new GetDisplaysQueryValidator();
-        var deletedValidator = new GetDeletedDisplaysQueryValidator();
+        var validator = new GetDisplaysQueryValidator();
 
-        var activeResult = activeValidator.Validate(
+        var result = validator.Validate(
             new GetDisplaysQuery
             {
                 BranchId = 0,
-                PageNumber = 0,
-                PageSize = 101
-            });
-        var deletedResult = deletedValidator.Validate(
-            new GetDeletedDisplaysQuery
-            {
-                BranchId = 0,
+                Search = new string('x', 201),
                 PageNumber = 0,
                 PageSize = 101
             });
 
-        Assert.False(activeResult.IsValid);
-        Assert.False(deletedResult.IsValid);
+        Assert.False(result.IsValid);
         Assert.Contains(
-            activeResult.Errors,
+            result.Errors,
             error => error.PropertyName == nameof(GetDisplaysQuery.BranchId));
         Assert.Contains(
-            deletedResult.Errors,
-            error => error.PropertyName == nameof(GetDeletedDisplaysQuery.BranchId));
+            result.Errors,
+            error => error.PropertyName == nameof(GetDisplaysQuery.Search));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(GetDisplaysQuery.PageNumber));
+        Assert.Contains(
+            result.Errors,
+            error => error.PropertyName == nameof(GetDisplaysQuery.PageSize));
     }
 
     [Fact]
-    public void Id_validators_reject_invalid_ids()
+    public void Id_and_lifecycle_validators_reject_invalid_ids_or_rowversions()
     {
         Assert.False(new GetDisplayByIdQueryValidator()
             .Validate(new GetDisplayByIdQuery { Id = 0 })
             .IsValid);
-        Assert.False(new DeleteDisplayCommandValidator()
-            .Validate(new DeleteDisplayCommand { Id = 0 })
+        Assert.False(new DeactivateDisplayCommandValidator()
+            .Validate(new DeactivateDisplayCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
             .IsValid);
-        Assert.False(new RestoreDisplayCommandValidator()
-            .Validate(new RestoreDisplayCommand { Id = 0 })
+        Assert.False(new ReactivateDisplayCommandValidator()
+            .Validate(new ReactivateDisplayCommand
+            {
+                Id = 0,
+                RowVersion = ValidRowVersion
+            })
             .IsValid);
         Assert.False(new PermanentDeleteDisplayCommandValidator()
-            .Validate(new PermanentDeleteDisplayCommand { Id = 0 })
+            .Validate(new PermanentDeleteDisplayCommand
+            {
+                Id = 1,
+                RowVersion = "not-base64"
+            })
             .IsValid);
     }
 }

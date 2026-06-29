@@ -1,8 +1,10 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.WaitingAreas.Command.UpdateWaitingArea;
@@ -10,31 +12,31 @@ namespace Qcontrol.Application.Features.WaitingAreas.Command.UpdateWaitingArea;
 internal sealed class UpdateWaitingAreaCommandHandler
     : ICommandHandler<UpdateWaitingAreaCommand, UpdateWaitingAreaResponse>
 {
-    private readonly IWriteReadRepository<Branch> _branchReadRepository;
     private readonly IWriteReadRepository<WaitingArea> _waitingAreaReadRepository;
+    private readonly IWriteReadRepository<Branch> _branchReadRepository;
     private readonly IWriteRepository<WaitingArea> _waitingAreaWriteRepository;
+    private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateWaitingAreaCommandHandler(
-        IWriteReadRepository<Branch> branchReadRepository,
         IWriteReadRepository<WaitingArea> waitingAreaReadRepository,
+        IWriteReadRepository<Branch> branchReadRepository,
         IWriteRepository<WaitingArea> waitingAreaWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
         IUnitOfWork unitOfWork)
     {
-        _branchReadRepository = branchReadRepository
-            ?? throw new ArgumentNullException(nameof(branchReadRepository));
-
         _waitingAreaReadRepository = waitingAreaReadRepository
             ?? throw new ArgumentNullException(nameof(waitingAreaReadRepository));
-
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
         _waitingAreaWriteRepository = waitingAreaWriteRepository
             ?? throw new ArgumentNullException(nameof(waitingAreaWriteRepository));
-
+        _concurrencyTokenManager = concurrencyTokenManager
+            ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -43,15 +45,20 @@ internal sealed class UpdateWaitingAreaCommandHandler
         UpdateWaitingAreaCommand request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated ||
-            !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
         {
-            return Result<UpdateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code: "WaitingAreas.Update.Unauthenticated",
-                    Message:
-                        ErrorMessage.WaitingArea_Authentication_Required,
-                    Type: ErrorType.Security));
+            return Result<UpdateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Update.Unauthenticated",
+                ErrorMessage.WaitingArea_Authentication_Required,
+                ErrorType.Unauthorized));
+        }
+
+        if (!RowVersionConverter.TryDecode(request.RowVersion, out var rowVersion))
+        {
+            return Result<UpdateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Update.InvalidRowVersion",
+                ErrorMessage.RowVersion_Invalid,
+                ErrorType.Validation));
         }
 
         var waitingArea =
@@ -61,49 +68,37 @@ internal sealed class UpdateWaitingAreaCommandHandler
 
         if (waitingArea is null)
         {
-            return Result<UpdateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code: "WaitingAreas.Update.WaitingAreaNotFound",
-                    Message: ErrorMessage.WaitingArea_NotFound,
-                    Type: ErrorType.NotFound));
-        }
-
-        var branchExists =
-            await _branchReadRepository.AnyAsync(
-                x => x.Id == request.BranchId,
-                cancellationToken);
-
-        if (!branchExists)
-        {
-            return Result<UpdateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code: "WaitingAreas.Update.BranchNotFound",
-                    Message: ErrorMessage.WaitingArea_Branch_NotFound,
-                    Type: ErrorType.NotFound));
+            return Result<UpdateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Update.WaitingAreaNotFound",
+                ErrorMessage.WaitingArea_NotFound,
+                ErrorType.NotFound));
         }
 
         var numberAlreadyExists =
             await _waitingAreaReadRepository.AnyAsync(
                 x =>
                     x.Id != request.Id &&
-                    x.BranchId == request.BranchId &&
+                    x.BranchId == waitingArea.BranchId &&
                     x.Number == request.Number,
                 cancellationToken);
 
         if (numberAlreadyExists)
         {
-            return Result<UpdateWaitingAreaResponse>.Fail(
-                new Error(
-                    Code:
-                        "WaitingAreas.Update.NumberAlreadyExistsInBranch",
-                    Message:
-                        ErrorMessage
-                            .WaitingArea_Number_AlreadyExistsInBranch,
-                    Type: ErrorType.Conflict));
+            return Result<UpdateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Update.NumberAlreadyExistsInBranch",
+                ErrorMessage.WaitingArea_Number_AlreadyExistsInBranch,
+                ErrorType.Conflict));
         }
 
+        var branch = await _branchReadRepository.GetByIdAsync(
+            waitingArea.BranchId,
+            cancellationToken);
+
+        _concurrencyTokenManager.SetOriginalRowVersion(
+            waitingArea,
+            rowVersion);
+
         waitingArea.Update(
-            branchId: request.BranchId,
             number: request.Number,
             audioDevice: request.AudioDevice,
             controlDevice: request.ControlDevice,
@@ -112,7 +107,17 @@ internal sealed class UpdateWaitingAreaCommandHandler
 
         _waitingAreaWriteRepository.Update(waitingArea);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<UpdateWaitingAreaResponse>.Fail(new Error(
+                "WaitingAreas.Update.ConcurrencyConflict",
+                ErrorMessage.Concurrency_Conflict,
+                ErrorType.Conflict));
+        }
 
         return Result<UpdateWaitingAreaResponse>.Ok(
             new UpdateWaitingAreaResponse
@@ -123,6 +128,12 @@ internal sealed class UpdateWaitingAreaCommandHandler
                 AudioDevice = waitingArea.AudioDevice,
                 ControlDevice = waitingArea.ControlDevice,
                 DescriptiveName = waitingArea.DescriptiveName,
+                IsActive = waitingArea.IsActive,
+                EffectiveIsActive =
+                    branch is not null &&
+                    branch.IsActive &&
+                    waitingArea.IsActive,
+                RowVersion = RowVersionConverter.ToBase64(waitingArea.RowVersion),
                 LastModifiedByApplicationUserId =
                     waitingArea.LastModifiedByApplicationUserId,
                 ModifiedOnUtc = waitingArea.ModifiedOnUtc,

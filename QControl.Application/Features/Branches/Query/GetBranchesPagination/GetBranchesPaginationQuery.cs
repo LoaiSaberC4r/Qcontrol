@@ -7,4 +7,5 @@ public sealed class GetBranchesPaginationQuery
     : SearchParameters,
       IQuery<Pagination<BranchPaginationItemResponse>>
 {
+    public bool? IsActive { get; set; }
 }

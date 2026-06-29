@@ -122,7 +122,8 @@ namespace BuildingBlock.Application.Behaviors
             ErrorType.Validation => 422,
             ErrorType.NotFound => 404,
             ErrorType.Conflict => 409,
-            ErrorType.Security => 403, // أو 401 تبع حالتك
+            ErrorType.Unauthorized => 401,
+            ErrorType.Security => 403,
             ErrorType.RateLimit => 429,
             ErrorType.Infrastructure => 503,
             _ => 500

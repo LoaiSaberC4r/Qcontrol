@@ -1,4 +1,5 @@
 using BuildingBlock.Domain.Specification;
+using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
@@ -17,12 +18,19 @@ internal sealed class GetDisplayLinkedWindowsSpec
         {
             var searchText = query.Search.Trim();
 
-            AddCriteria(x =>
-                x.Window.Number.Contains(searchText) ||
-                (x.Window.DescriptiveName != null &&
-                    x.Window.DescriptiveName.Contains(searchText)) ||
-                (x.Window.IPAddress != null &&
-                    x.Window.IPAddress.Contains(searchText)));
+            if (StatusSearchTerm.TryParse(searchText, out var status))
+            {
+                AddCriteria(x => x.Window.IsActive == status);
+            }
+            else
+            {
+                AddCriteria(x =>
+                    x.Window.Number.Contains(searchText) ||
+                    (x.Window.DescriptiveName != null &&
+                        x.Window.DescriptiveName.Contains(searchText)) ||
+                    (x.Window.IPAddress != null &&
+                        x.Window.IPAddress.Contains(searchText)));
+            }
         }
 
         AddOrderBy(x => x.Window.WaitingAreaId);
@@ -47,7 +55,12 @@ internal sealed class GetDisplayLinkedWindowsSpec
             IPAddress = x.Window.IPAddress,
             EnableTicketBooking = x.Window.EnableTicketBooking,
             EnableDirectCall = x.Window.EnableDirectCall,
-            IsDeleted = x.Window.IsDeleted
+            IsActive = x.Window.IsActive,
+            EffectiveIsActive =
+                x.BranchId == x.Window.BranchId &&
+                x.Window.WaitingArea.Branch.IsActive &&
+                x.Window.WaitingArea.IsActive &&
+                x.Window.IsActive
         });
     }
 }

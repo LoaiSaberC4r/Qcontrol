@@ -16,8 +16,7 @@ internal sealed class GetDisplayForAssignmentSpec
         Select(x => new DisplayAssignmentCandidate
         {
             Id = x.Id,
-            BranchId = x.BranchId,
-            IsDeleted = x.IsDeleted
+            BranchId = x.BranchId
         });
     }
 }

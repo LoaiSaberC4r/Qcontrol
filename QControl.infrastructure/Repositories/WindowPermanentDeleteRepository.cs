@@ -26,7 +26,7 @@ internal sealed class WindowPermanentDeleteRepository
         {
             return await _dbContext.Set<Window>()
                 .IgnoreQueryFilters()
-                .Where(x => x.Id == windowId && x.IsDeleted)
+                .Where(x => x.Id == windowId && !x.IsActive)
                 .ExecuteDeleteAsync(cancellationToken);
         }
         catch (DbUpdateException ex)

@@ -1,6 +1,4 @@
 ﻿using BuildingBlock.Domain.EntitiesHelper;
-using Qcontrol.Domain.Identity;
-
 namespace QControl.Domain.Entities;
 
 public sealed class Location : Entity<int>
@@ -9,25 +7,17 @@ public sealed class Location : Entity<int>
 
     public Branch Branch { get; private set; } = null!;
 
-    public string? Governorate { get; private set; }
+    public string Governorate { get; private set; } = string.Empty;
 
-    public string? City { get; private set; }
+    public string City { get; private set; } = string.Empty;
 
-    public string? Area { get; private set; }
+    public string Area { get; private set; } = string.Empty;
 
-    public string? Address { get; private set; }
+    public string Address { get; private set; } = string.Empty;
 
-    public string? Longitude { get; private set; }
+    public decimal Latitude { get; private set; }
 
-    public string? Latitude { get; private set; }
-
-    public Guid CreatedByApplicationUserId { get; private set; }
-
-    public ApplicationUser CreatedByApplicationUser { get; private set; } = null!;
-
-    public Guid? LastModifiedByApplicationUserId { get; private set; }
-
-    public ApplicationUser? LastModifiedByApplicationUser { get; private set; }
+    public decimal Longitude { get; private set; }
 
     private Location()
     {
@@ -35,53 +25,42 @@ public sealed class Location : Entity<int>
 
     internal static Location Create(
         Branch branch,
-        string? governorate,
-        string? city,
-        string? area,
-        string? address,
-        string? longitude,
-        string? latitude,
-        Guid createdByApplicationUserId)
+        string governorate,
+        string city,
+        string area,
+        string address,
+        decimal latitude,
+        decimal longitude)
     {
         ArgumentNullException.ThrowIfNull(branch);
 
         return new Location
         {
             Branch = branch,
-            Governorate = NormalizeOptional(governorate),
-            City = NormalizeOptional(city),
-            Area = NormalizeOptional(area),
-            Address = NormalizeOptional(address),
-            Longitude = NormalizeOptional(longitude),
-            Latitude = NormalizeOptional(latitude),
-            CreatedByApplicationUserId = createdByApplicationUserId,
-            LastModifiedByApplicationUserId = null
+            Governorate = NormalizeRequired(governorate),
+            City = NormalizeRequired(city),
+            Area = NormalizeRequired(area),
+            Address = NormalizeRequired(address),
+            Latitude = latitude,
+            Longitude = longitude
         };
     }
 
     internal void Update(
-        string? governorate,
-        string? city,
-        string? area,
-        string? address,
-        string? longitude,
-        string? latitude,
-        Guid lastModifiedByApplicationUserId)
+        string governorate,
+        string city,
+        string area,
+        string address,
+        decimal latitude,
+        decimal longitude)
     {
-        Governorate = NormalizeOptional(governorate);
-        City = NormalizeOptional(city);
-        Area = NormalizeOptional(area);
-        Address = NormalizeOptional(address);
-        Longitude = NormalizeOptional(longitude);
-        Latitude = NormalizeOptional(latitude);
-        LastModifiedByApplicationUserId =
-            lastModifiedByApplicationUserId;
+        Governorate = NormalizeRequired(governorate);
+        City = NormalizeRequired(city);
+        Area = NormalizeRequired(area);
+        Address = NormalizeRequired(address);
+        Latitude = latitude;
+        Longitude = longitude;
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
+    private static string NormalizeRequired(string value) => value.Trim();
 }

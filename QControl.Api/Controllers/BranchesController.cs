@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Branches;
 using Qcontrol.Application.Features.Branches.Command.CreateBranch;
-using Qcontrol.Application.Features.Branches.Command.DeleteBranch;
+using Qcontrol.Application.Features.Branches.Command.DeactivateBranch;
+using Qcontrol.Application.Features.Branches.Command.PermanentDeleteBranch;
+using Qcontrol.Application.Features.Branches.Command.ReactivateBranch;
 using Qcontrol.Application.Features.Branches.Command.UpdateBranch;
 using Qcontrol.Application.Features.Branches.Query.GetBranchDetails;
 using Qcontrol.Application.Features.Branches.Query.GetBranchesPagination;
@@ -71,12 +73,12 @@ public sealed class BranchesController : ControllerBase
             EnglishName = request.EnglishName,
             IPAddress = request.IPAddress,
             License = request.License,
-            Governorate = request.Location?.Governorate,
-            City = request.Location?.City,
-            Area = request.Location?.Area,
-            Address = request.Location?.Address,
-            Longitude = request.Location?.Longitude,
-            Latitude = request.Location?.Latitude
+            Governorate = request.Location.Governorate,
+            City = request.Location.City,
+            Area = request.Location.Area,
+            Address = request.Location.Address,
+            Longitude = request.Location.Longitude,
+            Latitude = request.Location.Latitude
         };
 
         var result = await sender.Send(
@@ -100,12 +102,13 @@ public sealed class BranchesController : ControllerBase
             EnglishName = request.EnglishName,
             IPAddress = request.IPAddress,
             License = request.License,
-            Governorate = request.Location?.Governorate,
-            City = request.Location?.City,
-            Area = request.Location?.Area,
-            Address = request.Location?.Address,
-            Longitude = request.Location?.Longitude,
-            Latitude = request.Location?.Latitude
+            Governorate = request.Location.Governorate,
+            City = request.Location.City,
+            Area = request.Location.Area,
+            Address = request.Location.Address,
+            Longitude = request.Location.Longitude,
+            Latitude = request.Location.Latitude,
+            RowVersion = request.RowVersion
         };
 
         var result = await sender.Send(
@@ -115,15 +118,57 @@ public sealed class BranchesController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpDelete("{branchId:int}")]
-    [Permission("Branches.Delete")]
-    public async Task<IActionResult> Delete(
+    [HttpPost("{branchId:int}/deactivate")]
+    [Permission("Branches.Deactivate")]
+    public async Task<IActionResult> Deactivate(
         int branchId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteBranchCommand
+        var command = new DeactivateBranchCommand
         {
-            BranchId = branchId
+            BranchId = branchId,
+            RowVersion = rowVersion
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/reactivate")]
+    [Permission("Branches.Reactivate")]
+    public async Task<IActionResult> Reactivate(
+        int branchId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
+        CancellationToken cancellationToken)
+    {
+        var command = new ReactivateBranchCommand
+        {
+            BranchId = branchId,
+            RowVersion = rowVersion
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{branchId:int}/permanent")]
+    [Permission("Branches.DeletePermanent")]
+    public async Task<IActionResult> DeletePermanently(
+        int branchId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
+        CancellationToken cancellationToken)
+    {
+        var command = new PermanentDeleteBranchCommand
+        {
+            BranchId = branchId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(

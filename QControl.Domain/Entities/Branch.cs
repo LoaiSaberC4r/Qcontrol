@@ -8,17 +8,17 @@ public sealed class Branch : AggregateRoot<int>
     private readonly List<WaitingArea> _waitingAreas = new();
     private readonly List<Display> _displays = new();
 
-    public string? ArabicName { get; private set; }
+    public string ArabicName { get; private set; } = string.Empty;
 
-    public string? EnglishName { get; private set; }
+    public string EnglishName { get; private set; } = string.Empty;
 
     public string IPAddress { get; private set; } = string.Empty;
 
-    public bool IsUpdatesAvailable { get; private set; }
-
-    public DateTime LastUpdated { get; private set; }
-
     public string? License { get; private set; }
+
+    public bool IsActive { get; private set; } = true;
+
+    public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
 
     public Location Location { get; private set; } = null!;
 
@@ -29,6 +29,18 @@ public sealed class Branch : AggregateRoot<int>
     public Guid? LastModifiedByApplicationUserId { get; private set; }
 
     public ApplicationUser? LastModifiedByApplicationUser { get; private set; }
+
+    public DateTime? DeactivatedOnUtc { get; private set; }
+
+    public Guid? DeactivatedByApplicationUserId { get; private set; }
+
+    public ApplicationUser? DeactivatedByApplicationUser { get; private set; }
+
+    public DateTime? ReactivatedOnUtc { get; private set; }
+
+    public Guid? ReactivatedByApplicationUserId { get; private set; }
+
+    public ApplicationUser? ReactivatedByApplicationUser { get; private set; }
 
     public IReadOnlyCollection<WaitingArea> WaitingAreas =>
         _waitingAreas.AsReadOnly();
@@ -41,26 +53,25 @@ public sealed class Branch : AggregateRoot<int>
     }
 
     public static Branch Create(
-        string? arabicName,
-        string? englishName,
+        string arabicName,
+        string englishName,
         string ipAddress,
         string? license,
-        string? governorate,
-        string? city,
-        string? area,
-        string? address,
-        string? longitude,
-        string? latitude,
+        string governorate,
+        string city,
+        string area,
+        string address,
+        decimal latitude,
+        decimal longitude,
         Guid createdByApplicationUserId)
     {
         var branch = new Branch
         {
-            ArabicName = NormalizeOptional(arabicName),
-            EnglishName = NormalizeOptional(englishName),
+            ArabicName = NormalizeRequired(arabicName),
+            EnglishName = NormalizeRequired(englishName),
             IPAddress = ipAddress.Trim(),
-            IsUpdatesAvailable = true,
-            LastUpdated = DateTime.UtcNow,
             License = NormalizeOptional(license),
+            IsActive = true,
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
@@ -71,22 +82,21 @@ public sealed class Branch : AggregateRoot<int>
             city,
             area,
             address,
-            longitude,
             latitude,
-            createdByApplicationUserId);
+            longitude);
 
         return branch;
     }
 
     public void Update(
-        string? arabicName,
-        string? englishName,
+        string arabicName,
+        string englishName,
         string ipAddress,
         string? license,
         Guid lastModifiedByApplicationUserId)
     {
-        ArabicName = NormalizeOptional(arabicName);
-        EnglishName = NormalizeOptional(englishName);
+        ArabicName = NormalizeRequired(arabicName);
+        EnglishName = NormalizeRequired(englishName);
         IPAddress = ipAddress.Trim();
         License = NormalizeOptional(license);
         LastModifiedByApplicationUserId =
@@ -94,33 +104,47 @@ public sealed class Branch : AggregateRoot<int>
     }
 
     public void UpdateLocation(
-        string? governorate,
-        string? city,
-        string? area,
-        string? address,
-        string? longitude,
-        string? latitude,
-        Guid lastModifiedByApplicationUserId)
+        string governorate,
+        string city,
+        string area,
+        string address,
+        decimal latitude,
+        decimal longitude)
     {
         Location.Update(
             governorate,
             city,
             area,
             address,
-            longitude,
             latitude,
-            lastModifiedByApplicationUserId);
+            longitude);
     }
 
-    public void SetUpdateState(
-        bool isUpdatesAvailable,
-        DateTime lastUpdated,
-        Guid lastModifiedByApplicationUserId)
+    public void Deactivate(
+        DateTime deactivatedOnUtc,
+        Guid deactivatedByApplicationUserId)
     {
-        IsUpdatesAvailable = isUpdatesAvailable;
-        LastUpdated = lastUpdated;
+        IsActive = false;
+        DeactivatedOnUtc = deactivatedOnUtc;
+        DeactivatedByApplicationUserId = deactivatedByApplicationUserId;
         LastModifiedByApplicationUserId =
-            lastModifiedByApplicationUserId;
+            deactivatedByApplicationUserId;
+    }
+
+    public void Reactivate(
+        DateTime reactivatedOnUtc,
+        Guid reactivatedByApplicationUserId)
+    {
+        IsActive = true;
+        ReactivatedOnUtc = reactivatedOnUtc;
+        ReactivatedByApplicationUserId = reactivatedByApplicationUserId;
+        LastModifiedByApplicationUserId =
+            reactivatedByApplicationUserId;
+    }
+
+    private static string NormalizeRequired(string value)
+    {
+        return value.Trim();
     }
 
     private static string? NormalizeOptional(string? value)

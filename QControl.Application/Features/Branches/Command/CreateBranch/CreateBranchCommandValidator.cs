@@ -1,7 +1,6 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Qcontrol.Domain.Resources;
-using System.Net;
-using System.Net.Sockets;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Branches.Command.CreateBranch;
 
@@ -10,81 +9,56 @@ internal sealed class CreateBranchCommandValidator
 {
     public CreateBranchCommandValidator()
     {
-        RuleFor(x => x)
-            .Must(x =>
-                !string.IsNullOrWhiteSpace(x.ArabicName) ||
-                !string.IsNullOrWhiteSpace(x.EnglishName))
-            .WithMessage(ErrorMessage.Branch_Name_Required);
-
         RuleFor(x => x.ArabicName)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_ArabicName_Required)
             .MaximumLength(100)
-            .WithMessage(ErrorMessage.Branch_ArabicName_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.ArabicName));
+            .WithMessage(ErrorMessage.Branch_ArabicName_MaxLength);
 
         RuleFor(x => x.EnglishName)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_EnglishName_Required)
             .MaximumLength(100)
-            .WithMessage(ErrorMessage.Branch_EnglishName_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.EnglishName));
+            .WithMessage(ErrorMessage.Branch_EnglishName_MaxLength);
 
         RuleFor(x => x.IPAddress)
             .NotEmpty()
             .WithMessage(ErrorMessage.Branch_IPAddress_Required)
             .MaximumLength(45)
             .WithMessage(ErrorMessage.Branch_IPAddress_MaxLength)
-            .Must(BeValidIPAddress)
+            .Must(value => IPAddressNormalizer.TryNormalize(value, out _))
             .WithMessage(ErrorMessage.Branch_IPAddress_Invalid);
 
         RuleFor(x => x.Governorate)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_Governorate_Required)
             .MaximumLength(100)
-            .WithMessage(ErrorMessage.Branch_Governorate_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.Governorate));
+            .WithMessage(ErrorMessage.Branch_Governorate_MaxLength);
 
         RuleFor(x => x.City)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_City_Required)
             .MaximumLength(100)
-            .WithMessage(ErrorMessage.Branch_City_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.City));
+            .WithMessage(ErrorMessage.Branch_City_MaxLength);
 
         RuleFor(x => x.Area)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_Area_Required)
             .MaximumLength(100)
-            .WithMessage(ErrorMessage.Branch_Area_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.Area));
+            .WithMessage(ErrorMessage.Branch_Area_MaxLength);
 
         RuleFor(x => x.Address)
+            .NotEmpty()
+            .WithMessage(ErrorMessage.Branch_Address_Required)
             .MaximumLength(500)
-            .WithMessage(ErrorMessage.Branch_Address_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.Address));
-
-        RuleFor(x => x.Longitude)
-            .MaximumLength(50)
-            .WithMessage(ErrorMessage.Branch_Longitude_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.Longitude));
+            .WithMessage(ErrorMessage.Branch_Address_MaxLength);
 
         RuleFor(x => x.Latitude)
-            .MaximumLength(50)
-            .WithMessage(ErrorMessage.Branch_Latitude_MaxLength)
-            .When(x => !string.IsNullOrWhiteSpace(x.Latitude));
-    }
+            .InclusiveBetween(-90m, 90m)
+            .WithMessage(ErrorMessage.Branch_Latitude_Invalid);
 
-    private static bool BeValidIPAddress(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return true;
-        }
-
-        var normalizedValue = value.Trim();
-
-        if (normalizedValue.Contains(':'))
-        {
-            return IPAddress.TryParse(normalizedValue, out var ipv6) &&
-                   ipv6.AddressFamily == AddressFamily.InterNetworkV6;
-        }
-
-        var parts = normalizedValue.Split('.');
-
-        return parts.Length == 4 &&
-               parts.All(part =>
-                   part.Length > 0 &&
-                   byte.TryParse(part, out _));
+        RuleFor(x => x.Longitude)
+            .InclusiveBetween(-180m, 180m)
+            .WithMessage(ErrorMessage.Branch_Longitude_Invalid);
     }
 }

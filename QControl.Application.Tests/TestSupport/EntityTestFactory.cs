@@ -18,12 +18,12 @@ internal static class EntityTestFactory
             englishName: englishName ?? $"English {id}",
             ipAddress: $"10.0.0.{id}",
             license: null,
-            governorate: null,
-            city: null,
-            area: null,
-            address: null,
-            longitude: null,
-            latitude: null,
+            governorate: $"Governorate {id}",
+            city: $"City {id}",
+            area: $"Area {id}",
+            address: $"Address {id}",
+            latitude: id,
+            longitude: id,
             createdByApplicationUserId: CurrentUserId);
 
         SetId(branch, id);
@@ -70,10 +70,11 @@ internal static class EntityTestFactory
         string? ipAddress = null,
         bool enableTicketBooking = false,
         bool enableDirectCall = false,
-        bool isDeleted = false,
-        DateTime? deletedOnUtc = null)
+        bool isInactive = false,
+        DateTime? deactivatedOnUtc = null)
     {
         var window = QControl.Domain.Entities.Window.Create(
+            waitingArea?.BranchId ?? waitingAreaId,
             waitingAreaId,
             number,
             descriptiveName: descriptiveName,
@@ -84,10 +85,11 @@ internal static class EntityTestFactory
 
         SetId(window, id);
 
-        if (isDeleted)
+        if (isInactive)
         {
-            window.IsDeleted = true;
-            window.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+            window.Deactivate(
+                deactivatedOnUtc ?? DateTime.UtcNow,
+                CurrentUserId);
         }
 
         if (waitingArea is not null)
@@ -110,10 +112,11 @@ internal static class EntityTestFactory
         string serialNo = "SERIAL-001",
         string type = "Operator Module",
         Window? window = null,
-        bool isDeleted = false,
-        DateTime? deletedOnUtc = null)
+        bool isInactive = false,
+        DateTime? deactivatedOnUtc = null)
     {
         var terminal = QControl.Domain.Entities.Terminal.Create(
+            window?.BranchId ?? windowId,
             windowId,
             number,
             ipAddress,
@@ -123,10 +126,11 @@ internal static class EntityTestFactory
 
         SetId(terminal, id);
 
-        if (isDeleted)
+        if (isInactive)
         {
-            terminal.IsDeleted = true;
-            terminal.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+            terminal.Deactivate(
+                deactivatedOnUtc ?? DateTime.UtcNow,
+                CurrentUserId);
         }
 
         if (window is not null)
@@ -149,8 +153,8 @@ internal static class EntityTestFactory
         string serialNo = "DISPLAY-SERIAL-001",
         string type = "LED Display",
         Branch? branch = null,
-        bool isDeleted = false,
-        DateTime? deletedOnUtc = null)
+        bool isInactive = false,
+        DateTime? deactivatedOnUtc = null)
     {
         var display = QControl.Domain.Entities.Display.Create(
             branchId,
@@ -162,10 +166,11 @@ internal static class EntityTestFactory
 
         SetId(display, id);
 
-        if (isDeleted)
+        if (isInactive)
         {
-            display.IsDeleted = true;
-            display.DeletedOnUtc = deletedOnUtc ?? DateTime.UtcNow;
+            display.Deactivate(
+                deactivatedOnUtc ?? DateTime.UtcNow,
+                CurrentUserId);
         }
 
         if (branch is not null)
@@ -187,6 +192,7 @@ internal static class EntityTestFactory
         Window? window = null)
     {
         var displayWindow = QControl.Domain.Entities.DisplayWindow.Create(
+            display?.BranchId ?? window?.BranchId ?? 1,
             displayId,
             windowId,
             CurrentUserId);

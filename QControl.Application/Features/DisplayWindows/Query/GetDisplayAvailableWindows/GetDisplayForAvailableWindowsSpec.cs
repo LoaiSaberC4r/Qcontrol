@@ -16,8 +16,7 @@ internal sealed class GetDisplayForAvailableWindowsSpec
         Select(x => new DisplayAvailableWindowsDisplayCandidate
         {
             Id = x.Id,
-            BranchId = x.BranchId,
-            IsDeleted = x.IsDeleted
+            BranchId = x.BranchId
         });
     }
 }

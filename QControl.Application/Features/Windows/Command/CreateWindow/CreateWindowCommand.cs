@@ -1,9 +1,11 @@
 using BuildingBlock.Application.Abstraction;
+using QControl.Application.Shared.Operational;
 
 namespace Qcontrol.Application.Features.Windows.Command.CreateWindow;
 
 public sealed record CreateWindowCommand
-    : ICommand<CreateWindowResponse>
+    : ICommand<CreateWindowResponse>,
+      ICacheInvalidator
 {
     public int WaitingAreaId { get; init; }
 
@@ -16,4 +18,11 @@ public sealed record CreateWindowCommand
     public bool EnableTicketBooking { get; init; }
 
     public bool EnableDirectCall { get; init; }
+
+    public IEnumerable<string> Tags => new[]
+    {
+        OperationalCacheTags.Windows,
+        OperationalCacheTags.WaitingArea(WaitingAreaId),
+        OperationalCacheTags.DisplayWindows
+    };
 }

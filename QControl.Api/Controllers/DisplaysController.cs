@@ -8,11 +8,10 @@ using Qcontrol.Application.Features.DisplayWindows.Command.UnassignWindowFromDis
 using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayAvailableWindows;
 using Qcontrol.Application.Features.DisplayWindows.Query.GetDisplayLinkedWindows;
 using Qcontrol.Application.Features.Displays.Command.CreateDisplay;
-using Qcontrol.Application.Features.Displays.Command.DeleteDisplay;
+using Qcontrol.Application.Features.Displays.Command.DeactivateDisplay;
 using Qcontrol.Application.Features.Displays.Command.PermanentDeleteDisplay;
-using Qcontrol.Application.Features.Displays.Command.RestoreDisplay;
+using Qcontrol.Application.Features.Displays.Command.ReactivateDisplay;
 using Qcontrol.Application.Features.Displays.Command.UpdateDisplay;
-using Qcontrol.Application.Features.Displays.Query.GetDeletedDisplays;
 using Qcontrol.Application.Features.Displays.Query.GetDisplayById;
 using Qcontrol.Application.Features.Displays.Query.GetDisplays;
 using QControl.Api.Attribute;
@@ -39,22 +38,6 @@ public sealed class DisplaysController : ControllerBase
         CancellationToken cancellationToken)
     {
         query ??= new GetDisplaysQuery();
-        query.Search ??= string.Empty;
-
-        var result = await sender.Send(
-            query,
-            cancellationToken);
-
-        return result.ToIActionResult();
-    }
-
-    [HttpGet("deleted")]
-    [Permission("Displays.ViewDeleted")]
-    public async Task<IActionResult> GetDeleted(
-        [FromQuery] GetDeletedDisplaysQuery query,
-        CancellationToken cancellationToken)
-    {
-        query ??= new GetDeletedDisplaysQuery();
         query.Search ??= string.Empty;
 
         var result = await sender.Send(
@@ -190,11 +173,11 @@ public sealed class DisplaysController : ControllerBase
         var command = new UpdateDisplayCommand
         {
             Id = displayId,
-            RequestId = request.Id,
             Number = request.Number,
             IPAddress = request.IPAddress,
             SerialNo = request.SerialNo,
-            Type = request.Type
+            Type = request.Type,
+            RowVersion = request.RowVersion
         };
 
         var result = await sender.Send(
@@ -204,15 +187,17 @@ public sealed class DisplaysController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpDelete("{displayId:int}")]
-    [Permission("Displays.Delete")]
-    public async Task<IActionResult> Delete(
+    [HttpPost("{displayId:int}/deactivate")]
+    [Permission("Displays.Deactivate")]
+    public async Task<IActionResult> Deactivate(
         int displayId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteDisplayCommand
+        var command = new DeactivateDisplayCommand
         {
-            Id = displayId
+            Id = displayId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
@@ -222,15 +207,17 @@ public sealed class DisplaysController : ControllerBase
         return result.ToIActionResult();
     }
 
-    [HttpPost("{displayId:int}/restore")]
-    [Permission("Displays.Restore")]
-    public async Task<IActionResult> Restore(
+    [HttpPost("{displayId:int}/reactivate")]
+    [Permission("Displays.Reactivate")]
+    public async Task<IActionResult> Reactivate(
         int displayId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
-        var command = new RestoreDisplayCommand
+        var command = new ReactivateDisplayCommand
         {
-            Id = displayId
+            Id = displayId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
@@ -244,11 +231,13 @@ public sealed class DisplaysController : ControllerBase
     [Permission("Displays.DeletePermanent")]
     public async Task<IActionResult> DeletePermanently(
         int displayId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
         CancellationToken cancellationToken)
     {
         var command = new PermanentDeleteDisplayCommand
         {
-            Id = displayId
+            Id = displayId,
+            RowVersion = rowVersion
         };
 
         var result = await sender.Send(
