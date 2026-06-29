@@ -7,6 +7,7 @@ public sealed class Branch : AggregateRoot<int>
 {
     private readonly List<WaitingArea> _waitingAreas = new();
     private readonly List<Display> _displays = new();
+    private readonly List<BranchAdvertisement> _advertisements = new();
 
     public string ArabicName { get; private set; } = string.Empty;
 
@@ -21,6 +22,8 @@ public sealed class Branch : AggregateRoot<int>
     public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
 
     public Location Location { get; private set; } = null!;
+
+    public BranchBranding? Branding { get; private set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 
@@ -47,6 +50,9 @@ public sealed class Branch : AggregateRoot<int>
 
     public IReadOnlyCollection<Display> Displays =>
         _displays.AsReadOnly();
+
+    public IReadOnlyCollection<BranchAdvertisement> Advertisements =>
+        _advertisements.AsReadOnly();
 
     private Branch()
     {

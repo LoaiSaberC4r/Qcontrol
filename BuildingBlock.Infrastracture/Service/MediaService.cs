@@ -7,11 +7,12 @@ namespace BuildingBlock.Infrastracture.Service
     public class MediaService : IMediaService
     {
         private readonly ILogger<MediaService> _logger;
-        private readonly string _fileSavePath = "./wwwroot/Media";
+        private readonly string _mediaRoot;
 
         public MediaService(ILogger<MediaService> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger), "Logger is not configured.");
+            _mediaRoot = Path.GetFullPath(Path.Combine(".", "wwwroot", "Media"));
         }
 
         public async Task<string> SaveAsync(IFormFile mediaFile, string folderName)
@@ -21,16 +22,20 @@ namespace BuildingBlock.Infrastracture.Service
 
             _logger.LogInformation("Saving media file: {FileName} to folder: {FolderName}", mediaFile.FileName, folderName);
 
-            var filePath = GetUniqueFilePath(folderName, Path.GetExtension(mediaFile.FileName));
+            var relativeFolder = NormalizeFolder(folderName);
+            var extension = NormalizeExtension(Path.GetExtension(mediaFile.FileName));
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var relativePath = CombineRelative(relativeFolder, fileName);
+            var filePath = ResolvePhysicalPath(relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
             try
             {
                 await using var stream = new FileStream(filePath, FileMode.Create);
                 await mediaFile.CopyToAsync(stream);
-                _logger.LogInformation("File saved successfully: {FilePath}", filePath);
+                _logger.LogInformation("File saved successfully: {RelativePath}", relativePath);
 
-                return Path.GetFileName(filePath);
+                return relativePath;
             }
             catch (Exception ex)
             {
@@ -60,15 +65,19 @@ namespace BuildingBlock.Infrastracture.Service
 
             _logger.LogInformation("Saving video file: {FileName} to folder: {FolderName}", videoFile.FileName, folderName);
 
-            var filePath = GetUniqueFilePath(folderName, Path.GetExtension(videoFile.FileName));
+            var relativeFolder = NormalizeFolder(folderName);
+            var extension = NormalizeExtension(Path.GetExtension(videoFile.FileName));
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var relativePath = CombineRelative(relativeFolder, fileName);
+            var filePath = ResolvePhysicalPath(relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
             try
             {
                 await using var stream = new FileStream(filePath, FileMode.Create);
                 await videoFile.CopyToAsync(stream);
-                _logger.LogInformation("Video saved successfully: {FilePath}", filePath);
-                return Path.GetFileName(filePath);
+                _logger.LogInformation("Video saved successfully: {RelativePath}", relativePath);
+                return relativePath;
             }
             catch (Exception ex)
             {
@@ -77,47 +86,40 @@ namespace BuildingBlock.Infrastracture.Service
             }
         }
 
-        private string GetUniqueFilePath(string folderName, string extension)
-        {
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            return Path.Combine(_fileSavePath, folderName, fileName).Replace("\\", "/");
-        }
-
         public async Task<List<string>> SaveAsync(List<IFormFile> formFiles, string folderName)
         {
-            var uploadDirectory = Path.Combine(_fileSavePath, folderName);
-
-            ArgumentException.ThrowIfNullOrEmpty(uploadDirectory, "UploadDirectory is not configured.");
+            ArgumentNullException.ThrowIfNull(formFiles);
 
             var filePaths = new List<string>();
 
-            foreach (var file in formFiles)
+            try
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                var filePath = Path.Combine(uploadDirectory, fileName);
-
-                if (!Directory.Exists(uploadDirectory))
+                foreach (var file in formFiles)
                 {
-                    Directory.CreateDirectory(uploadDirectory);
+                    filePaths.Add(await SaveAsync(file, folderName));
                 }
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                filePath = filePath.Replace("\\", "/");
-
-                filePaths.Add(filePath);
             }
+            catch
+            {
+                RemoveRange(filePaths);
+                throw;
+            }
+
             return filePaths;
         }
 
         public void Remove(string filePath)
         {
-            if (File.Exists(filePath))
+            if (string.IsNullOrWhiteSpace(filePath))
             {
-                File.Delete(filePath);
+                return;
+            }
+
+            var physicalPath = ResolveStoredPath(filePath);
+
+            if (File.Exists(physicalPath))
+            {
+                File.Delete(physicalPath);
             }
         }
 
@@ -128,5 +130,100 @@ namespace BuildingBlock.Infrastracture.Service
                 Remove(filePath);
             }
         }
+
+        private string NormalizeFolder(string folderName)
+        {
+            if (string.IsNullOrWhiteSpace(folderName))
+            {
+                throw new ArgumentException("Folder name is required.", nameof(folderName));
+            }
+
+            var normalized = folderName.Trim().Replace('\\', '/').Trim('/');
+
+            if (Path.IsPathRooted(folderName) ||
+                normalized.Contains(':', StringComparison.Ordinal) ||
+                normalized.Split('/').Any(segment =>
+                    string.IsNullOrWhiteSpace(segment) ||
+                    segment is "." or ".." ||
+                    segment.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0))
+            {
+                throw new ArgumentException("Folder name contains an unsafe path.", nameof(folderName));
+            }
+
+            return normalized;
+        }
+
+        private static string NormalizeExtension(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                throw new ArgumentException("File extension is required.", nameof(extension));
+            }
+
+            return extension.Trim().ToLowerInvariant();
+        }
+
+        private string ResolveStoredPath(string storedPath)
+        {
+            var normalized = storedPath.Trim().Replace('\\', '/');
+
+            if (normalized.StartsWith("/Media/", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized["/Media/".Length..];
+            }
+            else if (normalized.StartsWith("Media/", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized["Media/".Length..];
+            }
+            else if (normalized.StartsWith("wwwroot/Media/", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized["wwwroot/Media/".Length..];
+            }
+
+            if (Path.IsPathRooted(normalized))
+            {
+                var rooted = Path.GetFullPath(normalized);
+                EnsureUnderMediaRoot(rooted);
+                return rooted;
+            }
+
+            return ResolvePhysicalPath(normalized);
+        }
+
+        private string ResolvePhysicalPath(string relativePath)
+        {
+            var normalized = relativePath.Trim().Replace('\\', '/').Trim('/');
+
+            if (normalized.Contains(':', StringComparison.Ordinal) ||
+                normalized.Split('/').Any(segment =>
+                    string.IsNullOrWhiteSpace(segment) ||
+                    segment is "." or ".."))
+            {
+                throw new ArgumentException("File path contains an unsafe path.", nameof(relativePath));
+            }
+
+            var physicalPath = Path.GetFullPath(Path.Combine(
+                _mediaRoot,
+                normalized.Replace('/', Path.DirectorySeparatorChar)));
+
+            EnsureUnderMediaRoot(physicalPath);
+
+            return physicalPath;
+        }
+
+        private void EnsureUnderMediaRoot(string physicalPath)
+        {
+            var root = _mediaRoot.TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+            if (!physicalPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Media path resolves outside the media root.");
+            }
+        }
+
+        private static string CombineRelative(string folder, string fileName) =>
+            $"{folder.Trim('/')}/{fileName}".Replace('\\', '/');
     }
 }

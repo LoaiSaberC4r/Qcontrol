@@ -83,6 +83,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IWindowPermanentDeleteRepository, WindowPermanentDeleteRepository>();
             services.AddScoped<ITerminalPermanentDeleteRepository, TerminalPermanentDeleteRepository>();
             services.AddScoped<IDisplayPermanentDeleteRepository, DisplayPermanentDeleteRepository>();
+            services.AddScoped<IBranchAdvertisementReorderRepository, BranchAdvertisementReorderRepository>();
             services.AddScoped<IConcurrencyTokenManager, ConcurrencyTokenManager>();
 
             // public survey related services

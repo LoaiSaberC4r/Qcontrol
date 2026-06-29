@@ -609,4 +609,73 @@
   <data name="Window_Reactivate_Success" xml:space="preserve">
     <value>The window was reactivated successfully.</value>
   </data>
+  <data name="BranchBranding_Save_Success" xml:space="preserve">
+    <value>Branch branding was saved successfully.</value>
+  </data>
+  <data name="BranchBranding_Theme_Save_Success" xml:space="preserve">
+    <value>The branch theme was saved successfully.</value>
+  </data>
+  <data name="BranchBranding_Logo_Upload_Success" xml:space="preserve">
+    <value>The branch logo was uploaded successfully.</value>
+  </data>
+  <data name="BranchBranding_InvalidColor" xml:space="preserve">
+    <value>Colors must use hexadecimal format #RRGGBB.</value>
+  </data>
+  <data name="BranchBranding_Logo_Required" xml:space="preserve">
+    <value>A branch logo image is required.</value>
+  </data>
+  <data name="BranchBranding_InvalidImageType" xml:space="preserve">
+    <value>Only PNG, JPG, JPEG, and WEBP images are supported.</value>
+  </data>
+  <data name="BranchBranding_MediaSaveFailed" xml:space="preserve">
+    <value>The branch branding image could not be saved. Please try again.</value>
+  </data>
+  <data name="BranchAdvertisement_Images_Required" xml:space="preserve">
+    <value>At least one advertisement image is required.</value>
+  </data>
+  <data name="BranchAdvertisement_InvalidImageType" xml:space="preserve">
+    <value>Only PNG, JPG, JPEG, and WEBP advertisement images are supported.</value>
+  </data>
+  <data name="BranchAdvertisement_LimitExceeded" xml:space="preserve">
+    <value>A branch can have at most 20 advertisement images.</value>
+  </data>
+  <data name="BranchAdvertisement_NotFound" xml:space="preserve">
+    <value>The advertisement could not be found.</value>
+  </data>
+  <data name="BranchAdvertisement_DoesNotBelongToBranch" xml:space="preserve">
+    <value>The advertisement does not belong to the selected branch.</value>
+  </data>
+  <data name="BranchAdvertisement_InvalidDisplayOrder" xml:space="preserve">
+    <value>Display order must be between 1 and 20.</value>
+  </data>
+  <data name="BranchAdvertisement_DuplicateDisplayOrder" xml:space="preserve">
+    <value>Advertisement display orders must be unique.</value>
+  </data>
+  <data name="BranchAdvertisement_IncompleteReorder" xml:space="preserve">
+    <value>The reorder request must include every current advertisement with contiguous display orders.</value>
+  </data>
+  <data name="BranchAdvertisement_AlreadyActive" xml:space="preserve">
+    <value>The advertisement is already active.</value>
+  </data>
+  <data name="BranchAdvertisement_AlreadyInactive" xml:space="preserve">
+    <value>The advertisement is already inactive.</value>
+  </data>
+  <data name="BranchAdvertisement_Deactivate_Success" xml:space="preserve">
+    <value>The advertisement was deactivated successfully.</value>
+  </data>
+  <data name="BranchAdvertisement_Reactivate_Success" xml:space="preserve">
+    <value>The advertisement was reactivated successfully.</value>
+  </data>
+  <data name="BranchAdvertisement_Delete_Success" xml:space="preserve">
+    <value>The advertisement was deleted successfully.</value>
+  </data>
+  <data name="BranchAdvertisement_MediaSaveFailed" xml:space="preserve">
+    <value>The advertisement image could not be saved. Please try again.</value>
+  </data>
+  <data name="BranchAdvertisement_OrderConflict" xml:space="preserve">
+    <value>The advertisement order could not be saved because another request changed the order.</value>
+  </data>
+  <data name="BranchAdvertisement_Id_Required" xml:space="preserve">
+    <value>A valid advertisement id is required.</value>
+  </data>
 </root>
