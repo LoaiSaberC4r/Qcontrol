@@ -846,4 +846,88 @@
   <data name="Service_Pagination_PageSize_Max" xml:space="preserve">
     <value>Page size must not exceed 100.</value>
   </data>
+  <data name="ServiceWorkflow_Authentication_Required" xml:space="preserve">
+    <value>Authentication is required.</value>
+  </data>
+  <data name="ServiceWorkflow_Id_Required" xml:space="preserve">
+    <value>A valid workflow id is required.</value>
+  </data>
+  <data name="ServiceWorkflow_NotFound" xml:space="preserve">
+    <value>The service workflow could not be found.</value>
+  </data>
+  <data name="ServiceWorkflow_ArabicName_Required" xml:space="preserve">
+    <value>The Arabic workflow name is required.</value>
+  </data>
+  <data name="ServiceWorkflow_ArabicName_MaxLength" xml:space="preserve">
+    <value>The Arabic workflow name must not exceed 100 characters.</value>
+  </data>
+  <data name="ServiceWorkflow_EnglishName_Required" xml:space="preserve">
+    <value>The English workflow name is required.</value>
+  </data>
+  <data name="ServiceWorkflow_EnglishName_MaxLength" xml:space="preserve">
+    <value>The English workflow name must not exceed 100 characters.</value>
+  </data>
+  <data name="ServiceWorkflow_Name_AlreadyExists" xml:space="preserve">
+    <value>Another workflow already uses this name.</value>
+  </data>
+  <data name="ServiceWorkflow_Steps_Required" xml:space="preserve">
+    <value>Workflow steps are required.</value>
+  </data>
+  <data name="ServiceWorkflow_MinimumSteps_Required" xml:space="preserve">
+    <value>A workflow must contain at least two steps.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_Invalid" xml:space="preserve">
+    <value>Step order must be greater than zero.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_Duplicate" xml:space="preserve">
+    <value>Step order must be unique within the workflow.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_NotSequential" xml:space="preserve">
+    <value>Step order must be sequential starting from 1.</value>
+  </data>
+  <data name="ServiceWorkflow_ServiceId_Required" xml:space="preserve">
+    <value>A valid service id is required.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotFound" xml:space="preserve">
+    <value>The selected service could not be found.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_Deleted" xml:space="preserve">
+    <value>The selected service is deleted.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_Inactive" xml:space="preserve">
+    <value>The selected service is inactive.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotTicketIssuable" xml:space="preserve">
+    <value>The selected service cannot be used in a workflow because it does not issue tickets.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotEffectivelyActive" xml:space="preserve">
+    <value>The selected service cannot be used in a workflow because it is not effectively active.</value>
+  </data>
+  <data name="ServiceWorkflow_AlreadyInactive" xml:space="preserve">
+    <value>The service workflow is already inactive.</value>
+  </data>
+  <data name="ServiceWorkflow_AlreadyActive" xml:space="preserve">
+    <value>The service workflow is already active.</value>
+  </data>
+  <data name="ServiceWorkflow_Deactivate_Success" xml:space="preserve">
+    <value>Service workflow deactivated successfully.</value>
+  </data>
+  <data name="ServiceWorkflow_Reactivate_Success" xml:space="preserve">
+    <value>Service workflow reactivated successfully.</value>
+  </data>
+  <data name="ServiceWorkflow_Create_Success" xml:space="preserve">
+    <value>Service workflow created successfully.</value>
+  </data>
+  <data name="ServiceWorkflow_Update_Success" xml:space="preserve">
+    <value>Service workflow updated successfully.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>Page number must be at least 1.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>Page size must be at least 1.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageSize_Max" xml:space="preserve">
+    <value>Page size must not exceed 100.</value>
+  </data>
 </root>

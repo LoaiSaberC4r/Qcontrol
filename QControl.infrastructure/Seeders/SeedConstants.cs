@@ -157,6 +157,33 @@ internal static class SeedConstants
         public const string ServicesRestore =
             "Services.Restore";
 
+        public const string ServiceWorkflowsViewAll =
+            "ServiceWorkflows.ViewAll";
+
+        public const string ServiceWorkflowsViewDetails =
+            "ServiceWorkflows.ViewDetails";
+
+        public const string ServiceWorkflowsCreate =
+            "ServiceWorkflows.Create";
+
+        public const string ServiceWorkflowsUpdate =
+            "ServiceWorkflows.Update";
+
+        public const string ServiceWorkflowsDeactivate =
+            "ServiceWorkflows.Deactivate";
+
+        public const string ServiceWorkflowsReactivate =
+            "ServiceWorkflows.Reactivate";
+
+        public const string ServiceWorkflowsViewCandidateServices =
+            "ServiceWorkflows.ViewCandidateServices";
+
+        public const string ServiceWorkflowsViewServiceWorkflows =
+            "ServiceWorkflows.ViewServiceWorkflows";
+
+        public const string ServiceWorkflowsViewStartOptions =
+            "ServiceWorkflows.ViewStartOptions";
+
         public const string DisplayWindowsViewLinked =
             "DisplayWindows.ViewLinked";
 
@@ -395,6 +422,42 @@ internal static class SeedConstants
             public static readonly Guid ServicesRestore =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000052");
+
+            public static readonly Guid ServiceWorkflowsViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000053");
+
+            public static readonly Guid ServiceWorkflowsViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000054");
+
+            public static readonly Guid ServiceWorkflowsCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000055");
+
+            public static readonly Guid ServiceWorkflowsUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000056");
+
+            public static readonly Guid ServiceWorkflowsDeactivate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000057");
+
+            public static readonly Guid ServiceWorkflowsReactivate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000058");
+
+            public static readonly Guid ServiceWorkflowsViewCandidateServices =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000059");
+
+            public static readonly Guid ServiceWorkflowsViewServiceWorkflows =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000060");
+
+            public static readonly Guid ServiceWorkflowsViewStartOptions =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000061");
         }
     }
 
@@ -576,6 +639,42 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.ServicesRestore,
                     PermissionNames.ServicesRestore),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsViewAll,
+                    PermissionNames.ServiceWorkflowsViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsViewDetails,
+                    PermissionNames.ServiceWorkflowsViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsCreate,
+                    PermissionNames.ServiceWorkflowsCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsUpdate,
+                    PermissionNames.ServiceWorkflowsUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsDeactivate,
+                    PermissionNames.ServiceWorkflowsDeactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsReactivate,
+                    PermissionNames.ServiceWorkflowsReactivate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsViewCandidateServices,
+                    PermissionNames.ServiceWorkflowsViewCandidateServices),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsViewServiceWorkflows,
+                    PermissionNames.ServiceWorkflowsViewServiceWorkflows),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceWorkflowsViewStartOptions,
+                    PermissionNames.ServiceWorkflowsViewStartOptions),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplayWindowsViewLinked,

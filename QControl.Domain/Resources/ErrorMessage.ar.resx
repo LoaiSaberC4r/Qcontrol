@@ -846,4 +846,88 @@
   <data name="Service_Pagination_PageSize_Max" xml:space="preserve">
     <value>حجم الصفحة يجب ألا يتجاوز 100 عنصر.</value>
   </data>
+  <data name="ServiceWorkflow_Authentication_Required" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
+  <data name="ServiceWorkflow_Id_Required" xml:space="preserve">
+    <value>معرف مسار خدمة صالح مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_NotFound" xml:space="preserve">
+    <value>تعذر العثور على مسار الخدمة.</value>
+  </data>
+  <data name="ServiceWorkflow_ArabicName_Required" xml:space="preserve">
+    <value>اسم مسار الخدمة باللغة العربية مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_ArabicName_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز اسم مسار الخدمة باللغة العربية 100 حرف.</value>
+  </data>
+  <data name="ServiceWorkflow_EnglishName_Required" xml:space="preserve">
+    <value>اسم مسار الخدمة باللغة الإنجليزية مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_EnglishName_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز اسم مسار الخدمة باللغة الإنجليزية 100 حرف.</value>
+  </data>
+  <data name="ServiceWorkflow_Name_AlreadyExists" xml:space="preserve">
+    <value>يوجد مسار خدمة آخر يستخدم هذا الاسم.</value>
+  </data>
+  <data name="ServiceWorkflow_Steps_Required" xml:space="preserve">
+    <value>خطوات مسار الخدمة مطلوبة.</value>
+  </data>
+  <data name="ServiceWorkflow_MinimumSteps_Required" xml:space="preserve">
+    <value>يجب أن يحتوي مسار الخدمة على خطوتين على الأقل.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_Invalid" xml:space="preserve">
+    <value>يجب أن يكون ترتيب الخطوة أكبر من صفر.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_Duplicate" xml:space="preserve">
+    <value>يجب ألا يتكرر ترتيب الخطوة داخل مسار الخدمة.</value>
+  </data>
+  <data name="ServiceWorkflow_StepOrder_NotSequential" xml:space="preserve">
+    <value>يجب أن يكون ترتيب الخطوات متسلسلا ويبدأ من 1.</value>
+  </data>
+  <data name="ServiceWorkflow_ServiceId_Required" xml:space="preserve">
+    <value>معرف خدمة صالح مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الخدمة المحددة.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_Deleted" xml:space="preserve">
+    <value>الخدمة المحددة محذوفة.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_Inactive" xml:space="preserve">
+    <value>الخدمة المحددة غير مفعلة.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotTicketIssuable" xml:space="preserve">
+    <value>لا يمكن استخدام هذه الخدمة داخل مسار العمل لأنها لا تصدر تذاكر.</value>
+  </data>
+  <data name="ServiceWorkflow_Service_NotEffectivelyActive" xml:space="preserve">
+    <value>لا يمكن استخدام هذه الخدمة داخل مسار العمل لأنها غير فعالة بسبب حالة الخدمة أو أحد الآباء.</value>
+  </data>
+  <data name="ServiceWorkflow_AlreadyInactive" xml:space="preserve">
+    <value>مسار الخدمة غير مفعل بالفعل.</value>
+  </data>
+  <data name="ServiceWorkflow_AlreadyActive" xml:space="preserve">
+    <value>مسار الخدمة مفعل بالفعل.</value>
+  </data>
+  <data name="ServiceWorkflow_Deactivate_Success" xml:space="preserve">
+    <value>تم إلغاء تفعيل مسار الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceWorkflow_Reactivate_Success" xml:space="preserve">
+    <value>تمت إعادة تفعيل مسار الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceWorkflow_Create_Success" xml:space="preserve">
+    <value>تم إنشاء مسار الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceWorkflow_Update_Success" xml:space="preserve">
+    <value>تم تحديث مسار الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>رقم الصفحة يجب أن يكون 1 على الأقل.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>حجم الصفحة يجب أن يكون 1 على الأقل.</value>
+  </data>
+  <data name="ServiceWorkflow_Pagination_PageSize_Max" xml:space="preserve">
+    <value>حجم الصفحة يجب ألا يتجاوز 100 عنصر.</value>
+  </data>
 </root>
