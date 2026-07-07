@@ -184,6 +184,36 @@ internal static class EntityTestFactory
         return display;
     }
 
+    public static Service Service(
+        int id,
+        int? parentServiceId = null,
+        string? arabicName = null,
+        string? englishName = null,
+        bool isTicketIssuable = false)
+    {
+        var service = QControl.Domain.Entities.Service.Create(
+            parentServiceId,
+            arabicName ?? $"Arabic Service {id}",
+            englishName ?? $"English Service {id}",
+            arabicUserMessage: null,
+            englishUserMessage: null,
+            isTicketIssuable,
+            isClientInputRequired: false,
+            hasReservation: false,
+            orderNo: id,
+            priority: 0,
+            rangePrefix: $"S{id}",
+            rangeStartNumber: 1,
+            rangeEndNumber: 999,
+            waitingDuration: 0,
+            noOfTicketCopies: 1,
+            createdByApplicationUserId: CurrentUserId);
+
+        SetId(service, id);
+
+        return service;
+    }
+
     public static DisplayWindow DisplayWindow(
         int id,
         int displayId,
