@@ -139,6 +139,24 @@ internal static class SeedConstants
         public const string DisplaysDeletePermanent =
             "Displays.DeletePermanent";
 
+        public const string ServicesViewAll =
+            "Services.ViewAll";
+
+        public const string ServicesViewDetails =
+            "Services.ViewDetails";
+
+        public const string ServicesCreate =
+            "Services.Create";
+
+        public const string ServicesUpdate =
+            "Services.Update";
+
+        public const string ServicesDelete =
+            "Services.Delete";
+
+        public const string ServicesRestore =
+            "Services.Restore";
+
         public const string DisplayWindowsViewLinked =
             "DisplayWindows.ViewLinked";
 
@@ -353,6 +371,30 @@ internal static class SeedConstants
             public static readonly Guid DisplayWindowsUnassign =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000042");
+
+            public static readonly Guid ServicesViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000047");
+
+            public static readonly Guid ServicesViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000048");
+
+            public static readonly Guid ServicesCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000049");
+
+            public static readonly Guid ServicesUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000050");
+
+            public static readonly Guid ServicesDelete =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000051");
+
+            public static readonly Guid ServicesRestore =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000052");
         }
     }
 
@@ -510,6 +552,30 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplaysDeletePermanent,
                     PermissionNames.DisplaysDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesViewAll,
+                    PermissionNames.ServicesViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesViewDetails,
+                    PermissionNames.ServicesViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesCreate,
+                    PermissionNames.ServicesCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesUpdate,
+                    PermissionNames.ServicesUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesDelete,
+                    PermissionNames.ServicesDelete),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesRestore,
+                    PermissionNames.ServicesRestore),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.DisplayWindowsViewLinked,

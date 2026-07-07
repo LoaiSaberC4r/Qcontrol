@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QControl.infrastructure.Persistence;
 
 #nullable disable
 
-namespace Qcontrol.Infrastructure.Migrations
+namespace QControl.infrastructure.Migrations
 {
     [DbContext(typeof(PlatformWriteDbContext))]
-    partial class PlatformWriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260706121841_AddServiceManagement")]
+    partial class AddServiceManagement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -539,11 +542,17 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Logo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime?>("ModifiedOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("NoOfTicketCopies")
-                        .HasColumnType("int");
+                    b.Property<int>("NoOfTicketCopies")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<int>("OrderNo")
                         .ValueGeneratedOnAdd()
@@ -558,15 +567,16 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<int?>("RangeEndNumber")
+                    b.Property<int>("RangeEndNumber")
                         .HasColumnType("int");
 
                     b.Property<string>("RangePrefix")
+                        .IsRequired()
                         .HasMaxLength(10)
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
 
-                    b.Property<int?>("RangeStartNumber")
+                    b.Property<int>("RangeStartNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("RestoredOnUtc")
@@ -578,8 +588,15 @@ namespace Qcontrol.Infrastructure.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<int?>("WaitingDuration")
-                        .HasColumnType("int");
+                    b.Property<int>("WaitingDuration")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Weight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -612,95 +629,21 @@ namespace Qcontrol.Infrastructure.Migrations
 
                             t.HasCheckConstraint("CK_Service_EnglishName_NotBlank", "LEN(LTRIM(RTRIM([EnglishName]))) > 0");
 
-                            t.HasCheckConstraint("CK_Service_NoOfTicketCopies_NullOrPositive", "[NoOfTicketCopies] IS NULL OR [NoOfTicketCopies] > 0");
+                            t.HasCheckConstraint("CK_Service_NoOfTicketCopies_Positive", "[NoOfTicketCopies] > 0");
 
                             t.HasCheckConstraint("CK_Service_OrderNo_NonNegative", "[OrderNo] >= 0");
 
                             t.HasCheckConstraint("CK_Service_Priority_NonNegative", "[Priority] >= 0");
 
-                            t.HasCheckConstraint("CK_Service_RangeEnd_NullOrGreaterOrEqualStart", "[RangeStartNumber] IS NULL OR [RangeEndNumber] IS NULL OR [RangeEndNumber] >= [RangeStartNumber]");
+                            t.HasCheckConstraint("CK_Service_RangeEnd_GreaterOrEqualStart", "[RangeEndNumber] >= [RangeStartNumber]");
 
-                            t.HasCheckConstraint("CK_Service_RangeEnd_NullOrNonNegative", "[RangeEndNumber] IS NULL OR [RangeEndNumber] >= 0");
+                            t.HasCheckConstraint("CK_Service_RangePrefix_NotBlank", "LEN(LTRIM(RTRIM([RangePrefix]))) > 0");
 
-                            t.HasCheckConstraint("CK_Service_RangePrefix_NullOrNotBlank", "[RangePrefix] IS NULL OR LEN(LTRIM(RTRIM([RangePrefix]))) > 0");
+                            t.HasCheckConstraint("CK_Service_RangeStart_NonNegative", "[RangeStartNumber] >= 0");
 
-                            t.HasCheckConstraint("CK_Service_RangeStart_NullOrNonNegative", "[RangeStartNumber] IS NULL OR [RangeStartNumber] >= 0");
+                            t.HasCheckConstraint("CK_Service_WaitingDuration_NonNegative", "[WaitingDuration] >= 0");
 
-                            t.HasCheckConstraint("CK_Service_TicketIssuable_Settings_Required", "[IsTicketIssuable] = 0 OR ([RangePrefix] IS NOT NULL AND LEN(LTRIM(RTRIM([RangePrefix]))) > 0 AND [RangeStartNumber] IS NOT NULL AND [RangeEndNumber] IS NOT NULL AND [WaitingDuration] IS NOT NULL AND [NoOfTicketCopies] IS NOT NULL)");
-
-                            t.HasCheckConstraint("CK_Service_WaitingDuration_NullOrNonNegative", "[WaitingDuration] IS NULL OR [WaitingDuration] >= 0");
-                        });
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.ServiceImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DisplayOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("ImageType")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ModifiedOnUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByApplicationUserId");
-
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
-                    b.HasIndex("ServiceId");
-
-                    b.HasIndex("ServiceId", "ImageType")
-                        .IsUnique()
-                        .HasDatabaseName("UX_ServiceImage_ServiceId_ImageType_LogoIcon")
-                        .HasFilter("[ImageType] IN (1, 2)");
-
-                    b.HasIndex("ServiceId", "ImageType", "DisplayOrder");
-
-                    b.ToTable("ServiceImage", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_ServiceImage_DisplayOrder_NonNegative", "[DisplayOrder] >= 0");
-
-                            t.HasCheckConstraint("CK_ServiceImage_ImagePath_NotBlank", "LEN(LTRIM(RTRIM([ImagePath]))) > 0");
-
-                            t.HasCheckConstraint("CK_ServiceImage_ImageType_Valid", "[ImageType] IN (1, 2, 3)");
+                            t.HasCheckConstraint("CK_Service_Weight_NonNegative", "[Weight] >= 0");
                         });
                 });
 
@@ -1435,32 +1378,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("ParentService");
                 });
 
-            modelBuilder.Entity("QControl.Domain.Entities.ServiceImage", b =>
-                {
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("QControl.Domain.Entities.Service", "Service")
-                        .WithMany("Images")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
-
-                    b.Navigation("Service");
-                });
-
             modelBuilder.Entity("QControl.Domain.Entities.Terminal", b =>
                 {
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
@@ -1654,8 +1571,6 @@ namespace Qcontrol.Infrastructure.Migrations
             modelBuilder.Entity("QControl.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Children");
-
-                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.WaitingArea", b =>

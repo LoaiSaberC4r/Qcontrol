@@ -678,4 +678,172 @@
   <data name="BranchAdvertisement_Id_Required" xml:space="preserve">
     <value>A valid advertisement id is required.</value>
   </data>
+  <data name="Service_Authentication_Required" xml:space="preserve">
+    <value>Authentication is required.</value>
+  </data>
+  <data name="Service_Id_Required" xml:space="preserve">
+    <value>A valid service id is required.</value>
+  </data>
+  <data name="Service_ParentId_Required" xml:space="preserve">
+    <value>A valid parent service id is required.</value>
+  </data>
+  <data name="Service_NotFound" xml:space="preserve">
+    <value>The service could not be found.</value>
+  </data>
+  <data name="Service_Deleted" xml:space="preserve">
+    <value>The service is deleted.</value>
+  </data>
+  <data name="Service_AlreadyDeleted" xml:space="preserve">
+    <value>The service is already deleted.</value>
+  </data>
+  <data name="Service_NotDeleted" xml:space="preserve">
+    <value>The service is not deleted.</value>
+  </data>
+  <data name="Service_Parent_NotFound" xml:space="preserve">
+    <value>The selected parent service could not be found.</value>
+  </data>
+  <data name="Service_Parent_Deleted" xml:space="preserve">
+    <value>The selected parent service is deleted.</value>
+  </data>
+  <data name="Service_Parent_Inactive" xml:space="preserve">
+    <value>The selected parent service is inactive.</value>
+  </data>
+  <data name="Service_Parent_TicketIssuable" xml:space="preserve">
+    <value>A ticket-issuable service cannot be selected as a parent.</value>
+  </data>
+  <data name="Service_Parent_HasHistoricalTickets" xml:space="preserve">
+    <value>The selected parent service has historical tickets.</value>
+  </data>
+  <data name="Service_CircularHierarchy" xml:space="preserve">
+    <value>The selected parent would create a circular service hierarchy.</value>
+  </data>
+  <data name="Service_HasChildrenCannotBeTicketIssuable" xml:space="preserve">
+    <value>A service with children cannot issue tickets.</value>
+  </data>
+  <data name="Service_HistoricalTicketsPreventCategory" xml:space="preserve">
+    <value>A service that has historical tickets cannot become a parent/category service.</value>
+  </data>
+  <data name="Service_DuplicateArabicName" xml:space="preserve">
+    <value>Another service under the same parent already uses this Arabic name.</value>
+  </data>
+  <data name="Service_DuplicateEnglishName" xml:space="preserve">
+    <value>Another service under the same parent already uses this English name.</value>
+  </data>
+  <data name="Service_Create_Success" xml:space="preserve">
+    <value>Service created successfully.</value>
+  </data>
+  <data name="Service_Update_Success" xml:space="preserve">
+    <value>Service updated successfully.</value>
+  </data>
+  <data name="Service_Delete_Success" xml:space="preserve">
+    <value>Service deleted successfully.</value>
+  </data>
+  <data name="Service_Restore_Success" xml:space="preserve">
+    <value>Service restored successfully.</value>
+  </data>
+  <data name="Service_Logo_Upload_Success" xml:space="preserve">
+    <value>Service logo uploaded successfully.</value>
+  </data>
+  <data name="Service_Logo_InvalidImageType" xml:space="preserve">
+    <value>Only PNG, JPG, JPEG, and WEBP images are supported.</value>
+  </data>
+  <data name="Service_Logo_MediaSaveFailed" xml:space="preserve">
+    <value>The service logo could not be saved. Please try again.</value>
+  </data>
+  <data name="Service_Icon_Upload_Success" xml:space="preserve">
+    <value>Service icon uploaded successfully.</value>
+  </data>
+  <data name="Service_Ads_Upload_Success" xml:space="preserve">
+    <value>Service advertisement images uploaded successfully.</value>
+  </data>
+  <data name="Service_Image_Delete_Success" xml:space="preserve">
+    <value>Service image deleted successfully.</value>
+  </data>
+  <data name="Service_Image_Required" xml:space="preserve">
+    <value>A service image is required.</value>
+  </data>
+  <data name="Service_Images_Required" xml:space="preserve">
+    <value>At least one service image is required.</value>
+  </data>
+  <data name="Service_Image_Id_Required" xml:space="preserve">
+    <value>A valid service image id is required.</value>
+  </data>
+  <data name="Service_Image_NotFound" xml:space="preserve">
+    <value>The service image could not be found.</value>
+  </data>
+  <data name="Service_Image_Conflict" xml:space="preserve">
+    <value>The service image could not be saved because another image changed at the same time.</value>
+  </data>
+  <data name="Service_ImageType_Invalid" xml:space="preserve">
+    <value>The service image type is invalid.</value>
+  </data>
+  <data name="Service_ArabicName_Required" xml:space="preserve">
+    <value>The Arabic service name is required.</value>
+  </data>
+  <data name="Service_ArabicName_MaxLength" xml:space="preserve">
+    <value>The Arabic service name must not exceed 100 characters.</value>
+  </data>
+  <data name="Service_EnglishName_Required" xml:space="preserve">
+    <value>The English service name is required.</value>
+  </data>
+  <data name="Service_EnglishName_MaxLength" xml:space="preserve">
+    <value>The English service name must not exceed 100 characters.</value>
+  </data>
+  <data name="Service_ArabicUserMessage_MaxLength" xml:space="preserve">
+    <value>The Arabic user message must not exceed 500 characters.</value>
+  </data>
+  <data name="Service_EnglishUserMessage_MaxLength" xml:space="preserve">
+    <value>The English user message must not exceed 500 characters.</value>
+  </data>
+  <data name="Service_IsTicketIssuable_Required" xml:space="preserve">
+    <value>The ticket-issuable flag is required.</value>
+  </data>
+  <data name="Service_RangePrefix_Required" xml:space="preserve">
+    <value>The range prefix is required.</value>
+  </data>
+  <data name="Service_RangePrefix_MaxLength" xml:space="preserve">
+    <value>The range prefix must not exceed 10 characters.</value>
+  </data>
+  <data name="Service_TicketSettings_Required" xml:space="preserve">
+    <value>Ticket settings are required when the service issues tickets.</value>
+  </data>
+  <data name="Service_RangeStart_Required" xml:space="preserve">
+    <value>Range start number is required when the service issues tickets.</value>
+  </data>
+  <data name="Service_RangeStart_NonNegative" xml:space="preserve">
+    <value>Range start number must be greater than or equal to zero.</value>
+  </data>
+  <data name="Service_RangeEnd_Required" xml:space="preserve">
+    <value>Range end number is required when the service issues tickets.</value>
+  </data>
+  <data name="Service_RangeEnd_GreaterOrEqualStart" xml:space="preserve">
+    <value>Range end number must be greater than or equal to range start number.</value>
+  </data>
+  <data name="Service_OrderNo_NonNegative" xml:space="preserve">
+    <value>Order number must be greater than or equal to zero.</value>
+  </data>
+  <data name="Service_Priority_NonNegative" xml:space="preserve">
+    <value>Priority must be greater than or equal to zero.</value>
+  </data>
+  <data name="Service_WaitingDuration_Required" xml:space="preserve">
+    <value>Waiting duration is required when the service issues tickets.</value>
+  </data>
+  <data name="Service_WaitingDuration_NonNegative" xml:space="preserve">
+    <value>Waiting duration must be greater than or equal to zero.</value>
+  </data>
+  <data name="Service_NoOfTicketCopies_Required" xml:space="preserve">
+    <value>Number of ticket copies is required when the service issues tickets.</value>
+  </data>
+  <data name="Service_NoOfTicketCopies_Positive" xml:space="preserve">
+    <value>Number of ticket copies must be greater than zero.</value>
+  </data>
+  <data name="Service_Pagination_PageNumber_Invalid" xml:space="preserve">
+    <value>Page number must be at least 1.</value>
+  </data>
+  <data name="Service_Pagination_PageSize_Invalid" xml:space="preserve">
+    <value>Page size must be at least 1.</value>
+  </data>
+  <data name="Service_Pagination_PageSize_Max" xml:space="preserve">
+    <value>Page size must not exceed 100.</value>
+  </data>
 </root>

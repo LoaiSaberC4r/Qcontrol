@@ -7,6 +7,7 @@ internal static class OperationalCacheTags
     public const string Windows = "windows";
     public const string Terminals = "terminals";
     public const string Displays = "displays";
+    public const string Services = "services";
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
     public const string BranchAdvertisements = "branch-advertisements";
@@ -27,6 +28,8 @@ internal static class OperationalCacheTags
     public static string Terminal(int terminalId) => $"terminal:{terminalId}";
 
     public static string Display(int displayId) => $"display:{displayId}";
+
+    public static string Service(int serviceId) => $"service:{serviceId}";
 
     public static string DisplayLinkedWindows(int displayId) =>
         $"display:{displayId}:windows";
