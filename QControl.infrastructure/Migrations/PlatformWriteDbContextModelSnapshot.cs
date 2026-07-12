@@ -333,6 +333,8 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("Id", "BranchId");
+
                     b.HasIndex("BranchId");
 
                     b.HasIndex("CreatedByApplicationUserId");
@@ -404,12 +406,8 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasIndex("WindowId");
 
-                    b.HasIndex("DisplayId", "BranchId");
-
                     b.HasIndex("DisplayId", "WindowId")
                         .IsUnique();
-
-                    b.HasIndex("WindowId", "BranchId");
 
                     b.ToTable("DisplayWindow", (string)null);
                 });
@@ -1213,12 +1211,77 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_ApplicationUser_Email");
 
                     b.HasIndex("UserName")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_ApplicationUser_UserName");
 
                     b.ToTable("ApplicationUser", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUserBranch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .HasDatabaseName("IX_ApplicationUserBranch_ApplicationUserId");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("IX_ApplicationUserBranch_BranchId");
+
+                    b.HasIndex("ApplicationUserId", "BranchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ApplicationUserBranch_ApplicationUserId_BranchId");
+
+                    b.ToTable("ApplicationUserBranch", (string)null);
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.BranchAdmin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BranchAdmin_ApplicationUserId");
+
+                    b.ToTable("BranchAdmin", (string)null);
                 });
 
             modelBuilder.Entity("Qcontrol.Domain.Identity.Permission", b =>
@@ -1344,7 +1407,8 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.HasIndex("ApplicationUserId", "RoleId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_UserRole_ApplicationUserId_RoleId");
 
                     b.ToTable("UserRole", (string)null);
                 });
@@ -1497,15 +1561,13 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasOne("QControl.Domain.Entities.Display", "Display")
                         .WithMany("DisplayWindows")
-                        .HasForeignKey("DisplayId", "BranchId")
-                        .HasPrincipalKey("Id", "BranchId")
+                        .HasForeignKey("DisplayId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("QControl.Domain.Entities.Window", "Window")
                         .WithMany("DisplayWindows")
-                        .HasForeignKey("WindowId", "BranchId")
-                        .HasPrincipalKey("Id", "BranchId")
+                        .HasForeignKey("WindowId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1756,6 +1818,36 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
                         .WithOne()
                         .HasForeignKey("QControl.Domain.Identity.TechnicalAdmin", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.ApplicationUserBranch", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("Qcontrol.Domain.Identity.BranchAdmin", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ApplicationUser")
+                        .WithOne()
+                        .HasForeignKey("Qcontrol.Domain.Identity.BranchAdmin", "ApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

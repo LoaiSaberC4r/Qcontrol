@@ -1,13 +1,10 @@
-﻿using BuildingBlock.Application.Abstraction.Caching;
+using BuildingBlock.Application.Abstraction.Caching;
 using BuildingBlock.Application.Behaviors;
-using QControl.Application.Abstraction.Security;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Qcontrol.Application.Features.Auth.Shared;
+using QControl.Application.Abstraction.Security;
+using QControl.Application.Shared.Security;
 
 namespace QControl.Application.Bootstrap
 {
@@ -46,6 +43,10 @@ namespace QControl.Application.Bootstrap
         public static IServiceCollection AddApplicationBootstrap(this IServiceCollection services)
         {
             services.AddFluentValidation();
+            services.AddScoped<ICurrentBranchContext, CurrentBranchContext>();
+            services.AddScoped<IBranchAccessValidator, BranchAccessValidator>();
+            services.AddScoped<IPasswordPolicyValidator, PasswordPolicyValidator>();
+            services.AddScoped<UserTokenFactory>();
             services.AddMediatorInjection();
             return services;
         }

@@ -74,6 +74,25 @@ public sealed class ApplicationUser : AggregateRoot<Guid>
         };
     }
 
+    public static ApplicationUser CreateBranchAdmin(
+        string userName,
+        string email,
+        string nameEn,
+        string? nameAr,
+        string? phoneNumber,
+        Guid createdByApplicationUserId)
+    {
+        return Create(
+            userName,
+            email,
+            nameEn,
+            nameAr,
+            phoneNumber,
+            "TEMPORARY_PASSWORD_HASH_PENDING",
+            UserType.BranchAdmin,
+            createdByApplicationUserId);
+    }
+
     public static ApplicationUser CreateSeededTechnicalAdmin(
         Guid id,
         string userName,

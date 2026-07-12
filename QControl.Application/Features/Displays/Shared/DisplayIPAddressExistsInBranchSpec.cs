@@ -11,7 +11,6 @@ internal sealed class DisplayIPAddressExistsInBranchSpec
         string ipAddress,
         int? excludedDisplayId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

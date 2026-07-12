@@ -6,7 +6,7 @@
 
         Guid? UserId { get; }
         Guid? AccountId { get; }
-        Guid? ActiveBranchId { get; }
+        int? ActiveBranchId => null;
 
         string? Role { get; }
 

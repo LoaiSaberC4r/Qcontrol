@@ -11,7 +11,6 @@ internal sealed class TerminalSerialNoExistsInBranchSpec
         string serialNo,
         int? excludedTerminalId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

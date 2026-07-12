@@ -30,7 +30,8 @@ namespace QControl.infrastructure.Services.Token
             IReadOnlyCollection<string> roleNames,
              QControl.Domain.Enums.UserType userType,
             IReadOnlyCollection<string> permissions,
-            Guid? activeBranchId = null,
+            int? activeBranchId = null,
+            bool passwordChangeRequired = false,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -63,17 +64,23 @@ namespace QControl.infrastructure.Services.Token
                 claims.Add(new Claim(JwtClaimTypesCustom.PhoneNumber, phoneNumber.Trim()));
             }
 
-            if (activeBranchId.HasValue && activeBranchId.Value != Guid.Empty)
+            if (activeBranchId.HasValue && activeBranchId.Value > 0)
             {
                 claims.Add(new Claim(JwtClaimTypesCustom.ActiveBranchId, activeBranchId.Value.ToString()));
             }
+
+            claims.Add(new Claim(
+                JwtClaimTypesCustom.PasswordChangeRequired,
+                passwordChangeRequired.ToString().ToLowerInvariant()));
 
             foreach (var roleName in normalizedRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, roleName));
             }
 
-            foreach (var permission in normalizedPermissions)
+            foreach (var permission in passwordChangeRequired
+                         ? Array.Empty<string>()
+                         : normalizedPermissions)
             {
                 claims.Add(new Claim(JwtClaimTypesCustom.Permission, permission));
             }

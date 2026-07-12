@@ -11,7 +11,6 @@ internal sealed class DisplayNumberExistsInBranchSpec
         string number,
         int? excludedDisplayId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

@@ -11,7 +11,6 @@ internal sealed class WindowNumberExistsSpec
         string number,
         int? excludedWindowId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

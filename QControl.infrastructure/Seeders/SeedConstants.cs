@@ -30,6 +30,9 @@ internal static class SeedConstants
     {
         public const string TechnicalAdministrator =
             "Technical Administrator";
+
+        public const string BranchAdministrator =
+            "Branch Administrator";
     }
 
     public static class PermissionNames
@@ -54,6 +57,9 @@ internal static class SeedConstants
 
         public const string BranchesDeletePermanent =
             "Branches.DeletePermanent";
+
+        public const string BranchAdminsCreate =
+            "BranchAdmins.Create";
 
         public const string WaitingAreasViewAll =
             "WaitingAreas.ViewAll";
@@ -219,6 +225,10 @@ internal static class SeedConstants
             public static readonly Guid TechnicalAdministrator =
                 Guid.Parse(
                     "20000000-0000-0000-0000-000000000001");
+
+            public static readonly Guid BranchAdministrator =
+                Guid.Parse(
+                    "20000000-0000-0000-0000-000000000002");
         }
 
         public static class Permissions
@@ -458,6 +468,10 @@ internal static class SeedConstants
             public static readonly Guid ServiceWorkflowsViewStartOptions =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000061");
+
+            public static readonly Guid BranchAdminsCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000062");
         }
     }
 
@@ -468,7 +482,11 @@ internal static class SeedConstants
             {
                 new RoleSeedItem(
                     SeedIds.Roles.TechnicalAdministrator,
-                    RoleNames.TechnicalAdministrator)
+                    RoleNames.TechnicalAdministrator),
+
+                new RoleSeedItem(
+                    SeedIds.Roles.BranchAdministrator,
+                    RoleNames.BranchAdministrator)
             };
 
         public static IReadOnlyCollection<PermissionSeedItem>
@@ -503,6 +521,10 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.BranchesDeletePermanent,
                     PermissionNames.BranchesDeletePermanent),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchAdminsCreate,
+                    PermissionNames.BranchAdminsCreate),
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.WaitingAreasViewAll,

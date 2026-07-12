@@ -9,7 +9,6 @@ internal sealed class GetDisplayLinkedWindowsSpec
 {
     public GetDisplayLinkedWindowsSpec(GetDisplayLinkedWindowsQuery query)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x => x.DisplayId == query.DisplayId);
@@ -57,7 +56,7 @@ internal sealed class GetDisplayLinkedWindowsSpec
             EnableDirectCall = x.Window.EnableDirectCall,
             IsActive = x.Window.IsActive,
             EffectiveIsActive =
-                x.BranchId == x.Window.BranchId &&
+                x.Display.Branch.IsActive &&
                 x.Window.WaitingArea.Branch.IsActive &&
                 x.Window.WaitingArea.IsActive &&
                 x.Window.IsActive

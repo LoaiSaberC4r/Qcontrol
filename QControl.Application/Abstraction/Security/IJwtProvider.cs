@@ -17,7 +17,8 @@ namespace QControl.Application.Abstraction.Security
       IReadOnlyCollection<string> roleNames,
       UserType userType,
       IReadOnlyCollection<string> permissions,
-      Guid? activeBranchId = null,
+      int? activeBranchId = null,
+      bool passwordChangeRequired = false,
       CancellationToken cancellationToken = default);
     }
 }

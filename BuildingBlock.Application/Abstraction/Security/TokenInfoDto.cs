@@ -6,7 +6,8 @@
 
         public Guid? UserId { get; set; }
         public Guid? AccountId { get; set; }
-        public Guid? ActiveBranchId { get; set; }
+        public int? ActiveBranchId { get; set; }
+        public bool PasswordChangeRequired { get; set; }
 
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }

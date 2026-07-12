@@ -11,7 +11,6 @@ internal sealed class DisplaySerialNoExistsInBranchSpec
         string serialNo,
         int? excludedDisplayId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

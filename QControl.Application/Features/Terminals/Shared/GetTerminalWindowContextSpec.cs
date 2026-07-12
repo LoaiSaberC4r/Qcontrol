@@ -8,7 +8,6 @@ internal sealed class GetTerminalWindowContextSpec
 {
     public GetTerminalWindowContextSpec(int windowId)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x => x.Id == windowId);

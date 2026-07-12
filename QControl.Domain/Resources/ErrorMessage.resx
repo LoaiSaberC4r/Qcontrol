@@ -930,4 +930,109 @@
   <data name="ServiceWorkflow_Pagination_PageSize_Max" xml:space="preserve">
     <value>Page size must not exceed 100.</value>
   </data>
+  <data name="BranchAdmin_UserName_Required" xml:space="preserve">
+    <value>Username is required.</value>
+  </data>
+  <data name="BranchAdmin_UserName_MaxLength" xml:space="preserve">
+    <value>Username must not exceed 100 characters.</value>
+  </data>
+  <data name="BranchAdmin_Email_Required" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+  <data name="BranchAdmin_Email_Invalid" xml:space="preserve">
+    <value>Email must be valid.</value>
+  </data>
+  <data name="BranchAdmin_Email_MaxLength" xml:space="preserve">
+    <value>Email must not exceed 200 characters.</value>
+  </data>
+  <data name="BranchAdmin_NameEn_Required" xml:space="preserve">
+    <value>English name is required.</value>
+  </data>
+  <data name="BranchAdmin_NameEn_MaxLength" xml:space="preserve">
+    <value>English name must not exceed 200 characters.</value>
+  </data>
+  <data name="BranchAdmin_NameAr_MaxLength" xml:space="preserve">
+    <value>Arabic name must not exceed 200 characters.</value>
+  </data>
+  <data name="BranchAdmin_Phone_MaxLength" xml:space="preserve">
+    <value>Phone number must not exceed 30 characters.</value>
+  </data>
+  <data name="BranchAdmin_TemporaryPassword_Required" xml:space="preserve">
+    <value>Temporary password is required.</value>
+  </data>
+  <data name="Password_Required" xml:space="preserve">
+    <value>Password is required.</value>
+  </data>
+  <data name="Password_MaxLength" xml:space="preserve">
+    <value>Password must not exceed the configured maximum length.</value>
+  </data>
+  <data name="Password_Policy_Invalid" xml:space="preserve">
+    <value>Password does not satisfy the configured password policy.</value>
+  </data>
+  <data name="BranchAdmin_Create_Success" xml:space="preserve">
+    <value>Branch administrator was created successfully.</value>
+  </data>
+  <data name="Branch_Inactive" xml:space="preserve">
+    <value>The branch is inactive.</value>
+  </data>
+  <data name="BranchAdmin_Create_ForbiddenActorType" xml:space="preserve">
+    <value>Only a technical administrator can create branch administrators.</value>
+  </data>
+  <data name="BranchAdmin_Create_RoleNotFound" xml:space="preserve">
+    <value>The Branch Administrator system role is not configured.</value>
+  </data>
+  <data name="BranchAdmin_Create_UserNameAlreadyExists" xml:space="preserve">
+    <value>Username already exists.</value>
+  </data>
+  <data name="BranchAdmin_Create_EmailAlreadyExists" xml:space="preserve">
+    <value>Email already exists.</value>
+  </data>
+  <data name="Login_BranchAdminProfile_NotFound" xml:space="preserve">
+    <value>The branch administrator profile could not be found.</value>
+  </data>
+  <data name="Login_BranchAssignment_NotFound" xml:space="preserve">
+    <value>The branch administrator has no branch assignment.</value>
+  </data>
+  <data name="Login_MultipleBranchAssignments_NotSupported" xml:space="preserve">
+    <value>Multiple branch assignments are not supported in the current login flow.</value>
+  </data>
+  <data name="Login_Branch_NotFound" xml:space="preserve">
+    <value>The assigned branch could not be found.</value>
+  </data>
+  <data name="Login_Branch_Inactive" xml:space="preserve">
+    <value>The assigned branch is inactive.</value>
+  </data>
+  <data name="Auth_PasswordChangeRequired" xml:space="preserve">
+    <value>Password change is required before accessing this endpoint.</value>
+  </data>
+  <data name="ChangeInitialPassword_Unauthenticated" xml:space="preserve">
+    <value>Authentication is required.</value>
+  </data>
+  <data name="ChangeInitialPassword_UserNotFound" xml:space="preserve">
+    <value>The current user could not be found.</value>
+  </data>
+  <data name="ChangeInitialPassword_UserInactive" xml:space="preserve">
+    <value>The current user is inactive.</value>
+  </data>
+  <data name="ChangeInitialPassword_NotRequired" xml:space="preserve">
+    <value>Initial password change is not required.</value>
+  </data>
+  <data name="ChangeInitialPassword_InvalidTokenPurpose" xml:space="preserve">
+    <value>The token is not valid for initial password change.</value>
+  </data>
+  <data name="ChangeInitialPassword_SameAsTemporaryPassword" xml:space="preserve">
+    <value>New password must be different from the temporary password.</value>
+  </data>
+  <data name="ChangeInitialPassword_Success" xml:space="preserve">
+    <value>Initial password changed successfully.</value>
+  </data>
+  <data name="BranchScope_Forbidden" xml:space="preserve">
+    <value>The current user cannot access this branch.</value>
+  </data>
+  <data name="BranchScope_ActiveBranchRequired" xml:space="preserve">
+    <value>An active branch is required for this operation.</value>
+  </data>
+  <data name="BranchScope_UnsupportedActorType" xml:space="preserve">
+    <value>The current user type cannot perform this operation.</value>
+  </data>
 </root>

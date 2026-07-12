@@ -47,30 +47,12 @@ internal sealed class DisplayWindowConfiguration
 
         builder.HasOne(x => x.Display)
             .WithMany(x => x.DisplayWindows)
-            .HasForeignKey(x => new
-            {
-                x.DisplayId,
-                x.BranchId
-            })
-            .HasPrincipalKey(x => new
-            {
-                x.Id,
-                x.BranchId
-            })
+            .HasForeignKey(x => x.DisplayId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.Window)
             .WithMany(x => x.DisplayWindows)
-            .HasForeignKey(x => new
-            {
-                x.WindowId,
-                x.BranchId
-            })
-            .HasPrincipalKey(x => new
-            {
-                x.Id,
-                x.BranchId
-            })
+            .HasForeignKey(x => x.WindowId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.CreatedByApplicationUser)
