@@ -13,6 +13,7 @@ using Qcontrol.Application.Features.Services.Command.DeleteService;
 using Qcontrol.Application.Features.Services.Command.RestoreService;
 using Qcontrol.Application.Features.Services.Command.UpdateService;
 using Qcontrol.Application.Features.Services.Query.GetAvailableParentServices;
+using Qcontrol.Application.Features.Services.Query.GetServiceSelectionOptions;
 using Qcontrol.Application.Features.Services.Query.GetServiceById;
 using Qcontrol.Application.Features.Services.Query.GetServices;
 using Qcontrol.Application.Features.Services.Query.GetServicesTree;
@@ -83,6 +84,24 @@ public sealed class ServicesController : ControllerBase
         {
             ExcludeServiceId = excludeServiceId,
             SearchText = searchText
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("selection-options")]
+    [Permission("Services.ViewAll")]
+    public async Task<IActionResult> GetSelectionOptions(
+        [FromQuery] int? serviceId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetServiceSelectionOptionsQuery
+        {
+            ServiceId = serviceId
         };
 
         var result = await sender.Send(

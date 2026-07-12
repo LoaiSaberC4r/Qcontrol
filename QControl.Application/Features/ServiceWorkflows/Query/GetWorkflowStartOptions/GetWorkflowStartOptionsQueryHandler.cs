@@ -14,17 +14,22 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
 {
     private readonly IWriteReadRepository<ServiceWorkflow>
         _workflowReadRepository;
+    private readonly IWriteReadRepository<ServiceWorkflowStep>
+        _stepReadRepository;
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
     private readonly ICurrentUser _currentUser;
 
     public GetWorkflowStartOptionsQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
+        IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
         ICurrentUser currentUser)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
+        _stepReadRepository = stepReadRepository
+            ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _currentUser = currentUser
@@ -41,20 +46,6 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                 "ServiceWorkflows.Authentication.Required",
                 ServiceWorkflowMessages.AuthenticationRequired,
                 ErrorType.Unauthorized));
-        }
-
-        var service = await _serviceReadRepository.FirstOrDefaultAsync(
-            new GetServiceHierarchyItemByIdSpec(
-                request.ServiceId,
-                includeDeleted: true),
-            cancellationToken);
-
-        if (service is null)
-        {
-            return Result<ServiceWorkflowStartOptionsResponse>.Fail(new Error(
-                "ServiceWorkflows.StartOptions.ServiceNotFound",
-                ServiceWorkflowMessages.ServiceNotFound,
-                ErrorType.NotFound));
         }
 
         var serviceError =
@@ -84,17 +75,33 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                 step.ServiceId == request.ServiceId))
             .OrderBy(x => x.ArabicName)
             .ThenBy(x => x.Id)
-            .Select(x => new ServiceWorkflowStartOptionItemResponse
+            .Select(x => new ServiceWorkflowBasicProjection
             {
                 WorkflowId = x.Id,
                 ArabicName = x.ArabicName,
                 EnglishName = x.EnglishName,
                 IsActive = x.IsActive,
-                StepsCount = x.Steps.Count
+                RowVersion = x.RowVersion,
+                CreatedByApplicationUserId = x.CreatedByApplicationUserId,
+                LastModifiedByApplicationUserId =
+                    x.LastModifiedByApplicationUserId,
+                DeactivatedByApplicationUserId =
+                    x.DeactivatedByApplicationUserId,
+                DeactivatedOnUtc = x.DeactivatedOnUtc,
+                ReactivatedByApplicationUserId =
+                    x.ReactivatedByApplicationUserId,
+                ReactivatedOnUtc = x.ReactivatedOnUtc,
+                CreatedOnUtc = x.CreatedOnUtc,
+                ModifiedOnUtc = x.ModifiedOnUtc
             })
             .ToListAsync(cancellationToken);
 
-        var mode = workflows.Count switch
+        var workflowItems = await BuildWorkflowItemsAsync(
+            workflows,
+            request.ServiceId,
+            cancellationToken);
+
+        var mode = workflowItems.Count switch
         {
             0 => "NoWorkflow",
             1 => "AutoApply",
@@ -104,13 +111,90 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
         return Result<ServiceWorkflowStartOptionsResponse>.Ok(
             new ServiceWorkflowStartOptionsResponse
             {
-                ServiceId = service.Id,
+                ServiceId = request.ServiceId,
                 Mode = mode,
-                RequiresWorkflowSelection = workflows.Count > 1,
-                AutoApplyWorkflowId = workflows.Count == 1
-                    ? workflows[0].WorkflowId
+                RequiresWorkflowSelection = workflowItems.Count > 1,
+                AutoApplyWorkflowId = workflowItems.Count == 1
+                    ? workflowItems[0].WorkflowId
                     : null,
-                Workflows = workflows
+                Workflows = workflowItems
             });
+    }
+
+    private async Task<IReadOnlyList<ServiceWorkflowStartOptionItemResponse>>
+        BuildWorkflowItemsAsync(
+            IReadOnlyList<ServiceWorkflowBasicProjection> workflows,
+            int matchedServiceId,
+            CancellationToken cancellationToken)
+    {
+        if (workflows.Count == 0)
+        {
+            return Array.Empty<ServiceWorkflowStartOptionItemResponse>();
+        }
+
+        var serviceItems = await _serviceReadRepository.ListAsync(
+            new GetAllServiceHierarchyItemsSpec(),
+            cancellationToken);
+        var servicesById = serviceItems.ToDictionary(x => x.Id);
+        var serviceStates = ServiceHierarchyCalculator.ComputeStates(
+            serviceItems);
+
+        var workflowIds = workflows
+            .Select(x => x.WorkflowId)
+            .ToArray();
+
+        var steps = await _stepReadRepository.Query()
+            .Where(x => workflowIds.Contains(x.ServiceWorkflowId))
+            .OrderBy(x => x.ServiceWorkflowId)
+            .ThenBy(x => x.StepOrder)
+            .ThenBy(x => x.ServiceId)
+            .Select(x => new ServiceWorkflowStepProjection
+            {
+                WorkflowId = x.ServiceWorkflowId,
+                ServiceId = x.ServiceId,
+                StepOrder = x.StepOrder
+            })
+            .ToListAsync(cancellationToken);
+
+        var stepsByWorkflowId = steps
+            .GroupBy(x => x.WorkflowId)
+            .ToDictionary(
+                x => x.Key,
+                x => (IReadOnlyCollection<ServiceWorkflowStepProjection>)
+                    x.ToList());
+
+        return workflows
+            .Select(workflow =>
+            {
+                var workflowSteps = stepsByWorkflowId.TryGetValue(
+                    workflow.WorkflowId,
+                    out var foundSteps)
+                    ? foundSteps
+                    : Array.Empty<ServiceWorkflowStepProjection>();
+
+                var stepResponses = workflowSteps
+                    .OrderBy(x => x.StepOrder)
+                    .ThenBy(x => x.ServiceId)
+                    .Select(x => ServiceWorkflowResponseFactory.ToStepResponse(
+                        x,
+                        servicesById,
+                        serviceStates,
+                        matchedServiceId))
+                    .ToList();
+
+                return new ServiceWorkflowStartOptionItemResponse
+                {
+                    WorkflowId = workflow.WorkflowId,
+                    ArabicName = workflow.ArabicName,
+                    EnglishName = workflow.EnglishName,
+                    IsActive = workflow.IsActive,
+                    StartServiceId = stepResponses.FirstOrDefault()?.ServiceId,
+                    StepsCount = stepResponses.Count,
+                    Steps = stepResponses
+                };
+            })
+            .OrderBy(x => x.ArabicName)
+            .ThenBy(x => x.WorkflowId)
+            .ToList();
     }
 }
