@@ -57,7 +57,10 @@ namespace BuildingBlock.Infrastracture.Service
                 TryGetGuid(principal, JwtClaimTypesCustom.AccountId);
 
             dto.ActiveBranchId =
-                TryGetGuid(principal, JwtClaimTypesCustom.ActiveBranchId);
+                TryGetInt(principal, JwtClaimTypesCustom.ActiveBranchId);
+
+            dto.PasswordChangeRequired =
+                TryGetBool(principal, JwtClaimTypesCustom.PasswordChangeRequired) == true;
 
             dto.Email =
                 TryGetString(principal, JwtClaimTypesCustom.Email)
@@ -179,6 +182,15 @@ namespace BuildingBlock.Infrastracture.Service
         {
             var raw = GetClaimValueAny(principal, claimType);
             if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                return value;
+
+            return null;
+        }
+
+        private static bool? TryGetBool(ClaimsPrincipal principal, string claimType)
+        {
+            var raw = GetClaimValueAny(principal, claimType);
+            if (bool.TryParse(raw, out var value))
                 return value;
 
             return null;

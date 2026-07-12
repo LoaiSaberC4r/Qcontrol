@@ -8,6 +8,7 @@ namespace QControl.Domain.Enums
 {
     public enum UserType
     {
-        TechnicalAdmin = 1
+        TechnicalAdmin = 1,
+        BranchAdmin = 2
     }
 }

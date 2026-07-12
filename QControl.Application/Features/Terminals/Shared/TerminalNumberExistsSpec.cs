@@ -11,7 +11,6 @@ internal sealed class TerminalNumberExistsSpec
         string number,
         int? excludedTerminalId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

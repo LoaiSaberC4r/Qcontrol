@@ -18,14 +18,14 @@ namespace BuildingBlock.Infrastracture.Service
         public bool IsAuthenticated => _tenant.IsAuthenticated;
         public Guid? UserId => _tenant.UserId;
         public Guid? AccountId => _tenant.AccountId;
-        public Guid? ActiveBranchId
+        public int? ActiveBranchId
         {
             get
             {
                 var user = _http.HttpContext?.User;
                 var s = user?.FindFirst(JwtClaimTypesCustom.ActiveBranchId)?.Value;
 
-                return Guid.TryParse(s, out var branchId) && branchId != Guid.Empty
+                return int.TryParse(s, out var branchId) && branchId > 0
                     ? branchId
                     : null;
             }

@@ -930,4 +930,109 @@
   <data name="ServiceWorkflow_Pagination_PageSize_Max" xml:space="preserve">
     <value>حجم الصفحة يجب ألا يتجاوز 100 عنصر.</value>
   </data>
+  <data name="BranchAdmin_UserName_Required" xml:space="preserve">
+    <value>اسم المستخدم مطلوب.</value>
+  </data>
+  <data name="BranchAdmin_UserName_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز اسم المستخدم 100 حرف.</value>
+  </data>
+  <data name="BranchAdmin_Email_Required" xml:space="preserve">
+    <value>البريد الإلكتروني مطلوب.</value>
+  </data>
+  <data name="BranchAdmin_Email_Invalid" xml:space="preserve">
+    <value>يجب أن يكون البريد الإلكتروني صحيحًا.</value>
+  </data>
+  <data name="BranchAdmin_Email_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز البريد الإلكتروني 200 حرف.</value>
+  </data>
+  <data name="BranchAdmin_NameEn_Required" xml:space="preserve">
+    <value>الاسم الإنجليزي مطلوب.</value>
+  </data>
+  <data name="BranchAdmin_NameEn_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الاسم الإنجليزي 200 حرف.</value>
+  </data>
+  <data name="BranchAdmin_NameAr_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الاسم العربي 200 حرف.</value>
+  </data>
+  <data name="BranchAdmin_Phone_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز رقم الهاتف 30 حرف.</value>
+  </data>
+  <data name="BranchAdmin_TemporaryPassword_Required" xml:space="preserve">
+    <value>كلمة المرور المؤقتة مطلوبة.</value>
+  </data>
+  <data name="Password_Required" xml:space="preserve">
+    <value>كلمة المرور مطلوبة.</value>
+  </data>
+  <data name="Password_MaxLength" xml:space="preserve">
+    <value>يجب ألا تتجاوز كلمة المرور الحد الأقصى المحدد.</value>
+  </data>
+  <data name="Password_Policy_Invalid" xml:space="preserve">
+    <value>كلمة المرور لا تطابق سياسة كلمات المرور المحددة.</value>
+  </data>
+  <data name="BranchAdmin_Create_Success" xml:space="preserve">
+    <value>تم إنشاء مسؤول الفرع بنجاح.</value>
+  </data>
+  <data name="Branch_Inactive" xml:space="preserve">
+    <value>الفرع غير نشط.</value>
+  </data>
+  <data name="BranchAdmin_Create_ForbiddenActorType" xml:space="preserve">
+    <value>يمكن للمسؤول التقني فقط إنشاء مسؤولي الفروع.</value>
+  </data>
+  <data name="BranchAdmin_Create_RoleNotFound" xml:space="preserve">
+    <value>دور مسؤول الفرع غير مهيأ في النظام.</value>
+  </data>
+  <data name="BranchAdmin_Create_UserNameAlreadyExists" xml:space="preserve">
+    <value>اسم المستخدم موجود بالفعل.</value>
+  </data>
+  <data name="BranchAdmin_Create_EmailAlreadyExists" xml:space="preserve">
+    <value>البريد الإلكتروني موجود بالفعل.</value>
+  </data>
+  <data name="Login_BranchAdminProfile_NotFound" xml:space="preserve">
+    <value>تعذر العثور على ملف مسؤول الفرع.</value>
+  </data>
+  <data name="Login_BranchAssignment_NotFound" xml:space="preserve">
+    <value>لا يوجد فرع مسند إلى مسؤول الفرع.</value>
+  </data>
+  <data name="Login_MultipleBranchAssignments_NotSupported" xml:space="preserve">
+    <value>إسناد أكثر من فرع غير مدعوم في تدفق تسجيل الدخول الحالي.</value>
+  </data>
+  <data name="Login_Branch_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الفرع المسند.</value>
+  </data>
+  <data name="Login_Branch_Inactive" xml:space="preserve">
+    <value>الفرع المسند غير نشط.</value>
+  </data>
+  <data name="Auth_PasswordChangeRequired" xml:space="preserve">
+    <value>يجب تغيير كلمة المرور قبل الوصول إلى هذه العملية.</value>
+  </data>
+  <data name="ChangeInitialPassword_Unauthenticated" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
+  <data name="ChangeInitialPassword_UserNotFound" xml:space="preserve">
+    <value>تعذر العثور على المستخدم الحالي.</value>
+  </data>
+  <data name="ChangeInitialPassword_UserInactive" xml:space="preserve">
+    <value>المستخدم الحالي غير نشط.</value>
+  </data>
+  <data name="ChangeInitialPassword_NotRequired" xml:space="preserve">
+    <value>تغيير كلمة المرور الأولية غير مطلوب.</value>
+  </data>
+  <data name="ChangeInitialPassword_InvalidTokenPurpose" xml:space="preserve">
+    <value>الرمز غير صالح لتغيير كلمة المرور الأولية.</value>
+  </data>
+  <data name="ChangeInitialPassword_SameAsTemporaryPassword" xml:space="preserve">
+    <value>يجب أن تختلف كلمة المرور الجديدة عن كلمة المرور المؤقتة.</value>
+  </data>
+  <data name="ChangeInitialPassword_Success" xml:space="preserve">
+    <value>تم تغيير كلمة المرور الأولية بنجاح.</value>
+  </data>
+  <data name="BranchScope_Forbidden" xml:space="preserve">
+    <value>لا يمكن للمستخدم الحالي الوصول إلى هذا الفرع.</value>
+  </data>
+  <data name="BranchScope_ActiveBranchRequired" xml:space="preserve">
+    <value>يلزم وجود فرع نشط لهذه العملية.</value>
+  </data>
+  <data name="BranchScope_UnsupportedActorType" xml:space="preserve">
+    <value>نوع المستخدم الحالي لا يمكنه تنفيذ هذه العملية.</value>
+  </data>
 </root>

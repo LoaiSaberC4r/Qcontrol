@@ -8,7 +8,6 @@ internal sealed class GetDisplayForAssignmentSpec
 {
     public GetDisplayForAssignmentSpec(int displayId)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x => x.Id == displayId);

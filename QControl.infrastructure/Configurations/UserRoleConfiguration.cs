@@ -33,7 +33,8 @@ internal sealed class UserRoleConfiguration
             x.ApplicationUserId,
             x.RoleId
         })
-        .IsUnique();
+        .IsUnique()
+        .HasDatabaseName("UX_UserRole_ApplicationUserId_RoleId");
 
         builder.HasOne(x => x.ApplicationUser)
             .WithMany(x => x.UserRoles)

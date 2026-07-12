@@ -57,10 +57,12 @@ internal sealed class ApplicationUserConfiguration
             .IsRequired();
 
         builder.HasIndex(x => x.UserName)
-            .IsUnique();
+            .IsUnique()
+            .HasDatabaseName("UX_ApplicationUser_UserName");
 
         builder.HasIndex(x => x.Email)
-            .IsUnique();
+            .IsUnique()
+            .HasDatabaseName("UX_ApplicationUser_Email");
 
         builder.HasMany(x => x.UserRoles)
             .WithOne(x => x.ApplicationUser)

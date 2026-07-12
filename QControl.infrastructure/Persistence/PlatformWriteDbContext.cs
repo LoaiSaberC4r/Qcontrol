@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using BuildingBlock.Infrastracture.Extensions;
 using BuildingBlock.Infrastracture.MultiTenancy;
 using BuildingBlock.Infrastracture.Presistence;
+using Qcontrol.Domain.Identity;
+using QControl.Application.Abstraction.Security;
+using QControl.Domain.Entities;
 using QControl.Domain.Identity;
 
 namespace QControl.infrastructure.Persistence
@@ -11,18 +14,25 @@ namespace QControl.infrastructure.Persistence
     public class PlatformWriteDbContext : DbContext
     {
         private readonly ICurrentTenantContext _tenantContext;
+        private readonly ICurrentBranchContext _branchContext;
 
         // ✅ دي اللي الفلتر هيعتمد عليها (per DbContext instance)
         public Guid? CurrentAccountId => _tenantContext.AccountId;
 
         public bool IsPlatformAdmin => _tenantContext.IsPlatformAdmin;
 
+        public bool IsBranchScopeEnabled => _branchContext.IsBranchActor;
+
+        public int? CurrentBranchId => _branchContext.ActiveBranchId;
+
         public PlatformWriteDbContext(
             DbContextOptions<PlatformWriteDbContext> options,
-            ICurrentTenantContext tenantContext)
+            ICurrentTenantContext tenantContext,
+            ICurrentBranchContext branchContext)
             : base(options)
         {
             _tenantContext = tenantContext;
+            _branchContext = branchContext;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,8 +41,84 @@ namespace QControl.infrastructure.Persistence
             modelBuilder.ApplySoftDeleteQueryFilter();
 
             modelBuilder.ApplyTenantQueryFilters(this);
+            ApplyBranchScopeFilters(modelBuilder);
 
             base.OnModelCreating(modelBuilder);
+        }
+
+        private void ApplyBranchScopeFilters(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Branch>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.Id == CurrentBranchId.Value &&
+                     x.IsActive));
+
+            modelBuilder.Entity<Location>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<BranchBranding>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<BranchAdvertisement>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<WaitingArea>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<Window>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.WaitingArea.Branch.IsActive));
+
+            modelBuilder.Entity<Terminal>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Window.WaitingArea.Branch.IsActive));
+
+            modelBuilder.Entity<Display>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<DisplayWindow>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.Display.BranchId == CurrentBranchId.Value &&
+                     x.Window.BranchId == CurrentBranchId.Value &&
+                     x.Display.Branch.IsActive &&
+                     x.Window.WaitingArea.Branch.IsActive));
+
+            modelBuilder.Entity<ApplicationUserBranch>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId.Value &&
+                     x.Branch.IsActive));
         }
     }
 }

@@ -14,7 +14,7 @@ namespace QControl.Application.Shared.Dto
 
         public bool RequiresBranchSelection { get; init; }
 
-        public Guid? ActiveBranchId { get; init; }
+        public int? ActiveBranchId { get; init; }
 
         public IReadOnlyCollection<LoginBranchSelectionItemResponse> Branches { get; init; } =
             Array.Empty<LoginBranchSelectionItemResponse>();
@@ -30,12 +30,12 @@ namespace QControl.Application.Shared.Dto
 
     public sealed record LoginBranchSelectionItemResponse
     {
-        public Guid Id { get; init; }
+        public int BranchId { get; init; }
 
-        public string NameEn { get; init; } = string.Empty;
+        public string EnglishName { get; init; } = string.Empty;
 
-        public string? NameAr { get; init; }
+        public string ArabicName { get; init; } = string.Empty;
 
-        public string Code { get; init; } = string.Empty;
+        public bool IsActive { get; init; }
     }
 }

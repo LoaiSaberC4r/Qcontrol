@@ -8,7 +8,6 @@ internal sealed class GetWindowForAssignmentSpec
 {
     public GetWindowForAssignmentSpec(int windowId)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x => x.Id == windowId);

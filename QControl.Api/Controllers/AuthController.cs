@@ -1,7 +1,9 @@
-﻿using BuildingBlock.Api;
+using BuildingBlock.Api;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.Auth;
+using Qcontrol.Application.Features.Auth.Command.ChangeInitialPassword;
 using Qcontrol.Application.Features.Auth.Command.Login;
 
 namespace Qcontrol.Api.Controllers;
@@ -27,6 +29,24 @@ public sealed class AuthController : ControllerBase
         {
             UserNameOrEmail = request.UserNameOrEmail,
             Password = request.Password
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("change-initial-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangeInitialPassword(
+        [FromBody] ChangeInitialPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ChangeInitialPasswordCommand
+        {
+            NewPassword = request.NewPassword
         };
 
         var result = await sender.Send(

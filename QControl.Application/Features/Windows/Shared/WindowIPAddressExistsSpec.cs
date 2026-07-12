@@ -11,7 +11,6 @@ internal sealed class WindowIPAddressExistsSpec
         string ipAddress,
         int? excludedWindowId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>

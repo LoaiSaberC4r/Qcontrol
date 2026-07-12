@@ -95,6 +95,11 @@ namespace QControl.infrastructure.Services.Token
             static Guid? GuidOrNull(string? s)
                 => Guid.TryParse(s, out var g) ? g : null;
 
+            static int? IntOrNull(string? s)
+                => int.TryParse(s, out var value) && value > 0
+                    ? value
+                    : null;
+
             var permissions = principal.FindAll(JwtClaimTypesCustom.Permission)
                                        .Select(c => c.Value)
                                        .Where(v => !string.IsNullOrWhiteSpace(v))
@@ -107,7 +112,12 @@ namespace QControl.infrastructure.Services.Token
 
                 UserId = GuidOrNull(principal.FindFirstValue(JwtClaimTypesCustom.UserId)),
                 AccountId = GuidOrNull(principal.FindFirstValue(JwtClaimTypesCustom.AccountId)),
-                ActiveBranchId = GuidOrNull(principal.FindFirstValue(JwtClaimTypesCustom.ActiveBranchId)),
+                ActiveBranchId = IntOrNull(principal.FindFirstValue(JwtClaimTypesCustom.ActiveBranchId)),
+                PasswordChangeRequired =
+                    bool.TryParse(
+                        principal.FindFirstValue(JwtClaimTypesCustom.PasswordChangeRequired),
+                        out var passwordChangeRequired)
+                    && passwordChangeRequired,
 
                 Email = principal.FindFirstValue(JwtClaimTypesCustom.Email),
                 PhoneNumber = principal.FindFirstValue(JwtClaimTypesCustom.PhoneNumber),

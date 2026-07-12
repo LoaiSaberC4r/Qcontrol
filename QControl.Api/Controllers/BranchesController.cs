@@ -2,7 +2,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Qcontrol.Api.Contracts.BranchAdmins;
 using Qcontrol.Api.Contracts.Branches;
+using Qcontrol.Application.Features.BranchAdmins.Command.CreateBranchAdmin;
 using Qcontrol.Application.Features.BranchAdvertisements.Command.AddBranchAdvertisements;
 using Qcontrol.Application.Features.BranchAdvertisements.Command.DeactivateBranchAdvertisement;
 using Qcontrol.Application.Features.BranchAdvertisements.Command.DeleteBranchAdvertisement;
@@ -285,6 +287,31 @@ public sealed class BranchesController : ControllerBase
             Address = request.Location.Address,
             Longitude = request.Location.Longitude,
             Latitude = request.Location.Latitude
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/admins")]
+    [Permission("BranchAdmins.Create")]
+    public async Task<IActionResult> CreateAdmin(
+        int branchId,
+        [FromBody] CreateBranchAdminRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateBranchAdminCommand
+        {
+            BranchId = branchId,
+            UserName = request.UserName,
+            Email = request.Email,
+            NameEn = request.NameEn,
+            NameAr = request.NameAr,
+            PhoneNumber = request.PhoneNumber,
+            TemporaryPassword = request.TemporaryPassword
         };
 
         var result = await sender.Send(

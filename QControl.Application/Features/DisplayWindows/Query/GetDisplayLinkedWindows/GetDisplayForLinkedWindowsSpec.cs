@@ -8,7 +8,6 @@ internal sealed class GetDisplayForLinkedWindowsSpec
 {
     public GetDisplayForLinkedWindowsSpec(int displayId)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x => x.Id == displayId);

@@ -11,7 +11,6 @@ internal sealed class TerminalIPAddressExistsInBranchSpec
         string ipAddress,
         int? excludedTerminalId = null)
     {
-        IgnoreGlobalFilters();
         UseNoTracking();
 
         AddCriteria(x =>
