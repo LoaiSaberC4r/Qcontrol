@@ -3,8 +3,10 @@ using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Abstraction.Services;
 using QControl.Domain.Entities;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.Services.Query.GetAvailableParentServices;
 
@@ -14,11 +16,13 @@ internal sealed class GetAvailableParentServicesQueryHandler
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IServiceTicketUsageChecker _ticketUsageChecker;
     private readonly ICurrentUser _currentUser;
+    private readonly ICurrentBranchContext _currentBranchContext;
 
     public GetAvailableParentServicesQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IServiceTicketUsageChecker ticketUsageChecker,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        ICurrentBranchContext currentBranchContext)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
@@ -26,6 +30,8 @@ internal sealed class GetAvailableParentServicesQueryHandler
             ?? throw new ArgumentNullException(nameof(ticketUsageChecker));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentBranchContext = currentBranchContext
+            ?? throw new ArgumentNullException(nameof(currentBranchContext));
     }
 
     public async Task<Result<IReadOnlyList<AvailableParentServiceResponse>>> Handle(
@@ -49,11 +55,18 @@ internal sealed class GetAvailableParentServicesQueryHandler
                 allItems,
                 request.ExcludeServiceId.Value)
             : new HashSet<int>();
+        var editedItem = request.ExcludeServiceId.HasValue
+            ? allItems.FirstOrDefault(x => x.Id == request.ExcludeServiceId.Value)
+            : null;
+        var (requiredScope, requiredOwnerBranchId) =
+            ResolveRequiredScopeAndOwner(editedItem);
 
         var candidates = allItems
             .Where(x => !x.IsDeleted)
             .Where(x => x.IsActive)
             .Where(x => !x.IsTicketIssuable)
+            .Where(x => x.Scope == requiredScope)
+            .Where(x => x.OwnerBranchId == requiredOwnerBranchId)
             .Where(x =>
                 !request.ExcludeServiceId.HasValue ||
                 x.Id != request.ExcludeServiceId.Value)
@@ -89,6 +102,10 @@ internal sealed class GetAvailableParentServicesQueryHandler
             {
                 Id = candidate.Id,
                 ParentServiceId = candidate.ParentServiceId,
+                Scope = candidate.Scope,
+                OwnerBranchId = candidate.OwnerBranchId,
+                OwnerBranchArabicName = candidate.OwnerBranchArabicName,
+                OwnerBranchEnglishName = candidate.OwnerBranchEnglishName,
                 ArabicName = candidate.ArabicName,
                 EnglishName = candidate.EnglishName,
                 EffectiveIsActive = states[candidate.Id].EffectiveIsActive
@@ -96,5 +113,34 @@ internal sealed class GetAvailableParentServicesQueryHandler
         }
 
         return Result<IReadOnlyList<AvailableParentServiceResponse>>.Ok(responses);
+    }
+
+    private (ServiceScope Scope, int? OwnerBranchId) ResolveRequiredScopeAndOwner(
+        ServiceHierarchyItem? editedItem)
+    {
+        if (editedItem is not null)
+        {
+            if (_currentBranchContext.IsBranchActor &&
+                editedItem.Scope == ServiceScope.BranchScoped &&
+                editedItem.OwnerBranchId == _currentBranchContext.ActiveBranchId)
+            {
+                return (ServiceScope.BranchScoped, editedItem.OwnerBranchId);
+            }
+
+            if (_currentBranchContext.IsSystemLevelActor)
+            {
+                return (editedItem.Scope, editedItem.OwnerBranchId);
+            }
+        }
+
+        if (_currentBranchContext.IsBranchActor &&
+            _currentBranchContext.ActiveBranchId.HasValue)
+        {
+            return (
+                ServiceScope.BranchScoped,
+                _currentBranchContext.ActiveBranchId.Value);
+        }
+
+        return (ServiceScope.Global, null);
     }
 }

@@ -163,6 +163,15 @@ internal static class SeedConstants
         public const string ServicesRestore =
             "Services.Restore";
 
+        public const string BranchServicesView =
+            "BranchServices.View";
+
+        public const string BranchServicesAssign =
+            "BranchServices.Assign";
+
+        public const string BranchServiceTreesCreate =
+            "BranchServiceTrees.Create";
+
         public const string ServiceWorkflowsViewAll =
             "ServiceWorkflows.ViewAll";
 
@@ -472,6 +481,18 @@ internal static class SeedConstants
             public static readonly Guid BranchAdminsCreate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000062");
+
+            public static readonly Guid BranchServicesView =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000063");
+
+            public static readonly Guid BranchServicesAssign =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000064");
+
+            public static readonly Guid BranchServiceTreesCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000065");
         }
     }
 
@@ -663,6 +684,18 @@ internal static class SeedConstants
                     PermissionNames.ServicesRestore),
 
                 new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServicesView,
+                    PermissionNames.BranchServicesView),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServicesAssign,
+                    PermissionNames.BranchServicesAssign),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceTreesCreate,
+                    PermissionNames.BranchServiceTreesCreate),
+
+                new PermissionSeedItem(
                     SeedIds.Permissions.ServiceWorkflowsViewAll,
                     PermissionNames.ServiceWorkflowsViewAll),
 
@@ -738,12 +771,38 @@ internal static class SeedConstants
         public static IReadOnlyCollection<RolePermissionSeedItem>
             RolePermissions
         { get; } =
-            Permissions
+            BuildRolePermissions();
+
+        private static IReadOnlyCollection<RolePermissionSeedItem>
+            BuildRolePermissions()
+        {
+            var technicalAdministratorPermissions = Permissions
+                .Where(permission =>
+                    permission.Id !=
+                    SeedIds.Permissions.BranchServiceTreesCreate)
                 .Select(permission =>
                     new RolePermissionSeedItem(
                         SeedIds.Roles.TechnicalAdministrator,
-                        permission.Id))
+                        permission.Id));
+
+            var branchAdministratorPermissions = new[]
+            {
+                SeedIds.Permissions.ServicesViewAll,
+                SeedIds.Permissions.ServicesViewDetails,
+                SeedIds.Permissions.ServicesUpdate,
+                SeedIds.Permissions.BranchServicesView,
+                SeedIds.Permissions.BranchServicesAssign,
+                SeedIds.Permissions.BranchServiceTreesCreate
+            }
+            .Select(permissionId =>
+                new RolePermissionSeedItem(
+                    SeedIds.Roles.BranchAdministrator,
+                    permissionId));
+
+            return technicalAdministratorPermissions
+                .Concat(branchAdministratorPermissions)
                 .ToArray();
+        }
     }
 
     internal sealed record RoleSeedItem(

@@ -57,6 +57,9 @@ internal sealed class ServiceConfiguration
                 "CK_Service_Priority_NonNegative",
                 "[Priority] >= 0");
 
+            table.HasCheckConstraint(
+                "CK_Service_Scope_Owner",
+                "([Scope] = 1 AND [OwnerBranchId] IS NULL) OR ([Scope] = 2 AND [OwnerBranchId] IS NOT NULL)");
         });
 
         builder.HasKey(x => x.Id);
@@ -65,6 +68,13 @@ internal sealed class ServiceConfiguration
             .ValueGeneratedOnAdd();
 
         builder.Property(x => x.ParentServiceId)
+            .IsRequired(false);
+
+        builder.Property(x => x.Scope)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(x => x.OwnerBranchId)
             .IsRequired(false);
 
         builder.Property(x => x.ArabicName)
@@ -150,6 +160,11 @@ internal sealed class ServiceConfiguration
             .HasForeignKey(x => x.ParentServiceId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(x => x.OwnerBranch)
+            .WithMany(x => x.OwnedServices)
+            .HasForeignKey(x => x.OwnerBranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(x => x.CreatedByApplicationUser)
             .WithMany()
             .HasForeignKey(x => x.CreatedByApplicationUserId)
@@ -161,6 +176,27 @@ internal sealed class ServiceConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(x => x.ParentServiceId);
+
+        builder.HasIndex(x => x.Scope)
+            .HasDatabaseName("IX_Service_Scope");
+
+        builder.HasIndex(x => x.OwnerBranchId)
+            .HasDatabaseName("IX_Service_OwnerBranchId");
+
+        builder.HasIndex(x => new
+        {
+            x.Scope,
+            x.OwnerBranchId
+        })
+        .HasDatabaseName("IX_Service_Scope_OwnerBranchId");
+
+        builder.HasIndex(x => new
+        {
+            x.ParentServiceId,
+            x.Scope,
+            x.OwnerBranchId
+        })
+        .HasDatabaseName("IX_Service_ParentServiceId_Scope_OwnerBranchId");
 
         builder.HasIndex(x => x.IsActive);
 
@@ -180,19 +216,23 @@ internal sealed class ServiceConfiguration
         builder.HasIndex(x => new
         {
             x.ArabicName,
-            x.ParentServiceId
+            x.ParentServiceId,
+            x.Scope,
+            x.OwnerBranchId
         })
         .IsUnique()
         .HasFilter("[IsDeleted] = 0")
-        .HasDatabaseName("UX_Service_ArabicName_ParentServiceId");
+        .HasDatabaseName("UX_Service_ArabicName_ParentServiceId_Scope_OwnerBranchId");
 
         builder.HasIndex(x => new
         {
             x.EnglishName,
-            x.ParentServiceId
+            x.ParentServiceId,
+            x.Scope,
+            x.OwnerBranchId
         })
         .IsUnique()
         .HasFilter("[IsDeleted] = 0")
-        .HasDatabaseName("UX_Service_EnglishName_ParentServiceId");
+        .HasDatabaseName("UX_Service_EnglishName_ParentServiceId_Scope_OwnerBranchId");
     }
 }

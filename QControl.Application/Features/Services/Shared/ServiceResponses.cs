@@ -10,6 +10,20 @@ public sealed class ServiceResponse
 
     public int? ParentServiceId { get; init; }
 
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public string? OwnerBranchArabicName { get; init; }
+
+    public string? OwnerBranchEnglishName { get; init; }
+
+    public bool IsOwnedByCurrentBranch { get; init; }
+
+    public bool? IsAssignedToCurrentBranch { get; init; }
+
+    public bool CanEditDefinition { get; init; }
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
@@ -44,6 +58,20 @@ public sealed class ServiceDetailsResponse
     public int Id { get; init; }
 
     public int? ParentServiceId { get; init; }
+
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public string? OwnerBranchArabicName { get; init; }
+
+    public string? OwnerBranchEnglishName { get; init; }
+
+    public bool IsOwnedByCurrentBranch { get; init; }
+
+    public bool? IsAssignedToCurrentBranch { get; init; }
+
+    public bool CanEditDefinition { get; init; }
 
     public string? ParentServiceNameAr { get; init; }
 
@@ -115,6 +143,20 @@ public sealed class ServiceTreeNodeResponse
 
     public int? ParentServiceId { get; init; }
 
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public string? OwnerBranchArabicName { get; init; }
+
+    public string? OwnerBranchEnglishName { get; init; }
+
+    public bool IsOwnedByCurrentBranch { get; init; }
+
+    public bool? IsAssignedToCurrentBranch { get; init; }
+
+    public bool CanEditDefinition { get; init; }
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
@@ -142,6 +184,14 @@ public sealed class AvailableParentServiceResponse
     public int Id { get; init; }
 
     public int? ParentServiceId { get; init; }
+
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public string? OwnerBranchArabicName { get; init; }
+
+    public string? OwnerBranchEnglishName { get; init; }
 
     public string ArabicName { get; init; } = string.Empty;
 
@@ -215,13 +265,23 @@ internal static class ServiceResponseFactory
     public static ServiceResponse FromItem(
         ServiceHierarchyItem item,
         ServiceHierarchyState state,
+        ServiceResponseAccessContext accessContext,
         ServiceImagesForResponse? images = null,
         string? message = null)
     {
+        var access = accessContext.ForService(item);
+
         return new ServiceResponse
         {
             Id = item.Id,
             ParentServiceId = item.ParentServiceId,
+            Scope = item.Scope,
+            OwnerBranchId = item.OwnerBranchId,
+            OwnerBranchArabicName = item.OwnerBranchArabicName,
+            OwnerBranchEnglishName = item.OwnerBranchEnglishName,
+            IsOwnedByCurrentBranch = access.IsOwnedByCurrentBranch,
+            IsAssignedToCurrentBranch = access.IsAssignedToCurrentBranch,
+            CanEditDefinition = access.CanEditDefinition,
             ArabicName = item.ArabicName,
             EnglishName = item.EnglishName,
             LogoUrl = images?.LogoUrl,
@@ -243,12 +303,22 @@ internal static class ServiceResponseFactory
         ServiceHierarchyItem item,
         ServiceHierarchyState state,
         ServiceHierarchyItem? parent,
+        ServiceResponseAccessContext accessContext,
         ServiceImagesForResponse? images = null)
     {
+        var access = accessContext.ForService(item);
+
         return new ServiceDetailsResponse
         {
             Id = item.Id,
             ParentServiceId = item.ParentServiceId,
+            Scope = item.Scope,
+            OwnerBranchId = item.OwnerBranchId,
+            OwnerBranchArabicName = item.OwnerBranchArabicName,
+            OwnerBranchEnglishName = item.OwnerBranchEnglishName,
+            IsOwnedByCurrentBranch = access.IsOwnedByCurrentBranch,
+            IsAssignedToCurrentBranch = access.IsAssignedToCurrentBranch,
+            CanEditDefinition = access.CanEditDefinition,
             ParentServiceNameAr = parent?.ArabicName,
             ParentServiceNameEn = parent?.EnglishName,
             ArabicName = item.ArabicName,
@@ -313,6 +383,51 @@ internal sealed class ServiceImagesForResponse
 
     public static ServiceImagesForResponse Empty { get; } = new();
 }
+
+internal sealed class ServiceResponseAccessContext
+{
+    private readonly IReadOnlySet<int> _assignedServiceIds;
+
+    public ServiceResponseAccessContext(
+        bool isTechnicalAdmin,
+        bool isBranchAdmin,
+        int? activeBranchId,
+        IEnumerable<int>? assignedServiceIds)
+    {
+        IsTechnicalAdmin = isTechnicalAdmin;
+        IsBranchAdmin = isBranchAdmin;
+        ActiveBranchId = activeBranchId;
+        _assignedServiceIds = assignedServiceIds?.ToHashSet()
+            ?? new HashSet<int>();
+    }
+
+    public bool IsTechnicalAdmin { get; }
+
+    public bool IsBranchAdmin { get; }
+
+    public int? ActiveBranchId { get; }
+
+    public ServiceAccessMetadata ForService(ServiceHierarchyItem item)
+    {
+        var isOwnedByCurrentBranch =
+            IsBranchAdmin &&
+            ActiveBranchId.HasValue &&
+            item.Scope == ServiceScope.BranchScoped &&
+            item.OwnerBranchId == ActiveBranchId.Value;
+
+        return new ServiceAccessMetadata(
+            isOwnedByCurrentBranch,
+            ActiveBranchId.HasValue
+                ? _assignedServiceIds.Contains(item.Id)
+                : null,
+            IsTechnicalAdmin || isOwnedByCurrentBranch);
+    }
+}
+
+internal sealed record ServiceAccessMetadata(
+    bool IsOwnedByCurrentBranch,
+    bool? IsAssignedToCurrentBranch,
+    bool CanEditDefinition);
 
 internal static class ServiceImageResponseFactory
 {

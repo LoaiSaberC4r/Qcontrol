@@ -18,6 +18,8 @@ public sealed record UploadServiceLogoImageCommand
     public IEnumerable<string> Tags => new[]
     {
         OperationalCacheTags.Services,
+        OperationalCacheTags.ServiceCentral,
+        OperationalCacheTags.BranchServices,
         OperationalCacheTags.Service(ServiceId)
     };
 }

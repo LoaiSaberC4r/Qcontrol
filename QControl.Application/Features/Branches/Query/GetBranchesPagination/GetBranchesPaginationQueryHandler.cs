@@ -31,32 +31,42 @@ internal sealed class GetBranchesPaginationQueryHandler
         GetBranchesPaginationQuery request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        try
         {
-            return Result<Pagination<BranchPaginationItemResponse>>.Fail(
+            if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+            {
+                return Result<Pagination<BranchPaginationItemResponse>>.Fail(
+                    new Error(
+                        Code: "Branches.Pagination.Unauthenticated",
+                        Message: ErrorMessage.Branch_Authentication_Required,
+                        Type: ErrorType.Unauthorized));
+            }
+
+            request.SearchText ??= string.Empty;
+
+            var specification =
+                new GetBranchesPaginationSpec(request);
+
+            var (items, totalCount) =
+                await _branchReadRepository.ListWithCountAsync(
+                    specification,
+                    cancellationToken);
+
+            var response = new Pagination<BranchPaginationItemResponse>(
+                currentPage: request.PageNumber,
+                pageSize: request.PageSize,
+                totalItems: totalCount,
+                data: items);
+
+            return Result<Pagination<BranchPaginationItemResponse>>.Ok(
+                response);
+        }catch (Exception ex)
+        {
+ return Result<Pagination<BranchPaginationItemResponse>>.Fail(
                 new Error(
-                    Code: "Branches.Pagination.Unauthenticated",
-                    Message: ErrorMessage.Branch_Authentication_Required,
-                    Type: ErrorType.Unauthorized));
+                    Code: "Branches.Pagination.Exception",
+                    Message: ex.Message,
+                    Type: ErrorType.Unknown));
         }
-
-        request.SearchText ??= string.Empty;
-
-        var specification =
-            new GetBranchesPaginationSpec(request);
-
-        var (items, totalCount) =
-            await _branchReadRepository.ListWithCountAsync(
-                specification,
-                cancellationToken);
-
-        var response = new Pagination<BranchPaginationItemResponse>(
-            currentPage: request.PageNumber,
-            pageSize: request.PageSize,
-            totalItems: totalCount,
-            data: items);
-
-        return Result<Pagination<BranchPaginationItemResponse>>.Ok(
-            response);
     }
 }

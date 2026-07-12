@@ -2,6 +2,7 @@ using BuildingBlock.Domain.Results;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Services;
 using QControl.Domain.Entities;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.Services.Shared;
 
@@ -12,6 +13,8 @@ internal static class ServiceRuleChecks
         IServiceTicketUsageChecker ticketUsageChecker,
         int parentServiceId,
         int? currentServiceId,
+        ServiceScope expectedScope,
+        int? expectedOwnerBranchId,
         string operation,
         CancellationToken cancellationToken)
     {
@@ -62,6 +65,22 @@ internal static class ServiceRuleChecks
                 ErrorType.Conflict);
         }
 
+        if (parent.Scope != expectedScope)
+        {
+            return new Error(
+                $"Services.{operation}.ParentScopeMismatch",
+                ServiceFeatureMessages.ParentScopeMismatch,
+                ErrorType.Conflict);
+        }
+
+        if (parent.OwnerBranchId != expectedOwnerBranchId)
+        {
+            return new Error(
+                $"Services.{operation}.ParentOwnerMismatch",
+                ServiceFeatureMessages.ParentOwnerMismatch,
+                ErrorType.Conflict);
+        }
+
         if (currentServiceId.HasValue)
         {
             var allItems = await serviceReadRepository.ListAsync(
@@ -102,6 +121,8 @@ internal static class ServiceRuleChecks
         string arabicName,
         string englishName,
         int? parentServiceId,
+        ServiceScope scope,
+        int? ownerBranchId,
         int? excludedServiceId,
         string operation,
         CancellationToken cancellationToken)
@@ -111,6 +132,8 @@ internal static class ServiceRuleChecks
                 new ServiceDuplicateArabicNameSpec(
                     arabicName,
                     parentServiceId,
+                    scope,
+                    ownerBranchId,
                     excludedServiceId),
                 cancellationToken);
 
@@ -127,6 +150,8 @@ internal static class ServiceRuleChecks
                 new ServiceDuplicateEnglishNameSpec(
                     englishName,
                     parentServiceId,
+                    scope,
+                    ownerBranchId,
                     excludedServiceId),
                 cancellationToken);
 
@@ -173,6 +198,7 @@ internal static class ServiceRuleChecks
     public static async Task<ServiceResponse?> BuildServiceResponseAsync(
         IWriteReadRepository<Service> serviceReadRepository,
         int serviceId,
+        ServiceResponseAccessContext accessContext,
         string? message,
         CancellationToken cancellationToken)
     {
@@ -191,6 +217,7 @@ internal static class ServiceRuleChecks
         return ServiceResponseFactory.FromItem(
             item,
             states[item.Id],
+            accessContext,
             ServiceImagesForResponse.Empty,
             message);
     }

@@ -8,6 +8,8 @@ public sealed class Branch : AggregateRoot<int>
     private readonly List<WaitingArea> _waitingAreas = new();
     private readonly List<Display> _displays = new();
     private readonly List<BranchAdvertisement> _advertisements = new();
+    private readonly List<Service> _ownedServices = new();
+    private readonly List<BranchService> _branchServices = new();
 
     public string ArabicName { get; private set; } = string.Empty;
 
@@ -53,6 +55,12 @@ public sealed class Branch : AggregateRoot<int>
 
     public IReadOnlyCollection<BranchAdvertisement> Advertisements =>
         _advertisements.AsReadOnly();
+
+    public IReadOnlyCollection<Service> OwnedServices =>
+        _ownedServices.AsReadOnly();
+
+    public IReadOnlyCollection<BranchService> BranchServices =>
+        _branchServices.AsReadOnly();
 
     private Branch()
     {

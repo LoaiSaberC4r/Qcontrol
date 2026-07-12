@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Abstraction.Services;
 using QControl.Application.Shared.Operational;
+using QControl.Application.Shared.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Services.Command.UpdateService;
@@ -15,10 +17,13 @@ internal sealed class UpdateServiceCommandHandler
     : ICommandHandler<UpdateServiceCommand, ServiceResponse>
 {
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
+    private readonly IWriteReadRepository<BranchService>? _branchServiceReadRepository;
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly IServiceTicketUsageChecker _ticketUsageChecker;
     private readonly ICurrentUser _currentUser;
+    private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateServiceCommandHandler(
@@ -28,9 +33,33 @@ internal sealed class UpdateServiceCommandHandler
         IServiceTicketUsageChecker ticketUsageChecker,
         ICurrentUser currentUser,
         IUnitOfWork unitOfWork)
+        : this(
+            serviceReadRepository,
+            branchServiceReadRepository: null,
+            serviceWriteRepository,
+            concurrencyTokenManager,
+            ticketUsageChecker,
+            currentUser,
+            SystemLevelServiceBranchContext.Instance,
+            AllowAllServiceDefinitionAccessValidator.Instance,
+            unitOfWork)
+    {
+    }
+
+    public UpdateServiceCommandHandler(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService>? branchServiceReadRepository,
+        IWriteRepository<Service> serviceWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        IServiceTicketUsageChecker ticketUsageChecker,
+        ICurrentUser currentUser,
+        ICurrentBranchContext currentBranchContext,
+        IServiceDefinitionAccessValidator accessValidator,
+        IUnitOfWork unitOfWork)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository;
         _serviceWriteRepository = serviceWriteRepository
             ?? throw new ArgumentNullException(nameof(serviceWriteRepository));
         _concurrencyTokenManager = concurrencyTokenManager
@@ -39,6 +68,10 @@ internal sealed class UpdateServiceCommandHandler
             ?? throw new ArgumentNullException(nameof(ticketUsageChecker));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentBranchContext = currentBranchContext
+            ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -85,6 +118,15 @@ internal sealed class UpdateServiceCommandHandler
                 ErrorType.Conflict));
         }
 
+        var editAccess = _accessValidator.EnsureCanEdit(
+            service,
+            "Services.Update");
+
+        if (editAccess.IsFailure)
+        {
+            return Result<ServiceResponse>.Fail(editAccess.Errors);
+        }
+
         var normalizedArabicName = request.ArabicName.Trim();
         var normalizedEnglishName = request.EnglishName.Trim();
         var normalizedRangePrefix = string.IsNullOrWhiteSpace(request.RangePrefix)
@@ -114,6 +156,8 @@ internal sealed class UpdateServiceCommandHandler
                 _ticketUsageChecker,
                 request.ParentServiceId.Value,
                 service.Id,
+                service.Scope,
+                service.OwnerBranchId,
                 operation: "Update",
                 cancellationToken);
 
@@ -157,6 +201,8 @@ internal sealed class UpdateServiceCommandHandler
                 normalizedArabicName,
                 normalizedEnglishName,
                 request.ParentServiceId,
+                service.Scope,
+                service.OwnerBranchId,
                 service.Id,
                 operation: "Update",
                 cancellationToken);
@@ -215,6 +261,7 @@ internal sealed class UpdateServiceCommandHandler
         var response = await ServiceRuleChecks.BuildServiceResponseAsync(
             _serviceReadRepository,
             service.Id,
+            await BuildAccessContextAsync(service.Id, cancellationToken),
             ServiceFeatureMessages.UpdateSuccess,
             cancellationToken);
 
@@ -224,5 +271,31 @@ internal sealed class UpdateServiceCommandHandler
                 ServiceFeatureMessages.NotFound,
                 ErrorType.Infrastructure))
             : Result<ServiceResponse>.Ok(response);
+    }
+
+    private async Task<ServiceResponseAccessContext> BuildAccessContextAsync(
+        int serviceId,
+        CancellationToken cancellationToken)
+    {
+        var assignedServiceIds = Array.Empty<int>();
+
+        if (_currentBranchContext.ActiveBranchId.HasValue)
+        {
+            var activeBranchId = _currentBranchContext.ActiveBranchId.Value;
+            assignedServiceIds = _branchServiceReadRepository is null
+                ? Array.Empty<int>()
+                : await _branchServiceReadRepository.Query()
+                .Where(x =>
+                    x.BranchId == activeBranchId &&
+                    x.ServiceId == serviceId)
+                .Select(x => x.ServiceId)
+                .ToArrayAsync(cancellationToken);
+        }
+
+        return new ServiceResponseAccessContext(
+            _currentBranchContext.IsSystemLevelActor,
+            _currentBranchContext.IsBranchActor,
+            _currentBranchContext.ActiveBranchId,
+            assignedServiceIds);
     }
 }

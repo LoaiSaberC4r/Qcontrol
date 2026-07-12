@@ -47,12 +47,16 @@ public sealed record UpdateServiceCommand
             ? new[]
             {
                 OperationalCacheTags.Services,
+                OperationalCacheTags.ServiceCentral,
+                OperationalCacheTags.BranchServices,
                 OperationalCacheTags.Service(Id),
                 OperationalCacheTags.Service(ParentServiceId.Value)
             }
             : new[]
             {
                 OperationalCacheTags.Services,
+                OperationalCacheTags.ServiceCentral,
+                OperationalCacheTags.BranchServices,
                 OperationalCacheTags.Service(Id)
             };
 }

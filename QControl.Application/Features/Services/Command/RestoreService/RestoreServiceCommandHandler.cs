@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Operational;
+using QControl.Application.Shared.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Services.Command.RestoreService;
@@ -18,6 +20,7 @@ internal sealed class RestoreServiceCommandHandler
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -26,6 +29,25 @@ internal sealed class RestoreServiceCommandHandler
         IWriteRepository<Service> serviceWriteRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
+        IDateTimeProvider dateTimeProvider,
+        IUnitOfWork unitOfWork)
+        : this(
+            serviceReadRepository,
+            serviceWriteRepository,
+            concurrencyTokenManager,
+            currentUser,
+            AllowAllServiceDefinitionAccessValidator.Instance,
+            dateTimeProvider,
+            unitOfWork)
+    {
+    }
+
+    public RestoreServiceCommandHandler(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteRepository<Service> serviceWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
         IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
@@ -37,6 +59,8 @@ internal sealed class RestoreServiceCommandHandler
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
         _dateTimeProvider = dateTimeProvider
             ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _unitOfWork = unitOfWork
@@ -83,6 +107,15 @@ internal sealed class RestoreServiceCommandHandler
                 "Services.Restore.NotDeleted",
                 ServiceFeatureMessages.NotDeleted,
                 ErrorType.Conflict));
+        }
+
+        var editAccess = _accessValidator.EnsureCanEdit(
+            service,
+            "Services.Restore");
+
+        if (editAccess.IsFailure)
+        {
+            return Result<ServiceRestoreResponse>.Fail(editAccess.Errors);
         }
 
         _concurrencyTokenManager.SetOriginalRowVersion(

@@ -4,8 +4,11 @@ using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Abstraction.Services;
+using QControl.Application.Shared.Security;
 using QControl.Domain.Entities;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.Services.Command.CreateService;
 
@@ -16,6 +19,8 @@ internal sealed class CreateServiceCommandHandler
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IServiceTicketUsageChecker _ticketUsageChecker;
     private readonly ICurrentUser _currentUser;
+    private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateServiceCommandHandler(
@@ -23,6 +28,25 @@ internal sealed class CreateServiceCommandHandler
         IWriteRepository<Service> serviceWriteRepository,
         IServiceTicketUsageChecker ticketUsageChecker,
         ICurrentUser currentUser,
+        IUnitOfWork unitOfWork)
+        : this(
+            serviceReadRepository,
+            serviceWriteRepository,
+            ticketUsageChecker,
+            currentUser,
+            SystemLevelServiceBranchContext.Instance,
+            AllowAllServiceDefinitionAccessValidator.Instance,
+            unitOfWork)
+    {
+    }
+
+    public CreateServiceCommandHandler(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteRepository<Service> serviceWriteRepository,
+        IServiceTicketUsageChecker ticketUsageChecker,
+        ICurrentUser currentUser,
+        ICurrentBranchContext currentBranchContext,
+        IServiceDefinitionAccessValidator accessValidator,
         IUnitOfWork unitOfWork)
     {
         _serviceReadRepository = serviceReadRepository
@@ -33,6 +57,10 @@ internal sealed class CreateServiceCommandHandler
             ?? throw new ArgumentNullException(nameof(ticketUsageChecker));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentBranchContext = currentBranchContext
+            ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -47,6 +75,14 @@ internal sealed class CreateServiceCommandHandler
                 "Services.Authentication.Required",
                 ServiceFeatureMessages.AuthenticationRequired,
                 ErrorType.Unauthorized));
+        }
+
+        var createAccess = _accessValidator.EnsureCanCreateGlobal(
+            "Services.GlobalCreate");
+
+        if (createAccess.IsFailure)
+        {
+            return Result<ServiceResponse>.Fail(createAccess.Errors);
         }
 
         var normalizedArabicName = request.ArabicName.Trim();
@@ -77,6 +113,8 @@ internal sealed class CreateServiceCommandHandler
                 _ticketUsageChecker,
                 request.ParentServiceId.Value,
                 currentServiceId: null,
+                ServiceScope.Global,
+                expectedOwnerBranchId: null,
                 operation: "Create",
                 cancellationToken);
 
@@ -92,6 +130,8 @@ internal sealed class CreateServiceCommandHandler
                 normalizedArabicName,
                 normalizedEnglishName,
                 request.ParentServiceId,
+                ServiceScope.Global,
+                ownerBranchId: null,
                 excludedServiceId: null,
                 operation: "Create",
                 cancellationToken);
@@ -101,7 +141,7 @@ internal sealed class CreateServiceCommandHandler
             return Result<ServiceResponse>.Fail(duplicateError);
         }
 
-        var service = Service.Create(
+        var service = Service.CreateGlobal(
             parentServiceId: request.ParentServiceId,
             arabicName: normalizedArabicName,
             englishName: normalizedEnglishName,
@@ -138,6 +178,11 @@ internal sealed class CreateServiceCommandHandler
         var response = await ServiceRuleChecks.BuildServiceResponseAsync(
             _serviceReadRepository,
             service.Id,
+            new ServiceResponseAccessContext(
+                _currentBranchContext.IsSystemLevelActor,
+                _currentBranchContext.IsBranchActor,
+                _currentBranchContext.ActiveBranchId,
+                assignedServiceIds: Array.Empty<int>()),
             ServiceFeatureMessages.CreateSuccess,
             cancellationToken);
 

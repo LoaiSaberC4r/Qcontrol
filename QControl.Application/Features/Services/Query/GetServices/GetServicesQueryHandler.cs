@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.ServiceImages.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Services.Query.GetServices;
@@ -14,20 +15,28 @@ internal sealed class GetServicesQueryHandler
     : IQueryHandler<GetServicesQuery, Pagination<ServiceResponse>>
 {
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
+    private readonly IWriteReadRepository<BranchService> _branchServiceReadRepository;
     private readonly IWriteReadRepository<ServiceImage> _imageReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly ICurrentBranchContext _currentBranchContext;
 
     public GetServicesQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteReadRepository<ServiceImage> imageReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        ICurrentBranchContext currentBranchContext)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(nameof(branchServiceReadRepository));
         _imageReadRepository = imageReadRepository
             ?? throw new ArgumentNullException(nameof(imageReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentBranchContext = currentBranchContext
+            ?? throw new ArgumentNullException(nameof(currentBranchContext));
     }
 
     public async Task<Result<Pagination<ServiceResponse>>> Handle(
@@ -40,6 +49,24 @@ internal sealed class GetServicesQueryHandler
                 "Services.Authentication.Required",
                 ServiceFeatureMessages.AuthenticationRequired,
                 ErrorType.Unauthorized));
+        }
+
+        if (request.IsDeleted == true &&
+            !_currentBranchContext.IsSystemLevelActor)
+        {
+            return Result<Pagination<ServiceResponse>>.Fail(new Error(
+                "Services.List.IncludeDeletedForbidden",
+                ServiceFeatureMessages.ForeignBranchServiceForbidden,
+                ErrorType.Security));
+        }
+
+        if (request.IsAssignedToCurrentBranch.HasValue &&
+            !_currentBranchContext.ActiveBranchId.HasValue)
+        {
+            return Result<Pagination<ServiceResponse>>.Fail(new Error(
+                "Services.List.ActiveBranchRequired",
+                ServiceFeatureMessages.ActiveBranchRequired,
+                ErrorType.Security));
         }
 
         request.SearchText ??= string.Empty;
@@ -64,6 +91,9 @@ internal sealed class GetServicesQueryHandler
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var imagesByServiceId =
             await LoadImagesForPageAsync(pageItems, cancellationToken);
+        var accessContext = await BuildAccessContextAsync(
+            pageItems.Select(x => x.Id),
+            cancellationToken);
 
         var responses = pageItems
             .Select(item =>
@@ -75,6 +105,7 @@ internal sealed class GetServicesQueryHandler
                 return ServiceResponseFactory.FromItem(
                     item,
                     states[item.Id],
+                    accessContext,
                     images);
             })
             .ToList();
@@ -90,15 +121,18 @@ internal sealed class GetServicesQueryHandler
 
     private IQueryable<Service> BuildFilteredQuery(GetServicesQuery request)
     {
-        var query = _serviceReadRepository.Query();
+        var query = _serviceReadRepository.Query()
+            .IgnoreQueryFilters();
 
         if (request.IsDeleted == true)
         {
-            query = query
-                .IgnoreQueryFilters()
-                .Where(x => x.IsDeleted);
+            query = query.Where(x => x.IsDeleted);
         }
         else if (request.IsDeleted == false)
+        {
+            query = query.Where(x => !x.IsDeleted);
+        }
+        else
         {
             query = query.Where(x => !x.IsDeleted);
         }
@@ -121,6 +155,34 @@ internal sealed class GetServicesQueryHandler
             query = query.Where(x => x.ParentServiceId == parentServiceId);
         }
 
+        if (request.Scope.HasValue)
+        {
+            var scope = request.Scope.Value;
+            query = query.Where(x => x.Scope == scope);
+        }
+
+        if (request.OwnerBranchId.HasValue)
+        {
+            var ownerBranchId = request.OwnerBranchId.Value;
+            query = query.Where(x => x.OwnerBranchId == ownerBranchId);
+        }
+
+        if (request.IsAssignedToCurrentBranch.HasValue &&
+            _currentBranchContext.ActiveBranchId.HasValue)
+        {
+            var activeBranchId = _currentBranchContext.ActiveBranchId.Value;
+            var isAssigned = request.IsAssignedToCurrentBranch.Value;
+            var branchServices = _branchServiceReadRepository.Query();
+
+            query = isAssigned
+                ? query.Where(x => branchServices.Any(bs =>
+                    bs.BranchId == activeBranchId &&
+                    bs.ServiceId == x.Id))
+                : query.Where(x => !branchServices.Any(bs =>
+                    bs.BranchId == activeBranchId &&
+                    bs.ServiceId == x.Id));
+        }
+
         if (!string.IsNullOrWhiteSpace(request.SearchText))
         {
             var searchText = request.SearchText.Trim();
@@ -132,6 +194,32 @@ internal sealed class GetServicesQueryHandler
         }
 
         return query;
+    }
+
+    private async Task<ServiceResponseAccessContext> BuildAccessContextAsync(
+        IEnumerable<int> serviceIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = serviceIds.ToArray();
+        var assignedServiceIds = Array.Empty<int>();
+
+        if (ids.Length > 0 &&
+            _currentBranchContext.ActiveBranchId.HasValue)
+        {
+            var activeBranchId = _currentBranchContext.ActiveBranchId.Value;
+            assignedServiceIds = await _branchServiceReadRepository.Query()
+                .Where(x =>
+                    x.BranchId == activeBranchId &&
+                    ids.Contains(x.ServiceId))
+                .Select(x => x.ServiceId)
+                .ToArrayAsync(cancellationToken);
+        }
+
+        return new ServiceResponseAccessContext(
+            _currentBranchContext.IsSystemLevelActor,
+            _currentBranchContext.IsBranchActor,
+            _currentBranchContext.ActiveBranchId,
+            assignedServiceIds);
     }
 
     private async Task<IReadOnlyDictionary<int, ServiceImagesForResponse>>

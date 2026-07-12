@@ -3,6 +3,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Qcontrol.Api.Contracts.BranchAdmins;
+using Qcontrol.Api.Contracts.BranchServices;
+using Qcontrol.Api.Contracts.BranchServiceTrees;
 using Qcontrol.Api.Contracts.Branches;
 using Qcontrol.Application.Features.BranchAdmins.Command.CreateBranchAdmin;
 using Qcontrol.Application.Features.BranchAdvertisements.Command.AddBranchAdvertisements;
@@ -14,6 +16,9 @@ using Qcontrol.Application.Features.BranchAdvertisements.Query.GetBranchAdvertis
 using Qcontrol.Application.Features.BranchBranding.Command.UpdateBranchTheme;
 using Qcontrol.Application.Features.BranchBranding.Command.UploadBranchLogo;
 using Qcontrol.Application.Features.BranchBranding.Query.GetBranchBranding;
+using Qcontrol.Application.Features.BranchServices.Command.AssignBranchServices;
+using Qcontrol.Application.Features.BranchServices.Query.GetBranchServiceTree;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 using Qcontrol.Application.Features.Branches.Command.CreateBranch;
 using Qcontrol.Application.Features.Branches.Command.DeactivateBranch;
 using Qcontrol.Application.Features.Branches.Command.PermanentDeleteBranch;
@@ -67,6 +72,70 @@ public sealed class BranchesController : ControllerBase
 
         var result = await sender.Send(
             query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{branchId:int}/services/tree")]
+    [Permission("BranchServices.View")]
+    public async Task<IActionResult> GetAssignedServicesTree(
+        int branchId,
+        [FromQuery] bool includeInactive,
+        [FromQuery] bool includeDeleted,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetBranchServiceTreeQuery
+        {
+            BranchId = branchId,
+            IncludeInactive = includeInactive,
+            IncludeDeleted = includeDeleted
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/services/assign")]
+    [Permission("BranchServices.Assign")]
+    public async Task<IActionResult> AssignServices(
+        int branchId,
+        [FromBody] AssignBranchServicesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new AssignBranchServicesCommand
+        {
+            BranchId = branchId,
+            ServiceIds = request.ServiceIds
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/service-trees")]
+    [Permission("BranchServiceTrees.Create")]
+    public async Task<IActionResult> CreateServiceTree(
+        int branchId,
+        [FromBody] CreateBranchServiceTreeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateBranchServiceTreeCommand
+        {
+            BranchId = branchId,
+            Root = request.Root is null
+                ? null
+                : MapTreeNode(request.Root)
+        };
+
+        var result = await sender.Send(
+            command,
             cancellationToken);
 
         return result.ToIActionResult();
@@ -409,5 +478,30 @@ public sealed class BranchesController : ControllerBase
             cancellationToken);
 
         return result.ToIActionResult();
+    }
+
+    private static CreateBranchServiceTreeNodeCommand MapTreeNode(
+        CreateBranchServiceTreeNodeRequest request)
+    {
+        return new CreateBranchServiceTreeNodeCommand
+        {
+            ArabicName = request.ArabicName,
+            EnglishName = request.EnglishName,
+            ArabicUserMessage = request.ArabicUserMessage,
+            EnglishUserMessage = request.EnglishUserMessage,
+            IsTicketIssuable = request.IsTicketIssuable,
+            IsClientInputRequired = request.IsClientInputRequired,
+            HasReservation = request.HasReservation,
+            OrderNo = request.OrderNo,
+            Priority = request.Priority,
+            RangePrefix = request.RangePrefix,
+            RangeStartNumber = request.RangeStartNumber,
+            RangeEndNumber = request.RangeEndNumber,
+            WaitingDuration = request.WaitingDuration,
+            NoOfTicketCopies = request.NoOfTicketCopies,
+            Children = request.Children
+                .Select(MapTreeNode)
+                .ToList()
+        };
     }
 }
