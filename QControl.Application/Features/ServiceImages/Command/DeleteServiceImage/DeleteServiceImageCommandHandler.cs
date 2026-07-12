@@ -7,7 +7,9 @@ using Microsoft.Extensions.Logging;
 using Qcontrol.Application.Features.ServiceImages.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Operational;
+using QControl.Application.Shared.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceImages.Command.DeleteServiceImage;
@@ -20,6 +22,7 @@ internal sealed class DeleteServiceImageCommandHandler
     private readonly IWriteRepository<ServiceImage> _imageWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IMediaService _mediaService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DeleteServiceImageCommandHandler> _logger;
@@ -30,6 +33,29 @@ internal sealed class DeleteServiceImageCommandHandler
         IWriteRepository<ServiceImage> imageWriteRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
+        IMediaService mediaService,
+        IUnitOfWork unitOfWork,
+        ILogger<DeleteServiceImageCommandHandler> logger)
+        : this(
+            serviceReadRepository,
+            imageReadRepository,
+            imageWriteRepository,
+            concurrencyTokenManager,
+            currentUser,
+            AllowAllServiceDefinitionAccessValidator.Instance,
+            mediaService,
+            unitOfWork,
+            logger)
+    {
+    }
+
+    public DeleteServiceImageCommandHandler(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<ServiceImage> imageReadRepository,
+        IWriteRepository<ServiceImage> imageWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
         IMediaService mediaService,
         IUnitOfWork unitOfWork,
         ILogger<DeleteServiceImageCommandHandler> logger)
@@ -44,6 +70,8 @@ internal sealed class DeleteServiceImageCommandHandler
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
         _mediaService = mediaService
             ?? throw new ArgumentNullException(nameof(mediaService));
         _unitOfWork = unitOfWork
@@ -77,6 +105,15 @@ internal sealed class DeleteServiceImageCommandHandler
         if (loaded.IsFailure)
         {
             return Result<ServiceImageDeleteResponse>.Fail(loaded.Errors);
+        }
+
+        var editAccess = _accessValidator.EnsureCanEdit(
+            loaded.Value,
+            "ServiceImages");
+
+        if (editAccess.IsFailure)
+        {
+            return Result<ServiceImageDeleteResponse>.Fail(editAccess.Errors);
         }
 
         var image = await _imageReadRepository.FirstOrDefaultAsync(

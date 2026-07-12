@@ -15,6 +15,8 @@ public sealed record DeleteServiceCommand
     public IEnumerable<string> Tags => new[]
     {
         OperationalCacheTags.Services,
+        OperationalCacheTags.ServiceCentral,
+        OperationalCacheTags.BranchServices,
         OperationalCacheTags.Service(Id)
     };
 }

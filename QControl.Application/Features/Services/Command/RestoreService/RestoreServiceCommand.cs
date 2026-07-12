@@ -15,6 +15,8 @@ public sealed record RestoreServiceCommand
     public IEnumerable<string> Tags => new[]
     {
         OperationalCacheTags.Services,
+        OperationalCacheTags.ServiceCentral,
+        OperationalCacheTags.BranchServices,
         OperationalCacheTags.Service(Id)
     };
 }

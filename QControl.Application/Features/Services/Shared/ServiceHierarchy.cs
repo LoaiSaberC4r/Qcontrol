@@ -1,10 +1,20 @@
 namespace Qcontrol.Application.Features.Services.Shared;
 
+using QControl.Domain.Enums;
+
 internal sealed class ServiceHierarchyItem
 {
     public int Id { get; init; }
 
     public int? ParentServiceId { get; init; }
+
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public string? OwnerBranchArabicName { get; init; }
+
+    public string? OwnerBranchEnglishName { get; init; }
 
     public string ArabicName { get; init; } = string.Empty;
 

@@ -1035,4 +1035,76 @@
   <data name="BranchScope_UnsupportedActorType" xml:space="preserve">
     <value>The current user type cannot perform this operation.</value>
   </data>
+  <data name="Service_Parent_ScopeMismatch" xml:space="preserve">
+    <value>The selected parent service has a different service scope.</value>
+  </data>
+  <data name="Service_Parent_OwnerMismatch" xml:space="preserve">
+    <value>The selected parent service belongs to a different owner branch.</value>
+  </data>
+  <data name="Service_TechnicalAdmin_Required" xml:space="preserve">
+    <value>Only a technical administrator can perform this operation.</value>
+  </data>
+  <data name="Service_BranchAdmin_Required" xml:space="preserve">
+    <value>Only a branch administrator can perform this operation.</value>
+  </data>
+  <data name="Service_BranchAccess_Forbidden" xml:space="preserve">
+    <value>The current user cannot access this branch.</value>
+  </data>
+  <data name="Service_ActiveBranch_Required" xml:space="preserve">
+    <value>An active branch is required for this operation.</value>
+  </data>
+  <data name="Service_UnsupportedActorType" xml:space="preserve">
+    <value>The current user type cannot perform this operation.</value>
+  </data>
+  <data name="Service_GlobalService_ForbiddenForBranchAdmin" xml:space="preserve">
+    <value>Branch administrators cannot modify global service definitions.</value>
+  </data>
+  <data name="Service_ForeignBranchService_Forbidden" xml:space="preserve">
+    <value>Branch administrators can modify only service definitions owned by their active branch.</value>
+  </data>
+  <data name="Service_Branch_NotFound" xml:space="preserve">
+    <value>The branch could not be found.</value>
+  </data>
+  <data name="Service_Branch_Inactive" xml:space="preserve">
+    <value>The branch is inactive.</value>
+  </data>
+  <data name="BranchServices_Assign_LeafIdsRequired" xml:space="preserve">
+    <value>At least one leaf service id is required.</value>
+  </data>
+  <data name="BranchServices_Assign_ServiceInactive" xml:space="preserve">
+    <value>The selected service is inactive.</value>
+  </data>
+  <data name="BranchServices_Assign_ServiceEffectivelyInactive" xml:space="preserve">
+    <value>The selected service is inactive because one of its parents is inactive or deleted.</value>
+  </data>
+  <data name="BranchServices_Assign_ServiceNotLeaf" xml:space="preserve">
+    <value>Only leaf services can be assigned to a branch.</value>
+  </data>
+  <data name="BranchServices_Assign_InvalidHierarchy" xml:space="preserve">
+    <value>The service hierarchy is invalid.</value>
+  </data>
+  <data name="BranchServices_Assign_Success" xml:space="preserve">
+    <value>Services were assigned to the branch successfully.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_RootRequired" xml:space="preserve">
+    <value>A root service node is required.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_ParentCannotIssueTicket" xml:space="preserve">
+    <value>A parent service node cannot issue tickets.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_TicketIssuableCannotHaveChildren" xml:space="preserve">
+    <value>A ticket-issuable service cannot have children.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_DuplicateArabicName" xml:space="preserve">
+    <value>A sibling service already uses this Arabic name.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_DuplicateEnglishName" xml:space="preserve">
+    <value>A sibling service already uses this English name.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_PersistenceConflict" xml:space="preserve">
+    <value>The branch service tree could not be saved because of a data conflict.</value>
+  </data>
+  <data name="BranchServiceTrees_Create_Success" xml:space="preserve">
+    <value>The branch service tree was created and assigned successfully.</value>
+  </data>
 </root>

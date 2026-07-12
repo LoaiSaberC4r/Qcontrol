@@ -40,6 +40,12 @@ internal static class ServiceFeatureMessages
     public static string ParentHasHistoricalTickets =>
         Get("Service_Parent_HasHistoricalTickets", "The selected parent service has historical tickets.");
 
+    public static string ParentScopeMismatch =>
+        Get("Service_Parent_ScopeMismatch", "The selected parent service has a different service scope.");
+
+    public static string ParentOwnerMismatch =>
+        Get("Service_Parent_OwnerMismatch", "The selected parent service belongs to a different owner branch.");
+
     public static string CircularHierarchy =>
         Get("Service_CircularHierarchy", "The selected parent would create a circular service hierarchy.");
 
@@ -54,6 +60,72 @@ internal static class ServiceFeatureMessages
 
     public static string DuplicateEnglishName =>
         Get("Service_DuplicateEnglishName", "Another service under the same parent already uses this English name.");
+
+    public static string TechnicalAdminRequired =>
+        Get("Service_TechnicalAdmin_Required", "Only a technical administrator can perform this operation.");
+
+    public static string BranchAdminRequired =>
+        Get("Service_BranchAdmin_Required", "Only a branch administrator can perform this operation.");
+
+    public static string BranchAccessForbidden =>
+        Get("Service_BranchAccess_Forbidden", "The current user cannot access this branch.");
+
+    public static string ActiveBranchRequired =>
+        Get("Service_ActiveBranch_Required", "An active branch is required for this operation.");
+
+    public static string UnsupportedActorType =>
+        Get("Service_UnsupportedActorType", "The current user type cannot perform this operation.");
+
+    public static string GlobalServiceForbiddenForBranchAdmin =>
+        Get("Service_GlobalService_ForbiddenForBranchAdmin", "Branch administrators cannot modify global service definitions.");
+
+    public static string ForeignBranchServiceForbidden =>
+        Get("Service_ForeignBranchService_Forbidden", "Branch administrators can modify only service definitions owned by their active branch.");
+
+    public static string BranchNotFound =>
+        Get("Service_Branch_NotFound", "The branch could not be found.");
+
+    public static string BranchInactive =>
+        Get("Service_Branch_Inactive", "The branch is inactive.");
+
+    public static string LeafIdsRequired =>
+        Get("BranchServices_Assign_LeafIdsRequired", "At least one leaf service id is required.");
+
+    public static string ServiceInactive =>
+        Get("BranchServices_Assign_ServiceInactive", "The selected service is inactive.");
+
+    public static string ServiceEffectivelyInactive =>
+        Get("BranchServices_Assign_ServiceEffectivelyInactive", "The selected service is inactive because one of its parents is inactive or deleted.");
+
+    public static string ServiceNotLeaf =>
+        Get("BranchServices_Assign_ServiceNotLeaf", "Only leaf services can be assigned to a branch.");
+
+    public static string InvalidHierarchy =>
+        Get("BranchServices_Assign_InvalidHierarchy", "The service hierarchy is invalid.");
+
+    public static string BranchServicesAssignSuccess =>
+        Get("BranchServices_Assign_Success", "Services were assigned to the branch successfully.");
+
+    public static string BranchServiceTreeRootRequired =>
+        Get("BranchServiceTrees_Create_RootRequired", "A root service node is required.");
+
+    public static string BranchServiceTreeParentCannotIssueTicket =>
+        Get("BranchServiceTrees_Create_ParentCannotIssueTicket", "A parent service node cannot issue tickets.");
+
+    public static string BranchServiceTreeTicketIssuableCannotHaveChildren =>
+        Get("BranchServiceTrees_Create_TicketIssuableCannotHaveChildren", "A ticket-issuable service cannot have children.");
+
+    public static string BranchServiceTreeDuplicateArabicName =>
+        Get("BranchServiceTrees_Create_DuplicateArabicName", "A sibling service already uses this Arabic name.");
+
+    public static string BranchServiceTreeDuplicateEnglishName =>
+        Get("BranchServiceTrees_Create_DuplicateEnglishName", "A sibling service already uses this English name.");
+
+    public static string BranchServiceTreePersistenceConflict =>
+        Get("BranchServiceTrees_Create_PersistenceConflict", "The branch service tree could not be saved because of a data conflict.");
+
+    public static string BranchServiceTreeCreateSuccess =>
+        Get("BranchServiceTrees_Create_Success", "The branch service tree was created and assigned successfully.");
 
     public static string CreateSuccess =>
         Get("Service_Create_Success", "Service created successfully.");

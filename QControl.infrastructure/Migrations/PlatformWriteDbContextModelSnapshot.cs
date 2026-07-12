@@ -263,6 +263,47 @@ namespace Qcontrol.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchService", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("IX_BranchService_BranchId");
+
+                    b.HasIndex("CreatedByApplicationUserId")
+                        .HasDatabaseName("IX_BranchService_CreatedByApplicationUserId");
+
+                    b.HasIndex("ServiceId")
+                        .HasDatabaseName("IX_BranchService_ServiceId");
+
+                    b.HasIndex("BranchId", "ServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BranchService_BranchId_ServiceId");
+
+                    b.ToTable("BranchService", (string)null);
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.Property<int>("Id")
@@ -548,6 +589,9 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<int?>("OwnerBranchId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ParentServiceId")
                         .HasColumnType("int");
 
@@ -576,6 +620,9 @@ namespace Qcontrol.Infrastructure.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
                     b.Property<int?>("WaitingDuration")
                         .HasColumnType("int");
 
@@ -589,20 +636,32 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.HasIndex("LastModifiedByApplicationUserId");
 
+                    b.HasIndex("OwnerBranchId")
+                        .HasDatabaseName("IX_Service_OwnerBranchId");
+
                     b.HasIndex("ParentServiceId");
 
-                    b.HasIndex("ArabicName", "ParentServiceId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Service_ArabicName_ParentServiceId")
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.HasIndex("EnglishName", "ParentServiceId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Service_EnglishName_ParentServiceId")
-                        .HasFilter("[IsDeleted] = 0");
+                    b.HasIndex("Scope")
+                        .HasDatabaseName("IX_Service_Scope");
 
                     b.HasIndex("ParentServiceId", "OrderNo")
                         .HasDatabaseName("IX_Service_ParentServiceId_OrderNo");
+
+                    b.HasIndex("Scope", "OwnerBranchId")
+                        .HasDatabaseName("IX_Service_Scope_OwnerBranchId");
+
+                    b.HasIndex("ParentServiceId", "Scope", "OwnerBranchId")
+                        .HasDatabaseName("IX_Service_ParentServiceId_Scope_OwnerBranchId");
+
+                    b.HasIndex("ArabicName", "ParentServiceId", "Scope", "OwnerBranchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Service_ArabicName_ParentServiceId_Scope_OwnerBranchId")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("EnglishName", "ParentServiceId", "Scope", "OwnerBranchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Service_EnglishName_ParentServiceId_Scope_OwnerBranchId")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Service", null, t =>
                         {
@@ -623,6 +682,8 @@ namespace Qcontrol.Infrastructure.Migrations
                             t.HasCheckConstraint("CK_Service_RangePrefix_NullOrNotBlank", "[RangePrefix] IS NULL OR LEN(LTRIM(RTRIM([RangePrefix]))) > 0");
 
                             t.HasCheckConstraint("CK_Service_RangeStart_NullOrNonNegative", "[RangeStartNumber] IS NULL OR [RangeStartNumber] >= 0");
+
+                            t.HasCheckConstraint("CK_Service_Scope_Owner", "([Scope] = 1 AND [OwnerBranchId] IS NULL) OR ([Scope] = 2 AND [OwnerBranchId] IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Service_TicketIssuable_Settings_Required", "[IsTicketIssuable] = 0 OR ([RangePrefix] IS NOT NULL AND LEN(LTRIM(RTRIM([RangePrefix]))) > 0 AND [RangeStartNumber] IS NOT NULL AND [RangeEndNumber] IS NOT NULL AND [WaitingDuration] IS NOT NULL AND [NoOfTicketCopies] IS NOT NULL)");
 
@@ -1511,6 +1572,33 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("LastModifiedByApplicationUser");
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchService", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("BranchServices")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QControl.Domain.Entities.Service", "Service")
+                        .WithMany("BranchServices")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("Service");
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.HasOne("QControl.Domain.Entities.Branch", "Branch")
@@ -1602,6 +1690,11 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasForeignKey("LastModifiedByApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("QControl.Domain.Entities.Branch", "OwnerBranch")
+                        .WithMany("OwnedServices")
+                        .HasForeignKey("OwnerBranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QControl.Domain.Entities.Service", "ParentService")
                         .WithMany("Children")
                         .HasForeignKey("ParentServiceId")
@@ -1610,6 +1703,8 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("CreatedByApplicationUser");
 
                     b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("OwnerBranch");
 
                     b.Navigation("ParentService");
                 });
@@ -1896,12 +1991,16 @@ namespace Qcontrol.Infrastructure.Migrations
                 {
                     b.Navigation("Advertisements");
 
+                    b.Navigation("BranchServices");
+
                     b.Navigation("Branding");
 
                     b.Navigation("Displays");
 
                     b.Navigation("Location")
                         .IsRequired();
+
+                    b.Navigation("OwnedServices");
 
                     b.Navigation("WaitingAreas");
                 });
@@ -1913,6 +2012,8 @@ namespace Qcontrol.Infrastructure.Migrations
 
             modelBuilder.Entity("QControl.Domain.Entities.Service", b =>
                 {
+                    b.Navigation("BranchServices");
+
                     b.Navigation("Children");
 
                     b.Navigation("Images");

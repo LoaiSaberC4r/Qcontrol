@@ -58,12 +58,16 @@ public sealed class ServicesController : ControllerBase
     public async Task<IActionResult> GetTree(
         [FromQuery] bool includeInactive,
         [FromQuery] bool includeDeleted,
+        [FromQuery] ServiceScope? scope,
+        [FromQuery] int? ownerBranchId,
         CancellationToken cancellationToken)
     {
         var query = new GetServicesTreeQuery
         {
             IncludeInactive = includeInactive,
-            IncludeDeleted = includeDeleted
+            IncludeDeleted = includeDeleted,
+            Scope = scope,
+            OwnerBranchId = ownerBranchId
         };
 
         var result = await sender.Send(

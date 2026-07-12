@@ -43,10 +43,12 @@ public sealed record CreateServiceCommand
             ? new[]
             {
                 OperationalCacheTags.Services,
+                OperationalCacheTags.ServiceCentral,
                 OperationalCacheTags.Service(ParentServiceId.Value)
             }
             : new[]
             {
-                OperationalCacheTags.Services
+                OperationalCacheTags.Services,
+                OperationalCacheTags.ServiceCentral
             };
 }

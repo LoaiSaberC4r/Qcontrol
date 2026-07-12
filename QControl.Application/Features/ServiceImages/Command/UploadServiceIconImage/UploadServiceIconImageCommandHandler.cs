@@ -7,7 +7,9 @@ using Microsoft.Extensions.Logging;
 using Qcontrol.Application.Features.ServiceImages.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Operational;
+using QControl.Application.Shared.Security;
 using QControl.Application.Shared.Validation;
 using QControl.Domain.Entities;
 using QControl.Domain.Enums;
@@ -23,6 +25,7 @@ internal sealed class UploadServiceIconImageCommandHandler
     private readonly IWriteRepository<ServiceImage> _imageWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IMediaService _mediaService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<UploadServiceIconImageCommandHandler> _logger;
@@ -34,6 +37,31 @@ internal sealed class UploadServiceIconImageCommandHandler
         IWriteRepository<ServiceImage> imageWriteRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
+        IMediaService mediaService,
+        IUnitOfWork unitOfWork,
+        ILogger<UploadServiceIconImageCommandHandler> logger)
+        : this(
+            serviceReadRepository,
+            serviceWriteRepository,
+            imageReadRepository,
+            imageWriteRepository,
+            concurrencyTokenManager,
+            currentUser,
+            AllowAllServiceDefinitionAccessValidator.Instance,
+            mediaService,
+            unitOfWork,
+            logger)
+    {
+    }
+
+    public UploadServiceIconImageCommandHandler(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteRepository<Service> serviceWriteRepository,
+        IWriteReadRepository<ServiceImage> imageReadRepository,
+        IWriteRepository<ServiceImage> imageWriteRepository,
+        IConcurrencyTokenManager concurrencyTokenManager,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
         IMediaService mediaService,
         IUnitOfWork unitOfWork,
         ILogger<UploadServiceIconImageCommandHandler> logger)
@@ -50,6 +78,8 @@ internal sealed class UploadServiceIconImageCommandHandler
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
         _mediaService = mediaService
             ?? throw new ArgumentNullException(nameof(mediaService));
         _unitOfWork = unitOfWork
@@ -98,6 +128,15 @@ internal sealed class UploadServiceIconImageCommandHandler
         }
 
         var service = loaded.Value;
+        var editAccess = _accessValidator.EnsureCanEdit(
+            service,
+            "ServiceImages");
+
+        if (editAccess.IsFailure)
+        {
+            return Result<ServiceImageResponse>.Fail(editAccess.Errors);
+        }
+
         var existingImages = await _imageReadRepository.ListAsync(
             new GetServiceImagesSpec(
                 service.Id,

@@ -43,7 +43,7 @@ internal static class ServiceUniqueConstraintErrorMapper
         var message = sqlException.Message;
 
         if (message.Contains(
-                "UX_Service_ArabicName_ParentServiceId",
+                "UX_Service_ArabicName_ParentServiceId_Scope_OwnerBranchId",
                 StringComparison.OrdinalIgnoreCase))
         {
             error = new Error(
@@ -55,7 +55,7 @@ internal static class ServiceUniqueConstraintErrorMapper
         }
 
         if (message.Contains(
-                "UX_Service_EnglishName_ParentServiceId",
+                "UX_Service_EnglishName_ParentServiceId_Scope_OwnerBranchId",
                 StringComparison.OrdinalIgnoreCase))
         {
             error = new Error(

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using BuildingBlock.Domain.Specification;
 using QControl.Domain.Entities;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.Services.Shared;
 
@@ -11,6 +12,14 @@ internal static class ServiceProjection
         {
             Id = x.Id,
             ParentServiceId = x.ParentServiceId,
+            Scope = x.Scope,
+            OwnerBranchId = x.OwnerBranchId,
+            OwnerBranchArabicName = x.OwnerBranch == null
+                ? null
+                : x.OwnerBranch.ArabicName,
+            OwnerBranchEnglishName = x.OwnerBranch == null
+                ? null
+                : x.OwnerBranch.EnglishName,
             ArabicName = x.ArabicName,
             EnglishName = x.EnglishName,
             ArabicUserMessage = x.ArabicUserMessage,
@@ -67,9 +76,11 @@ internal sealed class GetServiceHierarchyItemByIdSpec
         int serviceId,
         bool includeDeleted = false)
     {
-        if (includeDeleted)
+        IgnoreGlobalFilters();
+
+        if (!includeDeleted)
         {
-            IgnoreGlobalFilters();
+            AddCriteria(x => !x.IsDeleted);
         }
 
         UseNoTracking();
@@ -84,9 +95,12 @@ internal sealed class ServiceDuplicateArabicNameSpec
     public ServiceDuplicateArabicNameSpec(
         string arabicName,
         int? parentServiceId,
+        ServiceScope scope,
+        int? ownerBranchId,
         int? excludedServiceId = null)
     {
         AddCriteria(x => x.ArabicName == arabicName);
+        AddCriteria(x => x.Scope == scope);
 
         if (parentServiceId.HasValue)
         {
@@ -96,6 +110,16 @@ internal sealed class ServiceDuplicateArabicNameSpec
         else
         {
             AddCriteria(x => x.ParentServiceId == null);
+        }
+
+        if (ownerBranchId.HasValue)
+        {
+            var branchId = ownerBranchId.Value;
+            AddCriteria(x => x.OwnerBranchId == branchId);
+        }
+        else
+        {
+            AddCriteria(x => x.OwnerBranchId == null);
         }
 
         if (excludedServiceId.HasValue)
@@ -115,9 +139,12 @@ internal sealed class ServiceDuplicateEnglishNameSpec
     public ServiceDuplicateEnglishNameSpec(
         string englishName,
         int? parentServiceId,
+        ServiceScope scope,
+        int? ownerBranchId,
         int? excludedServiceId = null)
     {
         AddCriteria(x => x.EnglishName == englishName);
+        AddCriteria(x => x.Scope == scope);
 
         if (parentServiceId.HasValue)
         {
@@ -127,6 +154,16 @@ internal sealed class ServiceDuplicateEnglishNameSpec
         else
         {
             AddCriteria(x => x.ParentServiceId == null);
+        }
+
+        if (ownerBranchId.HasValue)
+        {
+            var branchId = ownerBranchId.Value;
+            AddCriteria(x => x.OwnerBranchId == branchId);
+        }
+        else
+        {
+            AddCriteria(x => x.OwnerBranchId == null);
         }
 
         if (excludedServiceId.HasValue)
