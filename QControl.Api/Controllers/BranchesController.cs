@@ -18,6 +18,7 @@ using Qcontrol.Application.Features.BranchBranding.Command.UploadBranchLogo;
 using Qcontrol.Application.Features.BranchBranding.Query.GetBranchBranding;
 using Qcontrol.Application.Features.BranchServices.Command.AssignBranchServices;
 using Qcontrol.Application.Features.BranchServices.Query.GetBranchServiceTree;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 using Qcontrol.Application.Features.Branches.Command.CreateBranch;
 using Qcontrol.Application.Features.Branches.Command.DeactivateBranch;
@@ -129,6 +130,30 @@ public sealed class BranchesController : ControllerBase
         var command = new CreateBranchServiceTreeCommand
         {
             BranchId = branchId,
+            Root = request.Root is null
+                ? null
+                : MapTreeNode(request.Root)
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/services/{parentServiceId:int}/subtree")]
+    [Permission("BranchServiceTrees.Create")]
+    public async Task<IActionResult> CreateServiceSubtree(
+        int branchId,
+        int parentServiceId,
+        [FromBody] CreateBranchServiceSubtreeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateBranchServiceSubtreeCommand
+        {
+            BranchId = branchId,
+            ParentServiceId = parentServiceId,
             Root = request.Root is null
                 ? null
                 : MapTreeNode(request.Root)

@@ -1107,4 +1107,40 @@
   <data name="BranchServiceTrees_Create_Success" xml:space="preserve">
     <value>The branch service tree was created and assigned successfully.</value>
   </data>
+  <data name="Service_BranchSubtree_Create_Success" xml:space="preserve">
+    <value>تم إنشاء الشجرة الفرعية للخدمة بنجاح.</value>
+  </data>
+  <data name="Service_BranchSubtree_Root_Required" xml:space="preserve">
+    <value>جذر الشجرة الفرعية مطلوب.</value>
+  </data>
+  <data name="Service_BranchSubtree_MaximumNodesExceeded" xml:space="preserve">
+    <value>تتجاوز الشجرة الفرعية الحد الأقصى المسموح به لعدد الخدمات.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotFound" xml:space="preserve">
+    <value>تعذر العثور على خدمة الأصل المحددة.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_Deleted" xml:space="preserve">
+    <value>خدمة الأصل المحددة محذوفة.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_Inactive" xml:space="preserve">
+    <value>خدمة الأصل المحددة غير مفعلة.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotEffectivelyActive" xml:space="preserve">
+    <value>خدمة الأصل المحددة غير مفعلة فعليًا.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotAssignedToBranch" xml:space="preserve">
+    <value>خدمة الأصل المحددة غير مسندة إلى الفرع المطلوب.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_TicketIssuable" xml:space="preserve">
+    <value>لا يمكن لخدمة تصدر تذاكر أن تحتوي على خدمات فرعية.</value>
+  </data>
+  <data name="Service_BranchSubtree_DuplicateArabicName" xml:space="preserve">
+    <value>توجد خدمة أخرى تحت الأصل المحدد تستخدم هذا الاسم العربي.</value>
+  </data>
+  <data name="Service_BranchSubtree_DuplicateEnglishName" xml:space="preserve">
+    <value>توجد خدمة أخرى تحت الأصل المحدد تستخدم هذا الاسم الإنجليزي.</value>
+  </data>
+  <data name="Service_BranchSubtree_PersistenceConflict" xml:space="preserve">
+    <value>تعذر إنشاء الشجرة الفرعية للخدمة لأن البيانات تغيرت بالتزامن.</value>
+  </data>
 </root>
