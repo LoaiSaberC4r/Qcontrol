@@ -159,7 +159,12 @@ public sealed class ServiceWorkflowStartOptionItemResponse
 
     public bool IsActive { get; init; }
 
+    public int? StartServiceId { get; init; }
+
     public int StepsCount { get; init; }
+
+    public IReadOnlyList<ServiceWorkflowStepResponse> Steps { get; init; } =
+        Array.Empty<ServiceWorkflowStepResponse>();
 }
 
 public sealed class ServiceWorkflowCandidateServiceResponse
