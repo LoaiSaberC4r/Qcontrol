@@ -127,6 +127,42 @@ internal static class ServiceFeatureMessages
     public static string BranchServiceTreeCreateSuccess =>
         Get("BranchServiceTrees_Create_Success", "The branch service tree was created and assigned successfully.");
 
+    public static string BranchServiceSubtreeCreateSuccess =>
+        Get("Service_BranchSubtree_Create_Success", "The service subtree was created successfully.");
+
+    public static string BranchServiceSubtreeRootRequired =>
+        Get("Service_BranchSubtree_Root_Required", "A subtree root is required.");
+
+    public static string BranchServiceSubtreeMaximumNodesExceeded =>
+        Get("Service_BranchSubtree_MaximumNodesExceeded", "The subtree exceeds the maximum allowed number of service nodes.");
+
+    public static string BranchServiceSubtreeParentNotFound =>
+        Get("Service_BranchSubtree_Parent_NotFound", "The selected parent service could not be found.");
+
+    public static string BranchServiceSubtreeParentDeleted =>
+        Get("Service_BranchSubtree_Parent_Deleted", "The selected parent service is deleted.");
+
+    public static string BranchServiceSubtreeParentInactive =>
+        Get("Service_BranchSubtree_Parent_Inactive", "The selected parent service is inactive.");
+
+    public static string BranchServiceSubtreeParentNotEffectivelyActive =>
+        Get("Service_BranchSubtree_Parent_NotEffectivelyActive", "The selected parent service is not effectively active.");
+
+    public static string BranchServiceSubtreeParentNotAssignedToBranch =>
+        Get("Service_BranchSubtree_Parent_NotAssignedToBranch", "The selected parent service is not assigned to the target branch.");
+
+    public static string BranchServiceSubtreeParentTicketIssuable =>
+        Get("Service_BranchSubtree_Parent_TicketIssuable", "A ticket-issuable service cannot contain child services.");
+
+    public static string BranchServiceSubtreeDuplicateArabicName =>
+        Get("Service_BranchSubtree_DuplicateArabicName", "Another service under the selected parent already uses this Arabic name.");
+
+    public static string BranchServiceSubtreeDuplicateEnglishName =>
+        Get("Service_BranchSubtree_DuplicateEnglishName", "Another service under the selected parent already uses this English name.");
+
+    public static string BranchServiceSubtreePersistenceConflict =>
+        Get("Service_BranchSubtree_PersistenceConflict", "The service subtree could not be created because the data changed concurrently.");
+
     public static string CreateSuccess =>
         Get("Service_Create_Success", "Service created successfully.");
 

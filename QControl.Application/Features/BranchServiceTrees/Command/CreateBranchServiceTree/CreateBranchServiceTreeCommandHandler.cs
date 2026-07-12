@@ -2,6 +2,7 @@ using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceTrees.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -13,8 +14,6 @@ namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchS
 internal sealed class CreateBranchServiceTreeCommandHandler
     : ICommandHandler<CreateBranchServiceTreeCommand, CreateBranchServiceTreeResponse>
 {
-    private const int MaxNodeCount = 1000;
-
     private readonly IWriteReadRepository<Branch> _branchReadRepository;
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteRepository<Service> _serviceWriteRepository;
@@ -104,7 +103,24 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 ErrorType.Validation);
         }
 
-        var payloadValidation = ValidateTreePayload(request.Root);
+        var payloadValidation = BranchServiceTreePayloadValidator.Validate(
+            request.Root,
+            new BranchServiceTreePayloadValidationOptions
+            {
+                CodePrefix = "BranchServiceTrees.Create",
+                MaxNodeCount = 1000,
+                MaximumNodesExceededCode =
+                    "BranchServiceTrees.Create.InvalidHierarchy",
+                MaximumNodesExceededMessage =
+                    ServiceFeatureMessages.InvalidHierarchy,
+                TicketIssuableCannotHaveChildrenMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceTreeTicketIssuableCannotHaveChildren,
+                DuplicateArabicNameMessage =
+                    ServiceFeatureMessages.BranchServiceTreeDuplicateArabicName,
+                DuplicateEnglishNameMessage =
+                    ServiceFeatureMessages.BranchServiceTreeDuplicateEnglishName
+            });
         if (payloadValidation is not null)
         {
             return Result<CreateBranchServiceTreeResponse>.Fail(
@@ -124,9 +140,9 @@ internal sealed class CreateBranchServiceTreeCommandHandler
 
         var services = new List<Service>();
         var assignments = new List<BranchService>();
-        var createdRoot = BuildEntities(
+        var createdRoot = BranchServiceTreeEntityBuilder.Build(
             request.Root,
-            parentService: null,
+            rootParentServiceId: null,
             request.BranchId,
             _currentUser.UserId.Value,
             services,
@@ -166,7 +182,7 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 OwnerBranchId = request.BranchId,
                 CreatedServicesCount = services.Count,
                 CreatedAssignmentsCount = assignments.Count,
-                Root = ToResponse(createdRoot),
+                Root = BranchServiceTreeEntityBuilder.ToResponse(createdRoot),
                 Message = ServiceFeatureMessages.BranchServiceTreeCreateSuccess
             });
     }
@@ -214,300 +230,10 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         return null;
     }
 
-    private static Error? ValidateTreePayload(
-        CreateBranchServiceTreeNodeCommand root)
-    {
-        var total = 0;
-        var stack = new Stack<CreateBranchServiceTreeNodeCommand>();
-        stack.Push(root);
-
-        while (stack.Count > 0)
-        {
-            var node = stack.Pop();
-            total++;
-
-            if (total > MaxNodeCount)
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.InvalidHierarchy",
-                    ServiceFeatureMessages.InvalidHierarchy,
-                    ErrorType.Validation);
-            }
-
-            var nodeValidation = ValidateNodeFields(node);
-            if (nodeValidation is not null)
-            {
-                return nodeValidation;
-            }
-
-            var children = node.Children ?? Array.Empty<CreateBranchServiceTreeNodeCommand>();
-
-            if (children.Count > 0 &&
-                node.IsTicketIssuable.GetValueOrDefault())
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.TicketIssuableCannotHaveChildren",
-                    ServiceFeatureMessages.BranchServiceTreeTicketIssuableCannotHaveChildren,
-                    ErrorType.Conflict);
-            }
-
-            var duplicateSibling = ValidateSiblingNames(children);
-            if (duplicateSibling is not null)
-            {
-                return duplicateSibling;
-            }
-
-            foreach (var child in children)
-            {
-                stack.Push(child);
-            }
-        }
-
-        return null;
-    }
-
-    private static Error? ValidateNodeFields(
-        CreateBranchServiceTreeNodeCommand node)
-    {
-        if (string.IsNullOrWhiteSpace(node.ArabicName))
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicNameRequired",
-                ServiceFeatureMessages.ArabicNameRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.ArabicName.Length > 100)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicNameMaxLength",
-                ServiceFeatureMessages.ArabicNameMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (string.IsNullOrWhiteSpace(node.EnglishName))
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishNameRequired",
-                ServiceFeatureMessages.EnglishNameRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.EnglishName.Length > 100)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishNameMaxLength",
-                ServiceFeatureMessages.EnglishNameMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.ArabicUserMessage) &&
-            node.ArabicUserMessage.Length > 500)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicUserMessageMaxLength",
-                ServiceFeatureMessages.ArabicUserMessageMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.EnglishUserMessage) &&
-            node.EnglishUserMessage.Length > 500)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishUserMessageMaxLength",
-                ServiceFeatureMessages.EnglishUserMessageMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!node.IsTicketIssuable.HasValue)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.IsTicketIssuableRequired",
-                ServiceFeatureMessages.IsTicketIssuableRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.OrderNo < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.OrderNoNonNegative",
-                ServiceFeatureMessages.OrderNoNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.Priority < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.PriorityNonNegative",
-                ServiceFeatureMessages.PriorityNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.RangePrefix) &&
-            node.RangePrefix.Length > 10)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangePrefixMaxLength",
-                ServiceFeatureMessages.RangePrefixMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (node.RangeStartNumber is < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangeStartNonNegative",
-                ServiceFeatureMessages.RangeStartNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.RangeEndNumber.HasValue &&
-            node.RangeStartNumber.HasValue &&
-            node.RangeEndNumber.Value < node.RangeStartNumber.Value)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangeEndGreaterOrEqualStart",
-                ServiceFeatureMessages.RangeEndGreaterOrEqualStart,
-                ErrorType.Validation);
-        }
-
-        if (node.WaitingDuration is < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.WaitingDurationNonNegative",
-                ServiceFeatureMessages.WaitingDurationNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.NoOfTicketCopies is <= 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.NoOfTicketCopiesPositive",
-                ServiceFeatureMessages.NoOfTicketCopiesPositive,
-                ErrorType.Validation);
-        }
-
-        return ServiceRuleChecks.ValidateTicketSettings(
-            node.IsTicketIssuable.GetValueOrDefault(),
-            node.RangePrefix,
-            node.RangeStartNumber,
-            node.RangeEndNumber,
-            node.WaitingDuration,
-            node.NoOfTicketCopies,
-            operation: "Create");
-    }
-
-    private static Error? ValidateSiblingNames(
-        IReadOnlyCollection<CreateBranchServiceTreeNodeCommand> siblings)
-    {
-        var arabicNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var englishNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var sibling in siblings)
-        {
-            if (!arabicNames.Add(sibling.ArabicName.Trim()))
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.DuplicateArabicName",
-                    ServiceFeatureMessages.BranchServiceTreeDuplicateArabicName,
-                    ErrorType.Conflict);
-            }
-
-            if (!englishNames.Add(sibling.EnglishName.Trim()))
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.DuplicateEnglishName",
-                    ServiceFeatureMessages.BranchServiceTreeDuplicateEnglishName,
-                    ErrorType.Conflict);
-            }
-        }
-
-        return null;
-    }
-
-    private static CreatedNode BuildEntities(
-        CreateBranchServiceTreeNodeCommand requestNode,
-        Service? parentService,
-        int branchId,
-        Guid createdByApplicationUserId,
-        ICollection<Service> services,
-        ICollection<BranchService> assignments)
-    {
-        var service = Service.CreateBranchScoped(
-            parentService,
-            branchId,
-            requestNode.ArabicName,
-            requestNode.EnglishName,
-            requestNode.ArabicUserMessage,
-            requestNode.EnglishUserMessage,
-            requestNode.IsTicketIssuable.GetValueOrDefault(),
-            requestNode.IsClientInputRequired,
-            requestNode.HasReservation,
-            requestNode.OrderNo,
-            requestNode.Priority,
-            requestNode.RangePrefix,
-            requestNode.RangeStartNumber,
-            requestNode.RangeEndNumber,
-            requestNode.WaitingDuration,
-            requestNode.NoOfTicketCopies,
-            createdByApplicationUserId);
-
-        services.Add(service);
-        assignments.Add(BranchService.Create(
-            branchId,
-            service,
-            createdByApplicationUserId));
-
-        var createdNode = new CreatedNode(service);
-
-        foreach (var child in requestNode.Children ??
-                 Array.Empty<CreateBranchServiceTreeNodeCommand>())
-        {
-            createdNode.Children.Add(BuildEntities(
-                child,
-                service,
-                branchId,
-                createdByApplicationUserId,
-                services,
-                assignments));
-        }
-
-        return createdNode;
-    }
-
-    private static CreatedBranchServiceTreeNodeResponse ToResponse(
-        CreatedNode node)
-    {
-        return new CreatedBranchServiceTreeNodeResponse
-        {
-            Id = node.Service.Id,
-            ParentServiceId = node.Service.ParentServiceId,
-            ArabicName = node.Service.ArabicName,
-            EnglishName = node.Service.EnglishName,
-            Scope = node.Service.Scope,
-            OwnerBranchId = node.Service.OwnerBranchId.GetValueOrDefault(),
-            IsTicketIssuable = node.Service.IsTicketIssuable,
-            Children = node.Children
-                .Select(ToResponse)
-                .ToList()
-        };
-    }
-
     private static Result<CreateBranchServiceTreeResponse> Failure(
         string code,
         string message,
         ErrorType type)
         => Result<CreateBranchServiceTreeResponse>.Fail(
             new Error(code, message, type));
-
-    private sealed class CreatedNode
-    {
-        public CreatedNode(Service service)
-        {
-            Service = service;
-        }
-
-        public Service Service { get; }
-
-        public List<CreatedNode> Children { get; } = new();
-    }
 }

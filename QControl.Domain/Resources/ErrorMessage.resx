@@ -1107,4 +1107,40 @@
   <data name="BranchServiceTrees_Create_Success" xml:space="preserve">
     <value>The branch service tree was created and assigned successfully.</value>
   </data>
+  <data name="Service_BranchSubtree_Create_Success" xml:space="preserve">
+    <value>The service subtree was created successfully.</value>
+  </data>
+  <data name="Service_BranchSubtree_Root_Required" xml:space="preserve">
+    <value>A subtree root is required.</value>
+  </data>
+  <data name="Service_BranchSubtree_MaximumNodesExceeded" xml:space="preserve">
+    <value>The subtree exceeds the maximum allowed number of service nodes.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotFound" xml:space="preserve">
+    <value>The selected parent service could not be found.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_Deleted" xml:space="preserve">
+    <value>The selected parent service is deleted.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_Inactive" xml:space="preserve">
+    <value>The selected parent service is inactive.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotEffectivelyActive" xml:space="preserve">
+    <value>The selected parent service is not effectively active.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_NotAssignedToBranch" xml:space="preserve">
+    <value>The selected parent service is not assigned to the target branch.</value>
+  </data>
+  <data name="Service_BranchSubtree_Parent_TicketIssuable" xml:space="preserve">
+    <value>A ticket-issuable service cannot contain child services.</value>
+  </data>
+  <data name="Service_BranchSubtree_DuplicateArabicName" xml:space="preserve">
+    <value>Another service under the selected parent already uses this Arabic name.</value>
+  </data>
+  <data name="Service_BranchSubtree_DuplicateEnglishName" xml:space="preserve">
+    <value>Another service under the selected parent already uses this English name.</value>
+  </data>
+  <data name="Service_BranchSubtree_PersistenceConflict" xml:space="preserve">
+    <value>The service subtree could not be created because the data changed concurrently.</value>
+  </data>
 </root>
