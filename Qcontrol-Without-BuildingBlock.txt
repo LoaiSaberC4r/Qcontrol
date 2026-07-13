@@ -305,6 +305,14 @@ public sealed class AssignBranchServicesRequest
         Array.Empty<int>();
 }
  
+// ==================== E:\QControl\QControl.Api\Contracts\BranchServiceTrees\CreateBranchServiceSubtreeRequest.cs ==================== 
+namespace Qcontrol.Api.Contracts.BranchServiceTrees;
+
+public sealed class CreateBranchServiceSubtreeRequest
+{
+    public CreateBranchServiceTreeNodeRequest? Root { get; init; }
+}
+ 
 // ==================== E:\QControl\QControl.Api\Contracts\BranchServiceTrees\CreateBranchServiceTreeNodeRequest.cs ==================== 
 namespace Qcontrol.Api.Contracts.BranchServiceTrees;
 
@@ -699,6 +707,7 @@ using Qcontrol.Application.Features.BranchBranding.Command.UploadBranchLogo;
 using Qcontrol.Application.Features.BranchBranding.Query.GetBranchBranding;
 using Qcontrol.Application.Features.BranchServices.Command.AssignBranchServices;
 using Qcontrol.Application.Features.BranchServices.Query.GetBranchServiceTree;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 using Qcontrol.Application.Features.Branches.Command.CreateBranch;
 using Qcontrol.Application.Features.Branches.Command.DeactivateBranch;
@@ -810,6 +819,30 @@ public sealed class BranchesController : ControllerBase
         var command = new CreateBranchServiceTreeCommand
         {
             BranchId = branchId,
+            Root = request.Root is null
+                ? null
+                : MapTreeNode(request.Root)
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpPost("{branchId:int}/services/{parentServiceId:int}/subtree")]
+    [Permission("BranchServiceTrees.Create")]
+    public async Task<IActionResult> CreateServiceSubtree(
+        int branchId,
+        int parentServiceId,
+        [FromBody] CreateBranchServiceSubtreeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateBranchServiceSubtreeCommand
+        {
+            BranchId = branchId,
+            ParentServiceId = parentServiceId,
             Root = request.Root is null
                 ? null
                 : MapTreeNode(request.Root)
@@ -2546,7 +2579,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b616304bd482a0b33d4ecd8a944536b1b3b87ebb")]
 [assembly: System.Reflection.AssemblyProductAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -2620,7 +2653,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Qcontrol.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -8856,6 +8889,556 @@ internal static class BranchServiceUniqueConstraintErrorMapper
     }
 }
  
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceSubtree\CreateBranchServiceSubtreeCommand.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
+using QControl.Application.Shared.Operational;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
+
+public sealed record CreateBranchServiceSubtreeCommand
+    : ICommand<CreateBranchServiceSubtreeResponse>,
+      ICacheInvalidator
+{
+    public int BranchId { get; init; }
+
+    public int ParentServiceId { get; init; }
+
+    public CreateBranchServiceTreeNodeCommand? Root { get; init; }
+
+    public IEnumerable<string> Tags =>
+        new[]
+        {
+            OperationalCacheTags.Services,
+            OperationalCacheTags.ServiceCentral,
+            OperationalCacheTags.Service(ParentServiceId),
+            OperationalCacheTags.BranchServices,
+            OperationalCacheTags.BranchServicesForBranch(BranchId)
+        };
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceSubtree\CreateBranchServiceSubtreeCommandHandler.cs ==================== 
+using BuildingBlock.Application.Abstraction;
+using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
+using Qcontrol.Application.Features.BranchServiceTrees.Shared;
+using Qcontrol.Application.Features.Services.Shared;
+using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
+using QControl.Domain.Entities;
+using QControl.Domain.Enums;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
+
+internal sealed class CreateBranchServiceSubtreeCommandHandler
+    : ICommandHandler<CreateBranchServiceSubtreeCommand,
+        CreateBranchServiceSubtreeResponse>
+{
+    private const string CodePrefix = "BranchServiceTrees.CreateSubtree";
+
+    private readonly IWriteReadRepository<Branch> _branchReadRepository;
+    private readonly IWriteReadRepository<Service> _serviceReadRepository;
+    private readonly IWriteReadRepository<BranchService>
+        _branchServiceReadRepository;
+    private readonly IWriteRepository<Service> _serviceWriteRepository;
+    private readonly IWriteRepository<BranchService>
+        _branchServiceWriteRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IServiceDefinitionAccessValidator _accessValidator;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateBranchServiceSubtreeCommandHandler(
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
+        IWriteRepository<Service> serviceWriteRepository,
+        IWriteRepository<BranchService> branchServiceWriteRepository,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
+        IUnitOfWork unitOfWork)
+    {
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+        _serviceReadRepository = serviceReadRepository
+            ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(nameof(branchServiceReadRepository));
+        _serviceWriteRepository = serviceWriteRepository
+            ?? throw new ArgumentNullException(nameof(serviceWriteRepository));
+        _branchServiceWriteRepository = branchServiceWriteRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceWriteRepository));
+        _currentUser = currentUser
+            ?? throw new ArgumentNullException(nameof(currentUser));
+        _accessValidator = accessValidator
+            ?? throw new ArgumentNullException(nameof(accessValidator));
+        _unitOfWork = unitOfWork
+            ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+
+    public async Task<Result<CreateBranchServiceSubtreeResponse>> Handle(
+        CreateBranchServiceSubtreeCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        {
+            return Failure(
+                $"{CodePrefix}.Unauthenticated",
+                ServiceFeatureMessages.AuthenticationRequired,
+                ErrorType.Unauthorized);
+        }
+
+        var createAccess = _accessValidator.EnsureCanCreateBranchScoped(
+            request.BranchId,
+            CodePrefix);
+
+        if (createAccess.IsFailure)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                createAccess.Errors);
+        }
+
+        var branch = await _branchReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.Id == request.BranchId)
+            .Select(x => new
+            {
+                x.Id,
+                x.IsActive
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (branch is null)
+        {
+            return Failure(
+                $"{CodePrefix}.BranchNotFound",
+                ServiceFeatureMessages.BranchNotFound,
+                ErrorType.NotFound);
+        }
+
+        if (!branch.IsActive)
+        {
+            return Failure(
+                $"{CodePrefix}.BranchInactive",
+                ServiceFeatureMessages.BranchInactive,
+                ErrorType.Conflict);
+        }
+
+        if (request.Root is null)
+        {
+            return Failure(
+                $"{CodePrefix}.RootRequired",
+                ServiceFeatureMessages.BranchServiceSubtreeRootRequired,
+                ErrorType.Validation);
+        }
+
+        var payloadValidation = BranchServiceTreePayloadValidator.Validate(
+            request.Root,
+            new BranchServiceTreePayloadValidationOptions
+            {
+                CodePrefix = CodePrefix,
+                MaxNodeCount = 1000,
+                MaximumNodesExceededCode =
+                    $"{CodePrefix}.MaximumNodesExceeded",
+                MaximumNodesExceededMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceSubtreeMaximumNodesExceeded,
+                TicketIssuableCannotHaveChildrenMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceTreeTicketIssuableCannotHaveChildren,
+                DuplicateArabicNameMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceSubtreeDuplicateArabicName,
+                DuplicateEnglishNameMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceSubtreeDuplicateEnglishName,
+                UseCodePrefixForTicketSettings = true
+            });
+
+        if (payloadValidation is not null)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                payloadValidation);
+        }
+
+        var parentService = await _serviceReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == request.ParentServiceId,
+                cancellationToken);
+
+        if (parentService is null)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentNotFound",
+                ServiceFeatureMessages.BranchServiceSubtreeParentNotFound,
+                ErrorType.NotFound);
+        }
+
+        if (parentService.IsDeleted)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentDeleted",
+                ServiceFeatureMessages.BranchServiceSubtreeParentDeleted,
+                ErrorType.Conflict);
+        }
+
+        if (!parentService.IsActive)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentInactive",
+                ServiceFeatureMessages.BranchServiceSubtreeParentInactive,
+                ErrorType.Conflict);
+        }
+
+        var editAccess = _accessValidator.EnsureCanEdit(
+            parentService,
+            CodePrefix);
+
+        if (editAccess.IsFailure)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                editAccess.Errors);
+        }
+
+        var parentEffectiveIsActive = await IsParentEffectivelyActiveAsync(
+            request.BranchId,
+            request.ParentServiceId,
+            cancellationToken);
+
+        if (!parentEffectiveIsActive)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentNotEffectivelyActive",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentNotEffectivelyActive,
+                ErrorType.Conflict);
+        }
+
+        var parentAssignedToBranch = await _branchServiceReadRepository.Query()
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.BranchId == request.BranchId &&
+                    x.ServiceId == request.ParentServiceId,
+                cancellationToken);
+
+        if (!parentAssignedToBranch)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentNotAssignedToBranch",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentNotAssignedToBranch,
+                ErrorType.Conflict);
+        }
+
+        if (parentService.IsTicketIssuable)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentTicketIssuable",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentTicketIssuable,
+                ErrorType.Conflict);
+        }
+
+        var duplicateRoot = await ValidateDuplicateRootNamesAsync(
+            request.BranchId,
+            request.ParentServiceId,
+            request.Root,
+            cancellationToken);
+
+        if (duplicateRoot is not null)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                duplicateRoot);
+        }
+
+        var services = new List<Service>();
+        var assignments = new List<BranchService>();
+        var createdRoot = BranchServiceTreeEntityBuilder.Build(
+            request.Root,
+            rootParentServiceId: request.ParentServiceId,
+            request.BranchId,
+            _currentUser.UserId.Value,
+            services,
+            assignments);
+
+        await _serviceWriteRepository.AddRangeAsync(
+            services,
+            cancellationToken);
+        await _branchServiceWriteRepository.AddRangeAsync(
+            assignments,
+            cancellationToken);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (CreateBranchServiceSubtreeUniqueConstraintErrorMapper
+                .TryMap(ex, out var error))
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(error);
+        }
+        catch (DbUpdateException)
+        {
+            return Failure(
+                $"{CodePrefix}.PersistenceConflict",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreePersistenceConflict,
+                ErrorType.Conflict);
+        }
+
+        return Result<CreateBranchServiceSubtreeResponse>.Ok(
+            new CreateBranchServiceSubtreeResponse
+            {
+                BranchId = request.BranchId,
+                ParentServiceId = request.ParentServiceId,
+                Scope = ServiceScope.BranchScoped,
+                OwnerBranchId = request.BranchId,
+                CreatedServicesCount = services.Count,
+                CreatedAssignmentsCount = assignments.Count,
+                Root = BranchServiceTreeEntityBuilder.ToResponse(createdRoot),
+                Message =
+                    ServiceFeatureMessages.BranchServiceSubtreeCreateSuccess
+            });
+    }
+
+    private async Task<Error?> ValidateDuplicateRootNamesAsync(
+        int branchId,
+        int parentServiceId,
+        CreateBranchServiceTreeNodeCommand root,
+        CancellationToken cancellationToken)
+    {
+        var arabicName = root.ArabicName.Trim();
+        var englishName = root.EnglishName.Trim();
+
+        var duplicateArabicId = await _serviceReadRepository
+            .FirstOrDefaultAsync(
+                new ServiceDuplicateArabicNameSpec(
+                    arabicName,
+                    parentServiceId,
+                    ServiceScope.BranchScoped,
+                    ownerBranchId: branchId),
+                cancellationToken);
+
+        if (duplicateArabicId > 0)
+        {
+            return new Error(
+                $"{CodePrefix}.DuplicateArabicName",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeDuplicateArabicName,
+                ErrorType.Conflict);
+        }
+
+        var duplicateEnglishId = await _serviceReadRepository
+            .FirstOrDefaultAsync(
+                new ServiceDuplicateEnglishNameSpec(
+                    englishName,
+                    parentServiceId,
+                    ServiceScope.BranchScoped,
+                    ownerBranchId: branchId),
+                cancellationToken);
+
+        if (duplicateEnglishId > 0)
+        {
+            return new Error(
+                $"{CodePrefix}.DuplicateEnglishName",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeDuplicateEnglishName,
+                ErrorType.Conflict);
+        }
+
+        return null;
+    }
+
+    private async Task<bool> IsParentEffectivelyActiveAsync(
+        int branchId,
+        int parentServiceId,
+        CancellationToken cancellationToken)
+    {
+        var nodes = await _serviceReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x =>
+                x.Scope == ServiceScope.BranchScoped &&
+                x.OwnerBranchId == branchId)
+            .Select(x => new ParentHierarchyNode
+            {
+                Id = x.Id,
+                ParentServiceId = x.ParentServiceId,
+                IsActive = x.IsActive,
+                IsDeleted = x.IsDeleted
+            })
+            .ToArrayAsync(cancellationToken);
+
+        var byId = nodes.ToDictionary(x => x.Id);
+
+        return byId.TryGetValue(parentServiceId, out var parent) &&
+            IsEffectivelyActive(
+                parent,
+                byId,
+                new HashSet<int>());
+    }
+
+    private static bool IsEffectivelyActive(
+        ParentHierarchyNode node,
+        IReadOnlyDictionary<int, ParentHierarchyNode> byId,
+        ISet<int> visiting)
+    {
+        if (!visiting.Add(node.Id))
+        {
+            return false;
+        }
+
+        var isActive = !node.IsDeleted && node.IsActive;
+
+        if (isActive && node.ParentServiceId.HasValue)
+        {
+            isActive = byId.TryGetValue(
+                    node.ParentServiceId.Value,
+                    out var parent) &&
+                IsEffectivelyActive(parent, byId, visiting);
+        }
+
+        visiting.Remove(node.Id);
+        return isActive;
+    }
+
+    private static Result<CreateBranchServiceSubtreeResponse> Failure(
+        string code,
+        string message,
+        ErrorType type)
+        => Result<CreateBranchServiceSubtreeResponse>.Fail(
+            new Error(code, message, type));
+
+    private sealed class ParentHierarchyNode
+    {
+        public int Id { get; init; }
+
+        public int? ParentServiceId { get; init; }
+
+        public bool IsActive { get; init; }
+
+        public bool IsDeleted { get; init; }
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceSubtree\CreateBranchServiceSubtreeCommandValidator.cs ==================== 
+using FluentValidation;
+using Qcontrol.Application.Features.Services.Shared;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
+
+internal sealed class CreateBranchServiceSubtreeCommandValidator
+    : AbstractValidator<CreateBranchServiceSubtreeCommand>
+{
+    public CreateBranchServiceSubtreeCommandValidator()
+    {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ServiceFeatureMessages.BranchNotFound);
+
+        RuleFor(x => x.ParentServiceId)
+            .GreaterThan(0)
+            .WithMessage(ServiceFeatureMessages.ParentIdRequired);
+
+        RuleFor(x => x.Root)
+            .NotNull()
+            .WithMessage(ServiceFeatureMessages.BranchServiceSubtreeRootRequired);
+    }
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceSubtree\CreateBranchServiceSubtreeResponse.cs ==================== 
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
+using QControl.Domain.Enums;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
+
+public sealed class CreateBranchServiceSubtreeResponse
+{
+    public int BranchId { get; init; }
+
+    public int ParentServiceId { get; init; }
+
+    public ServiceScope Scope { get; init; }
+
+    public int OwnerBranchId { get; init; }
+
+    public int CreatedServicesCount { get; init; }
+
+    public int CreatedAssignmentsCount { get; init; }
+
+    public CreatedBranchServiceTreeNodeResponse Root { get; init; } = null!;
+
+    public string Message { get; init; } = string.Empty;
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceSubtree\CreateBranchServiceSubtreeUniqueConstraintErrorMapper.cs ==================== 
+using BuildingBlock.Domain.Results;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.Services.Shared;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
+
+internal static class CreateBranchServiceSubtreeUniqueConstraintErrorMapper
+{
+    public static bool TryMap(
+        DbUpdateException exception,
+        out Error error)
+    {
+        error = default!;
+
+        if (exception.InnerException is not SqlException
+            {
+                Number: 2601 or 2627
+            } sqlException)
+        {
+            return false;
+        }
+
+        var message = sqlException.Message;
+
+        if (message.Contains(
+                "UX_Service_ArabicName_ParentServiceId_Scope_OwnerBranchId",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                "BranchServiceTrees.CreateSubtree.DuplicateArabicName",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeDuplicateArabicName,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (message.Contains(
+                "UX_Service_EnglishName_ParentServiceId_Scope_OwnerBranchId",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                "BranchServiceTrees.CreateSubtree.DuplicateEnglishName",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeDuplicateEnglishName,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
+        error = new Error(
+            "BranchServiceTrees.CreateSubtree.PersistenceConflict",
+            ServiceFeatureMessages.BranchServiceSubtreePersistenceConflict,
+            ErrorType.Conflict);
+
+        return true;
+    }
+}
+ 
 // ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceTree\CreateBranchServiceTreeCommand.cs ==================== 
 using BuildingBlock.Application.Abstraction;
 using QControl.Application.Shared.Operational;
@@ -8919,6 +9502,7 @@ using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceTrees.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -8930,8 +9514,6 @@ namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchS
 internal sealed class CreateBranchServiceTreeCommandHandler
     : ICommandHandler<CreateBranchServiceTreeCommand, CreateBranchServiceTreeResponse>
 {
-    private const int MaxNodeCount = 1000;
-
     private readonly IWriteReadRepository<Branch> _branchReadRepository;
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteRepository<Service> _serviceWriteRepository;
@@ -9021,7 +9603,24 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 ErrorType.Validation);
         }
 
-        var payloadValidation = ValidateTreePayload(request.Root);
+        var payloadValidation = BranchServiceTreePayloadValidator.Validate(
+            request.Root,
+            new BranchServiceTreePayloadValidationOptions
+            {
+                CodePrefix = "BranchServiceTrees.Create",
+                MaxNodeCount = 1000,
+                MaximumNodesExceededCode =
+                    "BranchServiceTrees.Create.InvalidHierarchy",
+                MaximumNodesExceededMessage =
+                    ServiceFeatureMessages.InvalidHierarchy,
+                TicketIssuableCannotHaveChildrenMessage =
+                    ServiceFeatureMessages
+                        .BranchServiceTreeTicketIssuableCannotHaveChildren,
+                DuplicateArabicNameMessage =
+                    ServiceFeatureMessages.BranchServiceTreeDuplicateArabicName,
+                DuplicateEnglishNameMessage =
+                    ServiceFeatureMessages.BranchServiceTreeDuplicateEnglishName
+            });
         if (payloadValidation is not null)
         {
             return Result<CreateBranchServiceTreeResponse>.Fail(
@@ -9041,9 +9640,9 @@ internal sealed class CreateBranchServiceTreeCommandHandler
 
         var services = new List<Service>();
         var assignments = new List<BranchService>();
-        var createdRoot = BuildEntities(
+        var createdRoot = BranchServiceTreeEntityBuilder.Build(
             request.Root,
-            parentService: null,
+            rootParentServiceId: null,
             request.BranchId,
             _currentUser.UserId.Value,
             services,
@@ -9083,7 +9682,7 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 OwnerBranchId = request.BranchId,
                 CreatedServicesCount = services.Count,
                 CreatedAssignmentsCount = assignments.Count,
-                Root = ToResponse(createdRoot),
+                Root = BranchServiceTreeEntityBuilder.ToResponse(createdRoot),
                 Message = ServiceFeatureMessages.BranchServiceTreeCreateSuccess
             });
     }
@@ -9131,302 +9730,12 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         return null;
     }
 
-    private static Error? ValidateTreePayload(
-        CreateBranchServiceTreeNodeCommand root)
-    {
-        var total = 0;
-        var stack = new Stack<CreateBranchServiceTreeNodeCommand>();
-        stack.Push(root);
-
-        while (stack.Count > 0)
-        {
-            var node = stack.Pop();
-            total++;
-
-            if (total > MaxNodeCount)
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.InvalidHierarchy",
-                    ServiceFeatureMessages.InvalidHierarchy,
-                    ErrorType.Validation);
-            }
-
-            var nodeValidation = ValidateNodeFields(node);
-            if (nodeValidation is not null)
-            {
-                return nodeValidation;
-            }
-
-            var children = node.Children ?? Array.Empty<CreateBranchServiceTreeNodeCommand>();
-
-            if (children.Count > 0 &&
-                node.IsTicketIssuable.GetValueOrDefault())
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.TicketIssuableCannotHaveChildren",
-                    ServiceFeatureMessages.BranchServiceTreeTicketIssuableCannotHaveChildren,
-                    ErrorType.Conflict);
-            }
-
-            var duplicateSibling = ValidateSiblingNames(children);
-            if (duplicateSibling is not null)
-            {
-                return duplicateSibling;
-            }
-
-            foreach (var child in children)
-            {
-                stack.Push(child);
-            }
-        }
-
-        return null;
-    }
-
-    private static Error? ValidateNodeFields(
-        CreateBranchServiceTreeNodeCommand node)
-    {
-        if (string.IsNullOrWhiteSpace(node.ArabicName))
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicNameRequired",
-                ServiceFeatureMessages.ArabicNameRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.ArabicName.Length > 100)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicNameMaxLength",
-                ServiceFeatureMessages.ArabicNameMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (string.IsNullOrWhiteSpace(node.EnglishName))
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishNameRequired",
-                ServiceFeatureMessages.EnglishNameRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.EnglishName.Length > 100)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishNameMaxLength",
-                ServiceFeatureMessages.EnglishNameMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.ArabicUserMessage) &&
-            node.ArabicUserMessage.Length > 500)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.ArabicUserMessageMaxLength",
-                ServiceFeatureMessages.ArabicUserMessageMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.EnglishUserMessage) &&
-            node.EnglishUserMessage.Length > 500)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.EnglishUserMessageMaxLength",
-                ServiceFeatureMessages.EnglishUserMessageMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (!node.IsTicketIssuable.HasValue)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.IsTicketIssuableRequired",
-                ServiceFeatureMessages.IsTicketIssuableRequired,
-                ErrorType.Validation);
-        }
-
-        if (node.OrderNo < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.OrderNoNonNegative",
-                ServiceFeatureMessages.OrderNoNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.Priority < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.PriorityNonNegative",
-                ServiceFeatureMessages.PriorityNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (!string.IsNullOrWhiteSpace(node.RangePrefix) &&
-            node.RangePrefix.Length > 10)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangePrefixMaxLength",
-                ServiceFeatureMessages.RangePrefixMaxLength,
-                ErrorType.Validation);
-        }
-
-        if (node.RangeStartNumber is < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangeStartNonNegative",
-                ServiceFeatureMessages.RangeStartNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.RangeEndNumber.HasValue &&
-            node.RangeStartNumber.HasValue &&
-            node.RangeEndNumber.Value < node.RangeStartNumber.Value)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.RangeEndGreaterOrEqualStart",
-                ServiceFeatureMessages.RangeEndGreaterOrEqualStart,
-                ErrorType.Validation);
-        }
-
-        if (node.WaitingDuration is < 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.WaitingDurationNonNegative",
-                ServiceFeatureMessages.WaitingDurationNonNegative,
-                ErrorType.Validation);
-        }
-
-        if (node.NoOfTicketCopies is <= 0)
-        {
-            return new Error(
-                "BranchServiceTrees.Create.NoOfTicketCopiesPositive",
-                ServiceFeatureMessages.NoOfTicketCopiesPositive,
-                ErrorType.Validation);
-        }
-
-        return ServiceRuleChecks.ValidateTicketSettings(
-            node.IsTicketIssuable.GetValueOrDefault(),
-            node.RangePrefix,
-            node.RangeStartNumber,
-            node.RangeEndNumber,
-            node.WaitingDuration,
-            node.NoOfTicketCopies,
-            operation: "Create");
-    }
-
-    private static Error? ValidateSiblingNames(
-        IReadOnlyCollection<CreateBranchServiceTreeNodeCommand> siblings)
-    {
-        var arabicNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var englishNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var sibling in siblings)
-        {
-            if (!arabicNames.Add(sibling.ArabicName.Trim()))
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.DuplicateArabicName",
-                    ServiceFeatureMessages.BranchServiceTreeDuplicateArabicName,
-                    ErrorType.Conflict);
-            }
-
-            if (!englishNames.Add(sibling.EnglishName.Trim()))
-            {
-                return new Error(
-                    "BranchServiceTrees.Create.DuplicateEnglishName",
-                    ServiceFeatureMessages.BranchServiceTreeDuplicateEnglishName,
-                    ErrorType.Conflict);
-            }
-        }
-
-        return null;
-    }
-
-    private static CreatedNode BuildEntities(
-        CreateBranchServiceTreeNodeCommand requestNode,
-        Service? parentService,
-        int branchId,
-        Guid createdByApplicationUserId,
-        ICollection<Service> services,
-        ICollection<BranchService> assignments)
-    {
-        var service = Service.CreateBranchScoped(
-            parentService,
-            branchId,
-            requestNode.ArabicName,
-            requestNode.EnglishName,
-            requestNode.ArabicUserMessage,
-            requestNode.EnglishUserMessage,
-            requestNode.IsTicketIssuable.GetValueOrDefault(),
-            requestNode.IsClientInputRequired,
-            requestNode.HasReservation,
-            requestNode.OrderNo,
-            requestNode.Priority,
-            requestNode.RangePrefix,
-            requestNode.RangeStartNumber,
-            requestNode.RangeEndNumber,
-            requestNode.WaitingDuration,
-            requestNode.NoOfTicketCopies,
-            createdByApplicationUserId);
-
-        services.Add(service);
-        assignments.Add(BranchService.Create(
-            branchId,
-            service,
-            createdByApplicationUserId));
-
-        var createdNode = new CreatedNode(service);
-
-        foreach (var child in requestNode.Children ??
-                 Array.Empty<CreateBranchServiceTreeNodeCommand>())
-        {
-            createdNode.Children.Add(BuildEntities(
-                child,
-                service,
-                branchId,
-                createdByApplicationUserId,
-                services,
-                assignments));
-        }
-
-        return createdNode;
-    }
-
-    private static CreatedBranchServiceTreeNodeResponse ToResponse(
-        CreatedNode node)
-    {
-        return new CreatedBranchServiceTreeNodeResponse
-        {
-            Id = node.Service.Id,
-            ParentServiceId = node.Service.ParentServiceId,
-            ArabicName = node.Service.ArabicName,
-            EnglishName = node.Service.EnglishName,
-            Scope = node.Service.Scope,
-            OwnerBranchId = node.Service.OwnerBranchId.GetValueOrDefault(),
-            IsTicketIssuable = node.Service.IsTicketIssuable,
-            Children = node.Children
-                .Select(ToResponse)
-                .ToList()
-        };
-    }
-
     private static Result<CreateBranchServiceTreeResponse> Failure(
         string code,
         string message,
         ErrorType type)
         => Result<CreateBranchServiceTreeResponse>.Fail(
             new Error(code, message, type));
-
-    private sealed class CreatedNode
-    {
-        public CreatedNode(Service service)
-        {
-            Service = service;
-        }
-
-        public Service Service { get; }
-
-        public List<CreatedNode> Children { get; } = new();
-    }
 }
  
 // ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Command\CreateBranchServiceTree\CreateBranchServiceTreeCommandValidator.cs ==================== 
@@ -9490,6 +9799,426 @@ public sealed class CreatedBranchServiceTreeNodeResponse
 
     public IReadOnlyList<CreatedBranchServiceTreeNodeResponse> Children { get; init; } =
         Array.Empty<CreatedBranchServiceTreeNodeResponse>();
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Shared\BranchServiceTreeEntityBuilder.cs ==================== 
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
+using QControl.Domain.Entities;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Shared;
+
+internal static class BranchServiceTreeEntityBuilder
+{
+    public static CreatedBranchServiceTreeNode Build(
+        CreateBranchServiceTreeNodeCommand requestNode,
+        int? rootParentServiceId,
+        int branchId,
+        Guid createdByApplicationUserId,
+        ICollection<Service> services,
+        ICollection<BranchService> assignments)
+    {
+        var service = Service.CreateBranchScoped(
+            rootParentServiceId,
+            branchId,
+            requestNode.ArabicName,
+            requestNode.EnglishName,
+            requestNode.ArabicUserMessage,
+            requestNode.EnglishUserMessage,
+            requestNode.IsTicketIssuable.GetValueOrDefault(),
+            requestNode.IsClientInputRequired,
+            requestNode.HasReservation,
+            requestNode.OrderNo,
+            requestNode.Priority,
+            requestNode.RangePrefix,
+            requestNode.RangeStartNumber,
+            requestNode.RangeEndNumber,
+            requestNode.WaitingDuration,
+            requestNode.NoOfTicketCopies,
+            createdByApplicationUserId);
+
+        return BuildCore(
+            requestNode,
+            service,
+            branchId,
+            createdByApplicationUserId,
+            services,
+            assignments);
+    }
+
+    public static CreatedBranchServiceTreeNodeResponse ToResponse(
+        CreatedBranchServiceTreeNode node)
+    {
+        return new CreatedBranchServiceTreeNodeResponse
+        {
+            Id = node.Service.Id,
+            ParentServiceId = node.Service.ParentServiceId,
+            ArabicName = node.Service.ArabicName,
+            EnglishName = node.Service.EnglishName,
+            Scope = node.Service.Scope,
+            OwnerBranchId = node.Service.OwnerBranchId.GetValueOrDefault(),
+            IsTicketIssuable = node.Service.IsTicketIssuable,
+            Children = node.Children
+                .Select(ToResponse)
+                .ToList()
+        };
+    }
+
+    private static CreatedBranchServiceTreeNode Build(
+        CreateBranchServiceTreeNodeCommand requestNode,
+        Service parentService,
+        int branchId,
+        Guid createdByApplicationUserId,
+        ICollection<Service> services,
+        ICollection<BranchService> assignments)
+    {
+        var service = Service.CreateBranchScoped(
+            parentService,
+            branchId,
+            requestNode.ArabicName,
+            requestNode.EnglishName,
+            requestNode.ArabicUserMessage,
+            requestNode.EnglishUserMessage,
+            requestNode.IsTicketIssuable.GetValueOrDefault(),
+            requestNode.IsClientInputRequired,
+            requestNode.HasReservation,
+            requestNode.OrderNo,
+            requestNode.Priority,
+            requestNode.RangePrefix,
+            requestNode.RangeStartNumber,
+            requestNode.RangeEndNumber,
+            requestNode.WaitingDuration,
+            requestNode.NoOfTicketCopies,
+            createdByApplicationUserId);
+
+        return BuildCore(
+            requestNode,
+            service,
+            branchId,
+            createdByApplicationUserId,
+            services,
+            assignments);
+    }
+
+    private static CreatedBranchServiceTreeNode BuildCore(
+        CreateBranchServiceTreeNodeCommand requestNode,
+        Service service,
+        int branchId,
+        Guid createdByApplicationUserId,
+        ICollection<Service> services,
+        ICollection<BranchService> assignments)
+    {
+        services.Add(service);
+        assignments.Add(BranchService.Create(
+            branchId,
+            service,
+            createdByApplicationUserId));
+
+        var createdNode = new CreatedBranchServiceTreeNode(service);
+
+        foreach (var child in requestNode.Children ??
+                 Array.Empty<CreateBranchServiceTreeNodeCommand>())
+        {
+            createdNode.Children.Add(Build(
+                child,
+                service,
+                branchId,
+                createdByApplicationUserId,
+                services,
+                assignments));
+        }
+
+        return createdNode;
+    }
+}
+
+internal sealed class CreatedBranchServiceTreeNode
+{
+    public CreatedBranchServiceTreeNode(Service service)
+    {
+        Service = service;
+    }
+
+    public Service Service { get; }
+
+    public List<CreatedBranchServiceTreeNode> Children { get; } = new();
+}
+ 
+// ==================== E:\QControl\QControl.Application\Features\BranchServiceTrees\Shared\BranchServiceTreePayloadValidator.cs ==================== 
+using BuildingBlock.Domain.Results;
+using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
+using Qcontrol.Application.Features.Services.Shared;
+
+namespace Qcontrol.Application.Features.BranchServiceTrees.Shared;
+
+internal sealed class BranchServiceTreePayloadValidationOptions
+{
+    public string CodePrefix { get; init; } = string.Empty;
+
+    public int MaxNodeCount { get; init; } = 1000;
+
+    public string MaximumNodesExceededCode { get; init; } = string.Empty;
+
+    public string MaximumNodesExceededMessage { get; init; } = string.Empty;
+
+    public string TicketIssuableCannotHaveChildrenMessage { get; init; } =
+        string.Empty;
+
+    public string DuplicateArabicNameMessage { get; init; } = string.Empty;
+
+    public string DuplicateEnglishNameMessage { get; init; } = string.Empty;
+
+    public bool UseCodePrefixForTicketSettings { get; init; }
+}
+
+internal static class BranchServiceTreePayloadValidator
+{
+    public static Error? Validate(
+        CreateBranchServiceTreeNodeCommand root,
+        BranchServiceTreePayloadValidationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var total = 0;
+        var stack = new Stack<CreateBranchServiceTreeNodeCommand>();
+        stack.Push(root);
+
+        while (stack.Count > 0)
+        {
+            var node = stack.Pop();
+            total++;
+
+            if (total > options.MaxNodeCount)
+            {
+                return new Error(
+                    options.MaximumNodesExceededCode,
+                    options.MaximumNodesExceededMessage,
+                    ErrorType.Validation);
+            }
+
+            var nodeValidation = ValidateNodeFields(node, options);
+            if (nodeValidation is not null)
+            {
+                return nodeValidation;
+            }
+
+            var children = node.Children ??
+                Array.Empty<CreateBranchServiceTreeNodeCommand>();
+
+            if (children.Count > 0 &&
+                node.IsTicketIssuable.GetValueOrDefault())
+            {
+                return new Error(
+                    $"{options.CodePrefix}.TicketIssuableCannotHaveChildren",
+                    options.TicketIssuableCannotHaveChildrenMessage,
+                    ErrorType.Conflict);
+            }
+
+            var duplicateSibling = ValidateSiblingNames(children, options);
+            if (duplicateSibling is not null)
+            {
+                return duplicateSibling;
+            }
+
+            foreach (var child in children)
+            {
+                stack.Push(child);
+            }
+        }
+
+        return null;
+    }
+
+    private static Error? ValidateNodeFields(
+        CreateBranchServiceTreeNodeCommand node,
+        BranchServiceTreePayloadValidationOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(node.ArabicName))
+        {
+            return new Error(
+                $"{options.CodePrefix}.ArabicNameRequired",
+                ServiceFeatureMessages.ArabicNameRequired,
+                ErrorType.Validation);
+        }
+
+        if (node.ArabicName.Length > 100)
+        {
+            return new Error(
+                $"{options.CodePrefix}.ArabicNameMaxLength",
+                ServiceFeatureMessages.ArabicNameMaxLength,
+                ErrorType.Validation);
+        }
+
+        if (string.IsNullOrWhiteSpace(node.EnglishName))
+        {
+            return new Error(
+                $"{options.CodePrefix}.EnglishNameRequired",
+                ServiceFeatureMessages.EnglishNameRequired,
+                ErrorType.Validation);
+        }
+
+        if (node.EnglishName.Length > 100)
+        {
+            return new Error(
+                $"{options.CodePrefix}.EnglishNameMaxLength",
+                ServiceFeatureMessages.EnglishNameMaxLength,
+                ErrorType.Validation);
+        }
+
+        if (!string.IsNullOrWhiteSpace(node.ArabicUserMessage) &&
+            node.ArabicUserMessage.Length > 500)
+        {
+            return new Error(
+                $"{options.CodePrefix}.ArabicUserMessageMaxLength",
+                ServiceFeatureMessages.ArabicUserMessageMaxLength,
+                ErrorType.Validation);
+        }
+
+        if (!string.IsNullOrWhiteSpace(node.EnglishUserMessage) &&
+            node.EnglishUserMessage.Length > 500)
+        {
+            return new Error(
+                $"{options.CodePrefix}.EnglishUserMessageMaxLength",
+                ServiceFeatureMessages.EnglishUserMessageMaxLength,
+                ErrorType.Validation);
+        }
+
+        if (!node.IsTicketIssuable.HasValue)
+        {
+            return new Error(
+                $"{options.CodePrefix}.IsTicketIssuableRequired",
+                ServiceFeatureMessages.IsTicketIssuableRequired,
+                ErrorType.Validation);
+        }
+
+        if (node.OrderNo < 0)
+        {
+            return new Error(
+                $"{options.CodePrefix}.OrderNoNonNegative",
+                ServiceFeatureMessages.OrderNoNonNegative,
+                ErrorType.Validation);
+        }
+
+        if (node.Priority < 0)
+        {
+            return new Error(
+                $"{options.CodePrefix}.PriorityNonNegative",
+                ServiceFeatureMessages.PriorityNonNegative,
+                ErrorType.Validation);
+        }
+
+        if (!string.IsNullOrWhiteSpace(node.RangePrefix) &&
+            node.RangePrefix.Length > 10)
+        {
+            return new Error(
+                $"{options.CodePrefix}.RangePrefixMaxLength",
+                ServiceFeatureMessages.RangePrefixMaxLength,
+                ErrorType.Validation);
+        }
+
+        if (node.RangeStartNumber is < 0)
+        {
+            return new Error(
+                $"{options.CodePrefix}.RangeStartNonNegative",
+                ServiceFeatureMessages.RangeStartNonNegative,
+                ErrorType.Validation);
+        }
+
+        if (node.RangeEndNumber.HasValue &&
+            node.RangeStartNumber.HasValue &&
+            node.RangeEndNumber.Value < node.RangeStartNumber.Value)
+        {
+            return new Error(
+                $"{options.CodePrefix}.RangeEndGreaterOrEqualStart",
+                ServiceFeatureMessages.RangeEndGreaterOrEqualStart,
+                ErrorType.Validation);
+        }
+
+        if (node.WaitingDuration is < 0)
+        {
+            return new Error(
+                $"{options.CodePrefix}.WaitingDurationNonNegative",
+                ServiceFeatureMessages.WaitingDurationNonNegative,
+                ErrorType.Validation);
+        }
+
+        if (node.NoOfTicketCopies is <= 0)
+        {
+            return new Error(
+                $"{options.CodePrefix}.NoOfTicketCopiesPositive",
+                ServiceFeatureMessages.NoOfTicketCopiesPositive,
+                ErrorType.Validation);
+        }
+
+        return ValidateTicketSettings(node, options);
+    }
+
+    private static Error? ValidateTicketSettings(
+        CreateBranchServiceTreeNodeCommand node,
+        BranchServiceTreePayloadValidationOptions options)
+    {
+        var isTicketIssuable = node.IsTicketIssuable.GetValueOrDefault();
+
+        if (!options.UseCodePrefixForTicketSettings)
+        {
+            return ServiceRuleChecks.ValidateTicketSettings(
+                isTicketIssuable,
+                node.RangePrefix,
+                node.RangeStartNumber,
+                node.RangeEndNumber,
+                node.WaitingDuration,
+                node.NoOfTicketCopies,
+                operation: "Create");
+        }
+
+        if (!isTicketIssuable)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(node.RangePrefix) ||
+            !node.RangeStartNumber.HasValue ||
+            !node.RangeEndNumber.HasValue ||
+            !node.WaitingDuration.HasValue ||
+            !node.NoOfTicketCopies.HasValue)
+        {
+            return new Error(
+                $"{options.CodePrefix}.TicketSettingsRequired",
+                ServiceFeatureMessages.TicketSettingsRequired,
+                ErrorType.Validation);
+        }
+
+        return null;
+    }
+
+    private static Error? ValidateSiblingNames(
+        IReadOnlyCollection<CreateBranchServiceTreeNodeCommand> siblings,
+        BranchServiceTreePayloadValidationOptions options)
+    {
+        var arabicNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var englishNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var sibling in siblings)
+        {
+            if (!arabicNames.Add(sibling.ArabicName.Trim()))
+            {
+                return new Error(
+                    $"{options.CodePrefix}.DuplicateArabicName",
+                    options.DuplicateArabicNameMessage,
+                    ErrorType.Conflict);
+            }
+
+            if (!englishNames.Add(sibling.EnglishName.Trim()))
+            {
+                return new Error(
+                    $"{options.CodePrefix}.DuplicateEnglishName",
+                    options.DuplicateEnglishNameMessage,
+                    ErrorType.Conflict);
+            }
+        }
+
+        return null;
+    }
 }
  
 // ==================== E:\QControl\QControl.Application\Features\Displays\Command\CreateDisplay\CreateDisplayCommand.cs ==================== 
@@ -16176,6 +16905,42 @@ internal static class ServiceFeatureMessages
 
     public static string BranchServiceTreeCreateSuccess =>
         Get("BranchServiceTrees_Create_Success", "The branch service tree was created and assigned successfully.");
+
+    public static string BranchServiceSubtreeCreateSuccess =>
+        Get("Service_BranchSubtree_Create_Success", "The service subtree was created successfully.");
+
+    public static string BranchServiceSubtreeRootRequired =>
+        Get("Service_BranchSubtree_Root_Required", "A subtree root is required.");
+
+    public static string BranchServiceSubtreeMaximumNodesExceeded =>
+        Get("Service_BranchSubtree_MaximumNodesExceeded", "The subtree exceeds the maximum allowed number of service nodes.");
+
+    public static string BranchServiceSubtreeParentNotFound =>
+        Get("Service_BranchSubtree_Parent_NotFound", "The selected parent service could not be found.");
+
+    public static string BranchServiceSubtreeParentDeleted =>
+        Get("Service_BranchSubtree_Parent_Deleted", "The selected parent service is deleted.");
+
+    public static string BranchServiceSubtreeParentInactive =>
+        Get("Service_BranchSubtree_Parent_Inactive", "The selected parent service is inactive.");
+
+    public static string BranchServiceSubtreeParentNotEffectivelyActive =>
+        Get("Service_BranchSubtree_Parent_NotEffectivelyActive", "The selected parent service is not effectively active.");
+
+    public static string BranchServiceSubtreeParentNotAssignedToBranch =>
+        Get("Service_BranchSubtree_Parent_NotAssignedToBranch", "The selected parent service is not assigned to the target branch.");
+
+    public static string BranchServiceSubtreeParentTicketIssuable =>
+        Get("Service_BranchSubtree_Parent_TicketIssuable", "A ticket-issuable service cannot contain child services.");
+
+    public static string BranchServiceSubtreeDuplicateArabicName =>
+        Get("Service_BranchSubtree_DuplicateArabicName", "Another service under the selected parent already uses this Arabic name.");
+
+    public static string BranchServiceSubtreeDuplicateEnglishName =>
+        Get("Service_BranchSubtree_DuplicateEnglishName", "Another service under the selected parent already uses this English name.");
+
+    public static string BranchServiceSubtreePersistenceConflict =>
+        Get("Service_BranchSubtree_PersistenceConflict", "The service subtree could not be created because the data changed concurrently.");
 
     public static string CreateSuccess =>
         Get("Service_Create_Success", "Service created successfully.");
@@ -24983,7 +25748,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Qcontrol.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("Qcontrol.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Qcontrol.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -28024,7 +28789,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -28066,7 +28831,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QControl.Application.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -33664,31 +34429,6 @@ global using System.Net.Http;
 global using System.Threading;
 global using System.Threading.Tasks;
  
-// ==================== E:\QControl\QControl.Domain\obj\Debug\net8.0\ar\QControl.Domain.resources.cs ==================== 
-//------------------------------------------------------------------------------
-// <auto-generated>
-//     This code was generated by a tool.
-//
-//     Changes to this file may cause incorrect behavior and will be lost if
-//     the code is regenerated.
-// </auto-generated>
-//------------------------------------------------------------------------------
-
-using System;
-using System.Reflection;
-
-[assembly: System.Reflection.AssemblyCompanyAttribute("QControl.Domain")]
-[assembly: System.Reflection.AssemblyCopyrightAttribute(" ")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
-[assembly: System.Reflection.AssemblyProductAttribute("QControl.Domain")]
-[assembly: System.Reflection.AssemblyTitleAttribute("QControl.Domain")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyCultureAttribute("ar")]
-
-// Generated by the MSBuild WriteCodeFragment class.
-
- 
 // ==================== E:\QControl\QControl.Domain\obj\Release\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs ==================== 
 // <autogenerated />
 using System;
@@ -33712,7 +34452,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Qcontrol.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("Qcontrol.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Qcontrol.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -59868,7 +60608,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Qcontrol.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dac29e25f6d58bdc0979038821d7274c3df784b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8f7cd90a199d5eb00d5b6b0b0c33a8c198be1ba")]
 [assembly: System.Reflection.AssemblyProductAttribute("Qcontrol.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Qcontrol.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
