@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetWorkflowStartOptions;
@@ -19,12 +20,14 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetWorkflowStartOptionsQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
@@ -34,6 +37,8 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<ServiceWorkflowStartOptionsResponse>> Handle(
@@ -46,6 +51,27 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                 "ServiceWorkflows.Authentication.Required",
                 ServiceWorkflowMessages.AuthenticationRequired,
                 ErrorType.Unauthorized));
+        }
+
+        var requestedService = await _serviceReadRepository.FirstOrDefaultAsync(
+            new GetServiceHierarchyItemByIdSpec(request.ServiceId),
+            cancellationToken);
+        if (requestedService is null)
+        {
+            return Result<ServiceWorkflowStartOptionsResponse>.Fail(new Error(
+                "ServiceWorkflows.StartOptions.ServiceNotFound",
+                ServiceWorkflowMessages.ServiceNotFound,
+                ErrorType.NotFound));
+        }
+
+        var visibility = _visibilityPolicy.EnsureCanView(
+            requestedService.Scope,
+            requestedService.OwnerBranchId,
+            "ServiceWorkflows.StartOptions");
+        if (visibility.IsFailure)
+        {
+            return Result<ServiceWorkflowStartOptionsResponse>.Fail(
+                visibility.Errors);
         }
 
         var serviceError =
@@ -135,6 +161,9 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
         var serviceItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        serviceItems = serviceItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var servicesById = serviceItems.ToDictionary(x => x.Id);
         var serviceStates = ServiceHierarchyCalculator.ComputeStates(
             serviceItems);

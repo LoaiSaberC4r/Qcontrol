@@ -4,6 +4,7 @@ using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.ServiceImages.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceImages.Query.GetServiceImages;
@@ -14,11 +15,13 @@ internal sealed class GetServiceImagesQueryHandler
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteReadRepository<ServiceImage> _imageReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServiceImagesQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<ServiceImage> imageReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
@@ -26,6 +29,8 @@ internal sealed class GetServiceImagesQueryHandler
             ?? throw new ArgumentNullException(nameof(imageReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<IReadOnlyList<ServiceImageResponse>>> Handle(
@@ -49,6 +54,16 @@ internal sealed class GetServiceImagesQueryHandler
                     "Services.Images.Get.ServiceNotFound",
                     ServiceFeatureMessages.NotFound,
                     ErrorType.NotFound));
+        }
+
+        var visibility = _visibilityPolicy.EnsureCanView(
+            service.Scope,
+            service.OwnerBranchId,
+            "Services.Images.Get");
+        if (visibility.IsFailure)
+        {
+            return Result<IReadOnlyList<ServiceImageResponse>>.Fail(
+                visibility.Errors);
         }
 
         var images = await _imageReadRepository.ListAsync(

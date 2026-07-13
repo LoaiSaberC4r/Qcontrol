@@ -1158,4 +1158,97 @@
   <data name="BranchServices_Unassign_Success" xml:space="preserve">
     <value>تم إلغاء ربط الخدمة وحذف روابط الآباء غير المستخدمة بنجاح.</value>
   </data>
+  <data name="ServiceGlobalizationRequests_RequestId_Required" xml:space="preserve">
+    <value>معرف طلب تعميم الخدمة مطلوب.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_NotFound" xml:space="preserve">
+    <value>تعذر العثور على طلب تعميم الخدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_AlreadyApproved" xml:space="preserve">
+    <value>تمت الموافقة على الطلب مسبقا.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_AlreadyRejected" xml:space="preserve">
+    <value>تم رفض الطلب مسبقا.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_NotPending" xml:space="preserve">
+    <value>يمكن مراجعة الطلبات المعلقة فقط.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_CreatedSuccessfully" xml:space="preserve">
+    <value>تم إنشاء طلب تعميم الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_ApprovedSuccessfully" xml:space="preserve">
+    <value>تمت الموافقة على طلب تعميم الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_RejectedSuccessfully" xml:space="preserve">
+    <value>تم رفض طلب تعميم الخدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_RejectionReason_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز سبب الرفض 1000 حرف.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_RowVersion_Invalid" xml:space="preserve">
+    <value>إصدار صف الطلب غير صالح.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_ConcurrencyConflict" xml:space="preserve">
+    <value>تم تغيير الطلب بواسطة عملية أخرى.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_TechnicalAdmin_Required" xml:space="preserve">
+    <value>يمكن للمسؤول الفني فقط مراجعة طلبات تعميم الخدمات.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_BranchAccess_Forbidden" xml:space="preserve">
+    <value>لا يمكن للمستخدم الحالي الوصول إلى طلبات هذا الفرع.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SubmittedService_NotFound" xml:space="preserve">
+    <value>تعذر العثور على إحدى الخدمات المقدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SubmittedService_Deleted" xml:space="preserve">
+    <value>إحدى الخدمات المقدمة محذوفة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SubmittedService_ScopeChanged" xml:space="preserve">
+    <value>إحدى الخدمات المقدمة لم تعد تابعة للفرع.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SubmittedService_OwnerChanged" xml:space="preserve">
+    <value>تغير مالك إحدى الخدمات المقدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SubmittedHierarchy_Invalid" xml:space="preserve">
+    <value>هيكل الخدمات المقدمة لم يعد صالحا.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_GlobalParent_Required" xml:space="preserve">
+    <value>خدمة أصل عامة مطلوبة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_GlobalParent_Changed" xml:space="preserve">
+    <value>تم تغيير خدمة الأصل العامة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_GlobalParent_Deleted" xml:space="preserve">
+    <value>خدمة الأصل العامة محذوفة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_LeafUnderGlobalParent_CannotContainChildren" xml:space="preserve">
+    <value>لا يمكن أن تحتوي الخدمة النهائية تحت أصل عام على خدمات فرعية.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_DuplicateGlobalArabicName" xml:space="preserve">
+    <value>توجد خدمة عامة شقيقة تستخدم هذا الاسم العربي.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_DuplicateGlobalEnglishName" xml:space="preserve">
+    <value>توجد خدمة عامة شقيقة تستخدم هذا الاسم الإنجليزي.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_PendingRequestAlreadyExists" xml:space="preserve">
+    <value>يوجد طلب تعميم معلق لهذه الخدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_ItemMismatch" xml:space="preserve">
+    <value>عناصر الطلب لم تعد تطابق الخدمات المقدمة.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_PageNumber_Invalid" xml:space="preserve">
+    <value>يجب أن يكون رقم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_PageSize_Invalid" xml:space="preserve">
+    <value>يجب أن يكون حجم الصفحة 1 على الأقل.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_PageSize_Max" xml:space="preserve">
+    <value>يجب ألا يتجاوز حجم الصفحة 100.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_SearchText_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز نص البحث 200 حرف.</value>
+  </data>
+  <data name="ServiceGlobalizationRequests_Authentication_Required" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
 </root>

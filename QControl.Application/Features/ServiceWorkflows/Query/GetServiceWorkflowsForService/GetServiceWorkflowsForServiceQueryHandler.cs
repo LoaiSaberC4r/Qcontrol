@@ -4,6 +4,7 @@ using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetServiceWorkflowsForService;
@@ -18,12 +19,14 @@ internal sealed class GetServiceWorkflowsForServiceQueryHandler
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServiceWorkflowsForServiceQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
@@ -33,6 +36,8 @@ internal sealed class GetServiceWorkflowsForServiceQueryHandler
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<ServiceWorkflowForServiceResponse>> Handle(
@@ -59,9 +64,22 @@ internal sealed class GetServiceWorkflowsForServiceQueryHandler
                 ErrorType.NotFound));
         }
 
+        var visibility = _visibilityPolicy.EnsureCanView(
+            service.Scope,
+            service.OwnerBranchId,
+            "ServiceWorkflows.ServiceWorkflows");
+        if (visibility.IsFailure)
+        {
+            return Result<ServiceWorkflowForServiceResponse>.Fail(
+                visibility.Errors);
+        }
+
         var serviceItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        serviceItems = serviceItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var serviceStates = ServiceHierarchyCalculator.ComputeStates(
             serviceItems);
         var servicesById = serviceItems.ToDictionary(x => x.Id);

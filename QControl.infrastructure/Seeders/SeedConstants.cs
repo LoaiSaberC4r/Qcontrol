@@ -175,6 +175,24 @@ internal static class SeedConstants
         public const string BranchServiceTreesCreate =
             "BranchServiceTrees.Create";
 
+        public const string ServiceGlobalizationRequestsViewAll =
+            "ServiceGlobalizationRequests.ViewAll";
+
+        public const string ServiceGlobalizationRequestsViewDetails =
+            "ServiceGlobalizationRequests.ViewDetails";
+
+        public const string ServiceGlobalizationRequestsViewOwn =
+            "ServiceGlobalizationRequests.ViewOwn";
+
+        public const string ServiceGlobalizationRequestsApprove =
+            "ServiceGlobalizationRequests.Approve";
+
+        public const string ServiceGlobalizationRequestsReject =
+            "ServiceGlobalizationRequests.Reject";
+
+        public const string ServicesViewCentralTree =
+            "Services.ViewCentralTree";
+
         public const string ServiceWorkflowsViewAll =
             "ServiceWorkflows.ViewAll";
 
@@ -500,6 +518,30 @@ internal static class SeedConstants
             public static readonly Guid BranchServicesUnassign =
     Guid.Parse(
         "30000000-0000-0000-0000-000000000066");
+
+            public static readonly Guid ServiceGlobalizationRequestsViewAll =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000067");
+
+            public static readonly Guid ServiceGlobalizationRequestsViewDetails =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000068");
+
+            public static readonly Guid ServiceGlobalizationRequestsViewOwn =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000069");
+
+            public static readonly Guid ServiceGlobalizationRequestsApprove =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000070");
+
+            public static readonly Guid ServiceGlobalizationRequestsReject =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000071");
+
+            public static readonly Guid ServicesViewCentralTree =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000072");
         }
     }
 
@@ -703,6 +745,30 @@ internal static class SeedConstants
                     PermissionNames.BranchServiceTreesCreate),
 
                 new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceGlobalizationRequestsViewAll,
+                    PermissionNames.ServiceGlobalizationRequestsViewAll),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceGlobalizationRequestsViewDetails,
+                    PermissionNames.ServiceGlobalizationRequestsViewDetails),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceGlobalizationRequestsViewOwn,
+                    PermissionNames.ServiceGlobalizationRequestsViewOwn),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceGlobalizationRequestsApprove,
+                    PermissionNames.ServiceGlobalizationRequestsApprove),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceGlobalizationRequestsReject,
+                    PermissionNames.ServiceGlobalizationRequestsReject),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesViewCentralTree,
+                    PermissionNames.ServicesViewCentralTree),
+
+                new PermissionSeedItem(
                     SeedIds.Permissions.ServiceWorkflowsViewAll,
                     PermissionNames.ServiceWorkflowsViewAll),
 
@@ -811,7 +877,8 @@ internal static class SeedConstants
 
         SeedIds.Permissions.BranchServicesView,
         SeedIds.Permissions.BranchServicesAssign,
-        SeedIds.Permissions.BranchServiceTreesCreate
+        SeedIds.Permissions.BranchServiceTreesCreate,
+        SeedIds.Permissions.ServiceGlobalizationRequestsViewOwn
     }
             .Select(permissionId =>
                 new RolePermissionSeedItem(

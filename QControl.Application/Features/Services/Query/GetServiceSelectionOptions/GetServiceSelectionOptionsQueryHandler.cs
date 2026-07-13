@@ -4,6 +4,7 @@ using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Services.Query.GetServiceSelectionOptions;
@@ -13,15 +14,19 @@ internal sealed class GetServiceSelectionOptionsQueryHandler
 {
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServiceSelectionOptionsQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<GetServiceSelectionOptionsResponse>> Handle(
@@ -34,6 +39,14 @@ internal sealed class GetServiceSelectionOptionsQueryHandler
                 "Services.SelectionOptions.Unauthenticated",
                 ServiceFeatureMessages.AuthenticationRequired,
                 ErrorType.Unauthorized));
+        }
+
+        var visibilityContext = _visibilityPolicy.EnsureCanUseVisibilityContext(
+            "Services.SelectionOptions");
+        if (visibilityContext.IsFailure)
+        {
+            return Result<GetServiceSelectionOptionsResponse>.Fail(
+                visibilityContext.Errors);
         }
 
         var items = request.ServiceId.HasValue
@@ -56,8 +69,8 @@ internal sealed class GetServiceSelectionOptionsQueryHandler
 
         var parentIdsThatHaveChildren = itemIds.Length == 0
             ? new List<int>()
-            : await _serviceReadRepository
-                .Query()
+            : await _visibilityPolicy.ApplyVisibleServices(
+                    _serviceReadRepository.Query())
                 .Where(x => !x.IsDeleted)
                 .Where(x => x.IsActive)
                 .Select(x => x.ParentServiceId)
@@ -110,8 +123,8 @@ internal sealed class GetServiceSelectionOptionsQueryHandler
     private async Task<IReadOnlyList<ServiceSelectionOptionItem>>
         LoadRootItemsAsync(CancellationToken cancellationToken)
     {
-        return await _serviceReadRepository
-            .Query()
+        return await _visibilityPolicy.ApplyVisibleServices(
+                _serviceReadRepository.Query())
             .Where(x => !x.IsDeleted)
             .Where(x => x.IsActive)
             .Where(x => x.ParentServiceId == null)
@@ -147,8 +160,8 @@ internal sealed class GetServiceSelectionOptionsQueryHandler
             int parentServiceId,
             CancellationToken cancellationToken)
     {
-        var rows = await _serviceReadRepository
-            .Query()
+        var rows = await _visibilityPolicy.ApplyVisibleServices(
+                _serviceReadRepository.Query())
             .Where(x =>
                 (x.Id == parentServiceId && !x.IsDeleted) ||
                 (x.ParentServiceId == parentServiceId && !x.IsDeleted && x.IsActive))

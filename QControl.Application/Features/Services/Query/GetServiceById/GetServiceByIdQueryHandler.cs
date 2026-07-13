@@ -18,13 +18,15 @@ internal sealed class GetServiceByIdQueryHandler
     private readonly IWriteReadRepository<ServiceImage> _imageReadRepository;
     private readonly ICurrentUser _currentUser;
     private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServiceByIdQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteReadRepository<ServiceImage> imageReadRepository,
         ICurrentUser currentUser,
-        ICurrentBranchContext currentBranchContext)
+        ICurrentBranchContext currentBranchContext,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
@@ -36,6 +38,8 @@ internal sealed class GetServiceByIdQueryHandler
             ?? throw new ArgumentNullException(nameof(currentUser));
         _currentBranchContext = currentBranchContext
             ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<ServiceDetailsResponse>> Handle(
@@ -62,9 +66,21 @@ internal sealed class GetServiceByIdQueryHandler
                 ErrorType.NotFound));
         }
 
+        var visibility = _visibilityPolicy.EnsureCanView(
+            item.Scope,
+            item.OwnerBranchId,
+            "Services.GetById");
+        if (visibility.IsFailure)
+        {
+            return Result<ServiceDetailsResponse>.Fail(visibility.Errors);
+        }
+
         var allItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        allItems = allItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var byId = allItems.ToDictionary(x => x.Id);
 
