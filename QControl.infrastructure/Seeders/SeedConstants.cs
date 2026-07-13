@@ -796,19 +796,27 @@ internal static class SeedConstants
                         permission.Id));
 
             var branchAdministratorPermissions = new[]
-          {
-    SeedIds.Permissions.ServicesViewAll,
-    SeedIds.Permissions.ServicesViewDetails,
-    SeedIds.Permissions.ServicesUpdate,
-    SeedIds.Permissions.BranchServicesView,
-    SeedIds.Permissions.BranchServicesAssign,
-    SeedIds.Permissions.BranchServicesUnassign,
-    SeedIds.Permissions.BranchServiceTreesCreate
-}
-          .Select(permissionId =>
-              new RolePermissionSeedItem(
-                  SeedIds.Roles.BranchAdministrator,
-                  permissionId));
+            {
+        SeedIds.Permissions.ServicesViewAll,
+        SeedIds.Permissions.ServicesViewDetails,
+        SeedIds.Permissions.ServicesUpdate,
+
+        // Allow branch admins to soft-delete services
+        // owned by their active branch.
+        SeedIds.Permissions.ServicesDelete,
+
+        // Allow branch admins to restore services
+        // owned by their active branch.
+        SeedIds.Permissions.ServicesRestore,
+
+        SeedIds.Permissions.BranchServicesView,
+        SeedIds.Permissions.BranchServicesAssign,
+        SeedIds.Permissions.BranchServiceTreesCreate
+    }
+            .Select(permissionId =>
+                new RolePermissionSeedItem(
+                    SeedIds.Roles.BranchAdministrator,
+                    permissionId));
 
             return technicalAdministratorPermissions
                 .Concat(branchAdministratorPermissions)
