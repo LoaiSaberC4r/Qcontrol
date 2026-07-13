@@ -280,6 +280,31 @@ internal static class ServiceFeatureMessages
     public static string PageSizeMax =>
         Get("Service_Pagination_PageSize_Max", "Page size must not exceed 100.");
 
+    public static string BranchServicesUnassignAssignmentNotFound =>
+    Get(
+        "BranchServices_Unassign_AssignmentNotFound",
+        "The selected leaf service is not assigned to the branch.");
+
+    public static string BranchServicesUnassignServiceNotLeaf =>
+        Get(
+            "BranchServices_Unassign_ServiceNotLeaf",
+            "Only leaf services can be unassigned from a branch.");
+
+    public static string BranchServicesUnassignInvalidHierarchy =>
+        Get(
+            "BranchServices_Unassign_InvalidHierarchy",
+            "The service hierarchy is invalid.");
+
+    public static string BranchServicesUnassignPersistenceConflict =>
+        Get(
+            "BranchServices_Unassign_PersistenceConflict",
+            "The service could not be unassigned because the data changed concurrently.");
+
+    public static string BranchServicesUnassignSuccess =>
+        Get(
+            "BranchServices_Unassign_Success",
+            "The service was unassigned and unused parent assignments were removed successfully.");
+
     private static string Get(string resourceName, string fallback) =>
         ErrorMessage.ResourceManager.GetString(resourceName, ErrorMessage.Culture)
         ?? fallback;

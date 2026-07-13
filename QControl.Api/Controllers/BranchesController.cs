@@ -28,6 +28,7 @@ using Qcontrol.Application.Features.Branches.Command.UpdateBranch;
 using Qcontrol.Application.Features.Branches.Query.GetBranchDetails;
 using Qcontrol.Application.Features.Branches.Query.GetBranchesPagination;
 using QControl.Api.Attribute;
+using Qcontrol.Application.Features.BranchServices.Command.UnassignBranchLeafService;
 
 namespace Qcontrol.Api.Controllers;
 
@@ -496,6 +497,26 @@ public sealed class BranchesController : ControllerBase
         {
             BranchId = branchId,
             RowVersion = rowVersion
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{branchId:int}/services/{leafServiceId:int}")]
+    [Permission("BranchServices.Unassign")]
+    public async Task<IActionResult> UnassignLeafService(
+    int branchId,
+    int leafServiceId,
+    CancellationToken cancellationToken)
+    {
+        var command = new UnassignBranchLeafServiceCommand
+        {
+            BranchId = branchId,
+            LeafServiceId = leafServiceId
         };
 
         var result = await sender.Send(

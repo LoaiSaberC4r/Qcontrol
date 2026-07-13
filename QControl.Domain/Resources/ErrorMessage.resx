@@ -1143,4 +1143,19 @@
   <data name="Service_BranchSubtree_PersistenceConflict" xml:space="preserve">
     <value>The service subtree could not be created because the data changed concurrently.</value>
   </data>
+  <data name="BranchServices_Unassign_AssignmentNotFound" xml:space="preserve">
+    <value>The selected leaf service is not assigned to the branch.</value>
+  </data>
+  <data name="BranchServices_Unassign_ServiceNotLeaf" xml:space="preserve">
+    <value>Only leaf services can be unassigned from a branch.</value>
+  </data>
+  <data name="BranchServices_Unassign_InvalidHierarchy" xml:space="preserve">
+    <value>The service hierarchy is invalid.</value>
+  </data>
+  <data name="BranchServices_Unassign_PersistenceConflict" xml:space="preserve">
+    <value>The service could not be unassigned because the data changed concurrently.</value>
+  </data>
+  <data name="BranchServices_Unassign_Success" xml:space="preserve">
+    <value>The service was unassigned and unused parent assignments were removed successfully.</value>
+  </data>
 </root>

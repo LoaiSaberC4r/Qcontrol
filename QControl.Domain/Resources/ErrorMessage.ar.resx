@@ -132,6 +132,9 @@
   <data name="Branch_City_MaxLength" xml:space="preserve">
     <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„Ù…Ø¯ÙŠÙ†Ø© 100 Ø­Ø±Ù.</value>
   </data>
+  <data name="Branch_PermanentDelete_HasRelatedData" xml:space="preserve">
+    <value>The branch cannot be permanently deleted because it has related waiting areas or displays.</value>
+  </data>
   <data name="Branch_EnglishName_MaxLength" xml:space="preserve">
     <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ø³Ù… Ø§Ù„ÙØ±Ø¹ Ø¨Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ© 100 Ø­Ø±Ù.</value>
   </data>
@@ -191,6 +194,9 @@
   </data>
   <data name="WaitingArea_Create_Success" xml:space="preserve">
     <value>ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ø¨Ù†Ø¬Ø§Ø­.</value>
+  </data>
+  <data name="WaitingArea_PermanentDelete_HasWindows" xml:space="preserve">
+    <value>The waiting area cannot be permanently deleted because it contains windows.</value>
   </data>
   <data name="WaitingArea_DescriptiveName_MaxLength" xml:space="preserve">
     <value>ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙˆØµÙÙŠ 100 Ø­Ø±Ù.</value>
@@ -602,12 +608,6 @@
   </data>
   <data name="Window_Reactivate_Success" xml:space="preserve">
     <value>The window was reactivated successfully.</value>
-  </data>
-  <data name="Branch_PermanentDelete_HasRelatedData" xml:space="preserve">
-    <value>The branch cannot be permanently deleted because it has related waiting areas or displays.</value>
-  </data>
-  <data name="WaitingArea_PermanentDelete_HasWindows" xml:space="preserve">
-    <value>The waiting area cannot be permanently deleted because it contains windows.</value>
   </data>
   <data name="BranchBranding_Save_Success" xml:space="preserve">
     <value>تم حفظ هوية الفرع بنجاح.</value>
@@ -1142,5 +1142,20 @@
   </data>
   <data name="Service_BranchSubtree_PersistenceConflict" xml:space="preserve">
     <value>تعذر إنشاء الشجرة الفرعية للخدمة لأن البيانات تغيرت بالتزامن.</value>
+  </data>
+  <data name="BranchServices_Unassign_AssignmentNotFound" xml:space="preserve">
+    <value>الخدمة النهائية المحددة غير مربوطة بالفرع.</value>
+  </data>
+  <data name="BranchServices_Unassign_ServiceNotLeaf" xml:space="preserve">
+    <value>يمكن إلغاء ربط الخدمات النهائية فقط من الفرع.</value>
+  </data>
+  <data name="BranchServices_Unassign_InvalidHierarchy" xml:space="preserve">
+    <value>هيكل الخدمات غير صالح.</value>
+  </data>
+  <data name="BranchServices_Unassign_PersistenceConflict" xml:space="preserve">
+    <value>تعذر إلغاء ربط الخدمة لأن البيانات تغيرت بالتزامن.</value>
+  </data>
+  <data name="BranchServices_Unassign_Success" xml:space="preserve">
+    <value>تم إلغاء ربط الخدمة وحذف روابط الآباء غير المستخدمة بنجاح.</value>
   </data>
 </root>

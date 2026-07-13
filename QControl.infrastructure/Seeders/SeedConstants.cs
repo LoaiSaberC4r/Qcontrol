@@ -58,6 +58,9 @@ internal static class SeedConstants
         public const string BranchesDeletePermanent =
             "Branches.DeletePermanent";
 
+        public const string BranchServicesUnassign =
+    "BranchServices.Unassign";
+
         public const string BranchAdminsCreate =
             "BranchAdmins.Create";
 
@@ -493,6 +496,10 @@ internal static class SeedConstants
             public static readonly Guid BranchServiceTreesCreate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000065");
+
+            public static readonly Guid BranchServicesUnassign =
+    Guid.Parse(
+        "30000000-0000-0000-0000-000000000066");
         }
     }
 
@@ -765,7 +772,10 @@ internal static class SeedConstants
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsDelete,
-                    PermissionNames.GlobalConfigurationsDelete)
+                    PermissionNames.GlobalConfigurationsDelete) ,
+                new PermissionSeedItem(
+    SeedIds.Permissions.BranchServicesUnassign,
+    PermissionNames.BranchServicesUnassign),
             };
 
         public static IReadOnlyCollection<RolePermissionSeedItem>
@@ -786,18 +796,19 @@ internal static class SeedConstants
                         permission.Id));
 
             var branchAdministratorPermissions = new[]
-            {
-                SeedIds.Permissions.ServicesViewAll,
-                SeedIds.Permissions.ServicesViewDetails,
-                SeedIds.Permissions.ServicesUpdate,
-                SeedIds.Permissions.BranchServicesView,
-                SeedIds.Permissions.BranchServicesAssign,
-                SeedIds.Permissions.BranchServiceTreesCreate
-            }
-            .Select(permissionId =>
-                new RolePermissionSeedItem(
-                    SeedIds.Roles.BranchAdministrator,
-                    permissionId));
+          {
+    SeedIds.Permissions.ServicesViewAll,
+    SeedIds.Permissions.ServicesViewDetails,
+    SeedIds.Permissions.ServicesUpdate,
+    SeedIds.Permissions.BranchServicesView,
+    SeedIds.Permissions.BranchServicesAssign,
+    SeedIds.Permissions.BranchServicesUnassign,
+    SeedIds.Permissions.BranchServiceTreesCreate
+}
+          .Select(permissionId =>
+              new RolePermissionSeedItem(
+                  SeedIds.Roles.BranchAdministrator,
+                  permissionId));
 
             return technicalAdministratorPermissions
                 .Concat(branchAdministratorPermissions)
