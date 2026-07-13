@@ -1,8 +1,10 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Application.Time;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.BranchServiceTrees.Shared;
+using Qcontrol.Application.Features.ServiceGlobalizationRequests.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -18,8 +20,11 @@ internal sealed class CreateBranchServiceTreeCommandHandler
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IWriteRepository<BranchService> _branchServiceWriteRepository;
+    private readonly IWriteRepository<ServiceGlobalizationRequest>
+        _requestWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IServiceDefinitionAccessValidator _accessValidator;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateBranchServiceTreeCommandHandler(
@@ -27,8 +32,10 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteRepository<Service> serviceWriteRepository,
         IWriteRepository<BranchService> branchServiceWriteRepository,
+        IWriteRepository<ServiceGlobalizationRequest> requestWriteRepository,
         ICurrentUser currentUser,
         IServiceDefinitionAccessValidator accessValidator,
+        IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
         _branchReadRepository = branchReadRepository
@@ -39,10 +46,14 @@ internal sealed class CreateBranchServiceTreeCommandHandler
             ?? throw new ArgumentNullException(nameof(serviceWriteRepository));
         _branchServiceWriteRepository = branchServiceWriteRepository
             ?? throw new ArgumentNullException(nameof(branchServiceWriteRepository));
+        _requestWriteRepository = requestWriteRepository
+            ?? throw new ArgumentNullException(nameof(requestWriteRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _accessValidator = accessValidator
             ?? throw new ArgumentNullException(nameof(accessValidator));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -147,6 +158,18 @@ internal sealed class CreateBranchServiceTreeCommandHandler
             _currentUser.UserId.Value,
             services,
             assignments);
+        var requestedOnUtc = _dateTimeProvider.UtcNow;
+        var globalizationRequest = ServiceGlobalizationRequest.Create(
+            request.BranchId,
+            createdRoot.Service,
+            ServiceGlobalizationRequestType.BranchServiceTree,
+            _currentUser.UserId.Value,
+            requestedOnUtc);
+
+        foreach (var service in services)
+        {
+            globalizationRequest.AddService(service);
+        }
 
         await _serviceWriteRepository.AddRangeAsync(
             services,
@@ -154,10 +177,19 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         await _branchServiceWriteRepository.AddRangeAsync(
             assignments,
             cancellationToken);
+        await _requestWriteRepository.AddAsync(
+            globalizationRequest,
+            cancellationToken);
 
         try
         {
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (ServiceGlobalizationRequestUniqueConstraintErrorMapper
+                .TryMapCreate(ex, out var error))
+        {
+            return Result<CreateBranchServiceTreeResponse>.Fail(error);
         }
         catch (DbUpdateException ex)
             when (ServiceUniqueConstraintErrorMapper.TryMapCreate(
@@ -183,6 +215,15 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 CreatedServicesCount = services.Count,
                 CreatedAssignmentsCount = assignments.Count,
                 Root = BranchServiceTreeEntityBuilder.ToResponse(createdRoot),
+                GlobalizationRequest =
+                    new ServiceGlobalizationRequestSummaryResponse
+                    {
+                        RequestId = globalizationRequest.Id,
+                        RequestType = globalizationRequest.RequestType,
+                        Status = globalizationRequest.Status,
+                        RequestedOnUtc =
+                            globalizationRequest.RequestedOnUtc
+                    },
                 Message = ServiceFeatureMessages.BranchServiceTreeCreateSuccess
             });
     }

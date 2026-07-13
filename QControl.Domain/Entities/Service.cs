@@ -278,6 +278,16 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         LastModifiedByApplicationUserId = lastModifiedByApplicationUserId;
     }
 
+    public void PromoteToGlobal(
+        DateTime modifiedOnUtc,
+        Guid modifiedByApplicationUserId)
+    {
+        Scope = ServiceScope.Global;
+        OwnerBranchId = null;
+        ModifiedOnUtc = modifiedOnUtc;
+        LastModifiedByApplicationUserId = modifiedByApplicationUserId;
+    }
+
     public bool SoftDelete(
         DateTime deletedOnUtc,
         Guid deletedByApplicationUserId)

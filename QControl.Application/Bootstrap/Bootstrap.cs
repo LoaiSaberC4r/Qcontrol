@@ -46,6 +46,7 @@ namespace QControl.Application.Bootstrap
             services.AddScoped<ICurrentBranchContext, CurrentBranchContext>();
             services.AddScoped<IBranchAccessValidator, BranchAccessValidator>();
             services.AddScoped<IServiceDefinitionAccessValidator, ServiceDefinitionAccessValidator>();
+            services.AddScoped<IServiceVisibilityPolicy, ServiceVisibilityPolicy>();
             services.AddScoped<IPasswordPolicyValidator, PasswordPolicyValidator>();
             services.AddScoped<UserTokenFactory>();
             services.AddMediatorInjection();

@@ -13,6 +13,7 @@ using Qcontrol.Application.Features.Services.Command.DeleteService;
 using Qcontrol.Application.Features.Services.Command.RestoreService;
 using Qcontrol.Application.Features.Services.Command.UpdateService;
 using Qcontrol.Application.Features.Services.Query.GetAvailableParentServices;
+using Qcontrol.Application.Features.Services.Query.GetCentralServicesTree;
 using Qcontrol.Application.Features.Services.Query.GetServiceSelectionOptions;
 using Qcontrol.Application.Features.Services.Query.GetServiceById;
 using Qcontrol.Application.Features.Services.Query.GetServices;
@@ -68,6 +69,26 @@ public sealed class ServicesController : ControllerBase
             IncludeDeleted = includeDeleted,
             Scope = scope,
             OwnerBranchId = ownerBranchId
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("central-tree")]
+    [Permission("Services.ViewCentralTree")]
+    public async Task<IActionResult> GetCentralTree(
+        [FromQuery] bool includeInactive,
+        [FromQuery] bool includeDeleted,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetCentralServicesTreeQuery
+        {
+            IncludeInactive = includeInactive,
+            IncludeDeleted = includeDeleted
         };
 
         var result = await sender.Send(

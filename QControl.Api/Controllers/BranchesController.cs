@@ -27,6 +27,7 @@ using Qcontrol.Application.Features.Branches.Command.ReactivateBranch;
 using Qcontrol.Application.Features.Branches.Command.UpdateBranch;
 using Qcontrol.Application.Features.Branches.Query.GetBranchDetails;
 using Qcontrol.Application.Features.Branches.Query.GetBranchesPagination;
+using Qcontrol.Application.Features.ServiceGlobalizationRequests.Query.GetBranchServiceGlobalizationRequests;
 using QControl.Api.Attribute;
 using Qcontrol.Application.Features.BranchServices.Command.UnassignBranchLeafService;
 
@@ -162,6 +163,24 @@ public sealed class BranchesController : ControllerBase
 
         var result = await sender.Send(
             command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{branchId:int}/service-globalization-requests")]
+    [Permission("ServiceGlobalizationRequests.ViewOwn")]
+    public async Task<IActionResult> GetServiceGlobalizationRequests(
+        int branchId,
+        [FromQuery] GetBranchServiceGlobalizationRequestsQuery query,
+        CancellationToken cancellationToken)
+    {
+        query ??= new GetBranchServiceGlobalizationRequestsQuery();
+        query.BranchId = branchId;
+        query.SearchText ??= string.Empty;
+
+        var result = await sender.Send(
+            query,
             cancellationToken);
 
         return result.ToIActionResult();

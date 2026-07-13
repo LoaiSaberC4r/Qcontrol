@@ -1,9 +1,11 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Application.Time;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 using Qcontrol.Application.Features.BranchServiceTrees.Shared;
+using Qcontrol.Application.Features.ServiceGlobalizationRequests.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -25,8 +27,11 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IWriteRepository<BranchService>
         _branchServiceWriteRepository;
+    private readonly IWriteRepository<ServiceGlobalizationRequest>
+        _requestWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IServiceDefinitionAccessValidator _accessValidator;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateBranchServiceSubtreeCommandHandler(
@@ -35,8 +40,10 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteRepository<Service> serviceWriteRepository,
         IWriteRepository<BranchService> branchServiceWriteRepository,
+        IWriteRepository<ServiceGlobalizationRequest> requestWriteRepository,
         ICurrentUser currentUser,
         IServiceDefinitionAccessValidator accessValidator,
+        IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
         _branchReadRepository = branchReadRepository
@@ -50,10 +57,14 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
         _branchServiceWriteRepository = branchServiceWriteRepository
             ?? throw new ArgumentNullException(
                 nameof(branchServiceWriteRepository));
+        _requestWriteRepository = requestWriteRepository
+            ?? throw new ArgumentNullException(nameof(requestWriteRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _accessValidator = accessValidator
             ?? throw new ArgumentNullException(nameof(accessValidator));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -175,6 +186,14 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
                 ErrorType.Conflict);
         }
 
+        if (parentService.Scope == ServiceScope.Global)
+        {
+            return await CreateLeafUnderGlobalParentAsync(
+                request,
+                parentService,
+                cancellationToken);
+        }
+
         var editAccess = _accessValidator.EnsureCanEdit(
             parentService,
             CodePrefix);
@@ -288,6 +307,150 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
             });
     }
 
+    private async Task<Result<CreateBranchServiceSubtreeResponse>>
+        CreateLeafUnderGlobalParentAsync(
+            CreateBranchServiceSubtreeCommand request,
+            Service parentService,
+            CancellationToken cancellationToken)
+    {
+        var parentEffectiveIsActive = await IsServiceEffectivelyActiveAsync(
+            request.ParentServiceId,
+            cancellationToken);
+
+        if (!parentEffectiveIsActive)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentNotEffectivelyActive",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentNotEffectivelyActive,
+                ErrorType.Conflict);
+        }
+
+        var parentAssignedToBranch = await _branchServiceReadRepository.Query()
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.BranchId == request.BranchId &&
+                    x.ServiceId == request.ParentServiceId,
+                cancellationToken);
+
+        if (!parentAssignedToBranch)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentNotAssignedToBranch",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentNotAssignedToBranch,
+                ErrorType.Conflict);
+        }
+
+        if (parentService.IsTicketIssuable)
+        {
+            return Failure(
+                $"{CodePrefix}.ParentTicketIssuable",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreeParentTicketIssuable,
+                ErrorType.Conflict);
+        }
+
+        if (request.Root!.Children.Count > 0)
+        {
+            return Failure(
+                "BranchServiceTrees.Create.GlobalParentLeafRequired",
+                ServiceGlobalizationRequestMessages
+                    .LeafUnderGlobalParentCannotContainChildren,
+                ErrorType.Validation);
+        }
+
+        var duplicateRoot = await ValidateDuplicateRootNamesAsync(
+            request.BranchId,
+            request.ParentServiceId,
+            request.Root,
+            cancellationToken);
+
+        if (duplicateRoot is not null)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                duplicateRoot);
+        }
+
+        var services = new List<Service>();
+        var assignments = new List<BranchService>();
+        var createdRoot = BranchServiceTreeEntityBuilder.Build(
+            request.Root,
+            rootParentServiceId: request.ParentServiceId,
+            request.BranchId,
+            _currentUser.UserId!.Value,
+            services,
+            assignments);
+
+        var requestedOnUtc = _dateTimeProvider.UtcNow;
+        var globalizationRequest = ServiceGlobalizationRequest.Create(
+            request.BranchId,
+            createdRoot.Service,
+            ServiceGlobalizationRequestType.LeafUnderGlobalParent,
+            _currentUser.UserId.Value,
+            requestedOnUtc);
+        globalizationRequest.AddService(createdRoot.Service);
+
+        await _serviceWriteRepository.AddRangeAsync(
+            services,
+            cancellationToken);
+        await _branchServiceWriteRepository.AddRangeAsync(
+            assignments,
+            cancellationToken);
+        await _requestWriteRepository.AddAsync(
+            globalizationRequest,
+            cancellationToken);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (ServiceGlobalizationRequestUniqueConstraintErrorMapper
+                .TryMapCreate(ex, out var error))
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(error);
+        }
+        catch (DbUpdateException ex)
+            when (CreateBranchServiceSubtreeUniqueConstraintErrorMapper
+                .TryMap(ex, out var error))
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(error);
+        }
+        catch (DbUpdateException)
+        {
+            return Failure(
+                $"{CodePrefix}.PersistenceConflict",
+                ServiceFeatureMessages
+                    .BranchServiceSubtreePersistenceConflict,
+                ErrorType.Conflict);
+        }
+
+        return Result<CreateBranchServiceSubtreeResponse>.Ok(
+            new CreateBranchServiceSubtreeResponse
+            {
+                BranchId = request.BranchId,
+                ParentServiceId = request.ParentServiceId,
+                Scope = ServiceScope.BranchScoped,
+                OwnerBranchId = request.BranchId,
+                CreatedServicesCount = services.Count,
+                CreatedAssignmentsCount = assignments.Count,
+                Root = BranchServiceTreeEntityBuilder.ToResponse(createdRoot),
+                GlobalizationRequest =
+                    new ServiceGlobalizationRequestSummaryResponse
+                    {
+                        RequestId = globalizationRequest.Id,
+                        RequestType = globalizationRequest.RequestType,
+                        Status = globalizationRequest.Status,
+                        RequestedOnUtc =
+                            globalizationRequest.RequestedOnUtc
+                    },
+                Message =
+                    ServiceFeatureMessages.BranchServiceSubtreeCreateSuccess
+            });
+    }
+
     private async Task<Error?> ValidateDuplicateRootNamesAsync(
         int branchId,
         int parentServiceId,
@@ -345,8 +508,9 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(x =>
-                x.Scope == ServiceScope.BranchScoped &&
-                x.OwnerBranchId == branchId)
+                x.Scope == ServiceScope.Global ||
+                (x.Scope == ServiceScope.BranchScoped &&
+                 x.OwnerBranchId == branchId))
             .Select(x => new ParentHierarchyNode
             {
                 Id = x.Id,
@@ -361,6 +525,31 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
         return byId.TryGetValue(parentServiceId, out var parent) &&
             IsEffectivelyActive(
                 parent,
+                byId,
+                new HashSet<int>());
+    }
+
+    private async Task<bool> IsServiceEffectivelyActiveAsync(
+        int serviceId,
+        CancellationToken cancellationToken)
+    {
+        var nodes = await _serviceReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Select(x => new ParentHierarchyNode
+            {
+                Id = x.Id,
+                ParentServiceId = x.ParentServiceId,
+                IsActive = x.IsActive,
+                IsDeleted = x.IsDeleted
+            })
+            .ToArrayAsync(cancellationToken);
+
+        var byId = nodes.ToDictionary(x => x.Id);
+
+        return byId.TryGetValue(serviceId, out var service) &&
+            IsEffectivelyActive(
+                service,
                 byId,
                 new HashSet<int>());
     }

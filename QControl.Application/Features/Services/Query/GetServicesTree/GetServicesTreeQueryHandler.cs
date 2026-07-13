@@ -16,12 +16,14 @@ internal sealed class GetServicesTreeQueryHandler
     private readonly IWriteReadRepository<BranchService> _branchServiceReadRepository;
     private readonly ICurrentUser _currentUser;
     private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServicesTreeQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         ICurrentUser currentUser,
-        ICurrentBranchContext currentBranchContext)
+        ICurrentBranchContext currentBranchContext,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
@@ -31,6 +33,8 @@ internal sealed class GetServicesTreeQueryHandler
             ?? throw new ArgumentNullException(nameof(currentUser));
         _currentBranchContext = currentBranchContext
             ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<IReadOnlyList<ServiceTreeNodeResponse>>> Handle(
@@ -54,9 +58,20 @@ internal sealed class GetServicesTreeQueryHandler
                 ErrorType.Security));
         }
 
+        var visibilityContext = _visibilityPolicy.EnsureCanUseVisibilityContext(
+            "Services.Tree");
+        if (visibilityContext.IsFailure)
+        {
+            return Result<IReadOnlyList<ServiceTreeNodeResponse>>.Fail(
+                visibilityContext.Errors);
+        }
+
         var allItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        allItems = allItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var accessContext = await BuildAccessContextAsync(cancellationToken);
 

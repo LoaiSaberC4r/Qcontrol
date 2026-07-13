@@ -19,13 +19,15 @@ internal sealed class GetServicesQueryHandler
     private readonly IWriteReadRepository<ServiceImage> _imageReadRepository;
     private readonly ICurrentUser _currentUser;
     private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetServicesQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteReadRepository<ServiceImage> imageReadRepository,
         ICurrentUser currentUser,
-        ICurrentBranchContext currentBranchContext)
+        ICurrentBranchContext currentBranchContext,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
@@ -37,6 +39,8 @@ internal sealed class GetServicesQueryHandler
             ?? throw new ArgumentNullException(nameof(currentUser));
         _currentBranchContext = currentBranchContext
             ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<Pagination<ServiceResponse>>> Handle(
@@ -58,6 +62,14 @@ internal sealed class GetServicesQueryHandler
                 "Services.List.IncludeDeletedForbidden",
                 ServiceFeatureMessages.ForeignBranchServiceForbidden,
                 ErrorType.Security));
+        }
+
+        var visibilityContext = _visibilityPolicy.EnsureCanUseVisibilityContext(
+            "Services.List");
+        if (visibilityContext.IsFailure)
+        {
+            return Result<Pagination<ServiceResponse>>.Fail(
+                visibilityContext.Errors);
         }
 
         if (request.IsAssignedToCurrentBranch.HasValue &&
@@ -88,6 +100,9 @@ internal sealed class GetServicesQueryHandler
         var allItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        allItems = allItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var imagesByServiceId =
             await LoadImagesForPageAsync(pageItems, cancellationToken);
@@ -123,6 +138,8 @@ internal sealed class GetServicesQueryHandler
     {
         var query = _serviceReadRepository.Query()
             .IgnoreQueryFilters();
+
+        query = _visibilityPolicy.ApplyVisibleServices(query);
 
         if (request.IsDeleted == true)
         {

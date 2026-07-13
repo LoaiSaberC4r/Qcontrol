@@ -691,6 +691,118 @@ namespace Qcontrol.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("RequestType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RequestedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RequestedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReviewedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RootServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestedByApplicationUserId")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequest_RequestedByApplicationUserId");
+
+                    b.HasIndex("ReviewedByApplicationUserId")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequest_ReviewedByApplicationUserId");
+
+                    b.HasIndex("RootServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ServiceGlobalizationRequest_RootServiceId_Pending")
+                        .HasFilter("[Status] = 1");
+
+                    b.HasIndex("BranchId", "Status")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequest_BranchId_Status");
+
+                    b.HasIndex("Status", "RequestedOnUtc")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequest_Status_RequestedOnUtc");
+
+                    b.ToTable("ServiceGlobalizationRequest", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ServiceGlobalizationRequest_RequestType", "[RequestType] IN (1, 2)");
+
+                            t.HasCheckConstraint("CK_ServiceGlobalizationRequest_ReviewAudit", "(([Status] = 1 AND [ReviewedByApplicationUserId] IS NULL AND [ReviewedOnUtc] IS NULL) OR ([Status] IN (2, 3) AND [ReviewedByApplicationUserId] IS NOT NULL AND [ReviewedOnUtc] IS NOT NULL))");
+
+                            t.HasCheckConstraint("CK_ServiceGlobalizationRequest_Status", "[Status] IN (1, 2, 3)");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequestItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestId")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequestItem_RequestId");
+
+                    b.HasIndex("ServiceId")
+                        .HasDatabaseName("IX_ServiceGlobalizationRequestItem_ServiceId");
+
+                    b.HasIndex("RequestId", "ServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ServiceGlobalizationRequestItem_RequestId_ServiceId");
+
+                    b.ToTable("ServiceGlobalizationRequestItem", (string)null);
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.ServiceImage", b =>
                 {
                     b.Property<int>("Id")
@@ -1709,6 +1821,59 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("ParentService");
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequest", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "RequestedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReviewedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Service", "RootService")
+                        .WithMany()
+                        .HasForeignKey("RootServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("RequestedByApplicationUser");
+
+                    b.Navigation("ReviewedByApplicationUser");
+
+                    b.Navigation("RootService");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequestItem", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.ServiceGlobalizationRequest", "Request")
+                        .WithMany("Items")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QControl.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+
+                    b.Navigation("Service");
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.ServiceImage", b =>
                 {
                     b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
@@ -2017,6 +2182,11 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("Children");
 
                     b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequest", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.ServiceWorkflow", b =>

@@ -109,6 +109,7 @@ internal sealed class AssignBranchServicesCommandHandler
         {
             var validation = ResolveLeafPath(
                 leafId,
+                request.BranchId,
                 itemsById,
                 states,
                 serviceIdsToAssign);
@@ -176,6 +177,7 @@ internal sealed class AssignBranchServicesCommandHandler
 
     private static Error? ResolveLeafPath(
         int leafId,
+        int branchId,
         IReadOnlyDictionary<int, ServiceHierarchyItem> itemsById,
         IReadOnlyDictionary<int, ServiceHierarchyState> states,
         ISet<int> serviceIdsToAssign)
@@ -231,6 +233,15 @@ internal sealed class AssignBranchServicesCommandHandler
                     "BranchServices.Assign.InvalidHierarchy",
                     ServiceFeatureMessages.InvalidHierarchy,
                     ErrorType.Conflict);
+            }
+
+            if (current.Scope == QControl.Domain.Enums.ServiceScope.BranchScoped &&
+                current.OwnerBranchId != branchId)
+            {
+                return new Error(
+                    "BranchServices.Assign.ForeignBranchServiceForbidden",
+                    ServiceFeatureMessages.ForeignBranchServiceForbidden,
+                    ErrorType.Security);
             }
 
             serviceIdsToAssign.Add(current.Id);

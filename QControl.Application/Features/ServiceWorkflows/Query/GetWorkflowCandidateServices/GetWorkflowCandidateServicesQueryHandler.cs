@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetWorkflowCandidateServices;
@@ -20,12 +21,14 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetWorkflowCandidateServicesQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
@@ -35,6 +38,8 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<Pagination<ServiceWorkflowCandidateServiceResponse>>> Handle(
@@ -47,12 +52,21 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
                 new Error(
                     "ServiceWorkflows.Authentication.Required",
                     ServiceWorkflowMessages.AuthenticationRequired,
-                    ErrorType.Unauthorized));
+                ErrorType.Unauthorized));
+        }
+
+        var visibilityContext = _visibilityPolicy.EnsureCanUseVisibilityContext(
+            "ServiceWorkflows.CandidateServices");
+        if (visibilityContext.IsFailure)
+        {
+            return Result<Pagination<ServiceWorkflowCandidateServiceResponse>>
+                .Fail(visibilityContext.Errors);
         }
 
         request.SearchText ??= string.Empty;
 
-        var query = _serviceReadRepository.Query()
+        var query = _visibilityPolicy.ApplyVisibleServices(
+                _serviceReadRepository.Query())
             .Where(x =>
                 !x.IsDeleted &&
                 x.IsActive &&
@@ -83,6 +97,9 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
         var serviceItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        serviceItems = serviceItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var serviceStates = ServiceHierarchyCalculator.ComputeStates(
             serviceItems);
         var servicesById = serviceItems.ToDictionary(x => x.Id);

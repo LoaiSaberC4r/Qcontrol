@@ -10,6 +10,8 @@ internal static class OperationalCacheTags
     public const string Services = "services";
     public const string ServiceCentral = "service-central";
     public const string BranchServices = "branch-services";
+    public const string ServiceGlobalizationRequests =
+        "service-globalization-requests";
     public const string ServiceWorkflows = "service-workflows";
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
@@ -36,6 +38,12 @@ internal static class OperationalCacheTags
 
     public static string BranchServicesForBranch(int branchId) =>
         $"branch:{branchId}:services";
+
+    public static string ServiceGlobalizationRequest(int requestId) =>
+        $"service-globalization-request:{requestId}";
+
+    public static string ServiceGlobalizationRequestsForBranch(int branchId) =>
+        $"branch:{branchId}:service-globalization-requests";
 
     public static string ServiceWorkflow(int serviceWorkflowId) =>
         $"service-workflow:{serviceWorkflowId}";

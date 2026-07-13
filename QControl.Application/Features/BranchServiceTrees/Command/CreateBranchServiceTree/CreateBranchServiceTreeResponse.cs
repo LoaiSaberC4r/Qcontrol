@@ -1,4 +1,5 @@
 using QControl.Domain.Enums;
+using Qcontrol.Application.Features.ServiceGlobalizationRequests.Shared;
 
 namespace Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 
@@ -15,6 +16,12 @@ public sealed class CreateBranchServiceTreeResponse
     public int CreatedAssignmentsCount { get; init; }
 
     public CreatedBranchServiceTreeNodeResponse Root { get; init; } = null!;
+
+    public ServiceGlobalizationRequestSummaryResponse GlobalizationRequest
+    {
+        get;
+        init;
+    } = null!;
 
     public string Message { get; init; } = string.Empty;
 }

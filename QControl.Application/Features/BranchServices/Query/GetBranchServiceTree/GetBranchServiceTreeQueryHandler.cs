@@ -104,6 +104,10 @@ internal sealed class GetBranchServiceTreeQueryHandler
 
         var includedItems = allItems
             .Where(x => assignedSet.Contains(x.Id))
+            .Where(x =>
+                x.Scope == QControl.Domain.Enums.ServiceScope.Global ||
+                (x.Scope == QControl.Domain.Enums.ServiceScope.BranchScoped &&
+                 x.OwnerBranchId == request.BranchId))
             .Where(x => request.IncludeDeleted || !x.IsDeleted)
             .Where(x => request.IncludeInactive || states[x.Id].EffectiveIsActive)
             .ToDictionary(x => x.Id);

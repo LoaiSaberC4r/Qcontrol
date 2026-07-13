@@ -1,6 +1,7 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -14,24 +15,34 @@ internal sealed class GetAvailableParentServicesQueryHandler
     : IQueryHandler<GetAvailableParentServicesQuery, IReadOnlyList<AvailableParentServiceResponse>>
 {
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
+    private readonly IWriteReadRepository<BranchService>
+        _branchServiceReadRepository;
     private readonly IServiceTicketUsageChecker _ticketUsageChecker;
     private readonly ICurrentUser _currentUser;
     private readonly ICurrentBranchContext _currentBranchContext;
+    private readonly IServiceVisibilityPolicy _visibilityPolicy;
 
     public GetAvailableParentServicesQueryHandler(
         IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
         IServiceTicketUsageChecker ticketUsageChecker,
         ICurrentUser currentUser,
-        ICurrentBranchContext currentBranchContext)
+        ICurrentBranchContext currentBranchContext,
+        IServiceVisibilityPolicy visibilityPolicy)
     {
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceReadRepository));
         _ticketUsageChecker = ticketUsageChecker
             ?? throw new ArgumentNullException(nameof(ticketUsageChecker));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _currentBranchContext = currentBranchContext
             ?? throw new ArgumentNullException(nameof(currentBranchContext));
+        _visibilityPolicy = visibilityPolicy
+            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
     }
 
     public async Task<Result<IReadOnlyList<AvailableParentServiceResponse>>> Handle(
@@ -46,9 +57,20 @@ internal sealed class GetAvailableParentServicesQueryHandler
                 ErrorType.Unauthorized));
         }
 
+        var visibilityContext = _visibilityPolicy.EnsureCanUseVisibilityContext(
+            "Services.AvailableParents");
+        if (visibilityContext.IsFailure)
+        {
+            return Result<IReadOnlyList<AvailableParentServiceResponse>>.Fail(
+                visibilityContext.Errors);
+        }
+
         var allItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
+        allItems = allItems
+            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
+            .ToList();
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var excludedDescendants = request.ExcludeServiceId.HasValue
             ? ServiceHierarchyCalculator.GetDescendantIds(
@@ -58,19 +80,36 @@ internal sealed class GetAvailableParentServicesQueryHandler
         var editedItem = request.ExcludeServiceId.HasValue
             ? allItems.FirstOrDefault(x => x.Id == request.ExcludeServiceId.Value)
             : null;
-        var (requiredScope, requiredOwnerBranchId) =
-            ResolveRequiredScopeAndOwner(editedItem);
+        var assignedGlobalParentIds = await LoadAssignedGlobalParentIdsAsync(
+            cancellationToken);
 
         var candidates = allItems
             .Where(x => !x.IsDeleted)
             .Where(x => x.IsActive)
             .Where(x => !x.IsTicketIssuable)
-            .Where(x => x.Scope == requiredScope)
-            .Where(x => x.OwnerBranchId == requiredOwnerBranchId)
             .Where(x =>
                 !request.ExcludeServiceId.HasValue ||
                 x.Id != request.ExcludeServiceId.Value)
             .Where(x => !excludedDescendants.Contains(x.Id));
+
+        if (_currentBranchContext.IsBranchActor &&
+            _currentBranchContext.ActiveBranchId.HasValue)
+        {
+            var branchId = _currentBranchContext.ActiveBranchId.Value;
+            candidates = candidates.Where(x =>
+                (x.Scope == ServiceScope.Global &&
+                 assignedGlobalParentIds.Contains(x.Id)) ||
+                (x.Scope == ServiceScope.BranchScoped &&
+                 x.OwnerBranchId == branchId));
+        }
+        else
+        {
+            var (requiredScope, requiredOwnerBranchId) =
+                ResolveRequiredScopeAndOwner(editedItem);
+            candidates = candidates
+                .Where(x => x.Scope == requiredScope)
+                .Where(x => x.OwnerBranchId == requiredOwnerBranchId);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.SearchText))
         {
@@ -113,6 +152,24 @@ internal sealed class GetAvailableParentServicesQueryHandler
         }
 
         return Result<IReadOnlyList<AvailableParentServiceResponse>>.Ok(responses);
+    }
+
+    private async Task<IReadOnlySet<int>> LoadAssignedGlobalParentIdsAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!_currentBranchContext.IsBranchActor ||
+            !_currentBranchContext.ActiveBranchId.HasValue)
+        {
+            return new HashSet<int>();
+        }
+
+        var activeBranchId = _currentBranchContext.ActiveBranchId.Value;
+        var assignedIds = await _branchServiceReadRepository.Query()
+            .Where(x => x.BranchId == activeBranchId)
+            .Select(x => x.ServiceId)
+            .ToArrayAsync(cancellationToken);
+
+        return assignedIds.ToHashSet();
     }
 
     private (ServiceScope Scope, int? OwnerBranchId) ResolveRequiredScopeAndOwner(
