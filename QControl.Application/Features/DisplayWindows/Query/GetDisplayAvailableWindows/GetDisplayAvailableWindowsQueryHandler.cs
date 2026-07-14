@@ -59,7 +59,8 @@ internal sealed class GetDisplayAvailableWindowsQueryHandler
         request.Search ??= string.Empty;
 
         var specification = new GetDisplayAvailableWindowsSpec(
-            request);
+            request,
+            display.BranchId);
 
         var (items, totalCount) =
             await _windowReadRepository.ListWithCountAsync(

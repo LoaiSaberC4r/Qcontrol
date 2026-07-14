@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
@@ -22,8 +23,13 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
         _stepReadRepository;
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
+    private readonly IWriteReadRepository<Branch>
+        _branchReadRepository;
+    private readonly IWriteReadRepository<BranchService>
+        _branchServiceReadRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
+    private readonly IBranchAccessValidator _branchAccessValidator;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -32,8 +38,11 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
         IWriteRepository<ServiceWorkflow> workflowWriteRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         ICurrentUser currentUser,
+        IBranchAccessValidator branchAccessValidator,
         IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
@@ -45,10 +54,17 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
             ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceReadRepository));
         _concurrencyTokenManager = concurrencyTokenManager
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _branchAccessValidator = branchAccessValidator
+            ?? throw new ArgumentNullException(nameof(branchAccessValidator));
         _dateTimeProvider = dateTimeProvider
             ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _unitOfWork = unitOfWork
@@ -77,8 +93,25 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
                 ErrorType.Validation));
         }
 
-        var workflow = await _workflowReadRepository.GetByIdTrackedAsync(
-            request.Id,
+        var branchResult =
+            await ServiceWorkflowRuleChecks.ValidateBranchAccessAndStateAsync(
+                _branchReadRepository,
+                _branchAccessValidator,
+                request.BranchId,
+                "Reactivate",
+                cancellationToken);
+
+        if (branchResult.IsFailure)
+        {
+            return Result<ServiceWorkflowActivationResponse>.Fail(
+                branchResult.Errors);
+        }
+
+        var workflow = await _workflowReadRepository.FirstOrDefaultAsync(
+            new GetServiceWorkflowForMutationSpec(
+                request.BranchId,
+                request.LeafServiceId,
+                request.Id),
             cancellationToken);
 
         if (workflow is null)
@@ -107,8 +140,11 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
             .ToListAsync(cancellationToken);
 
         var serviceError =
-            await ServiceWorkflowRuleChecks.ValidateStepServicesAreEligibleAsync(
+            await ServiceWorkflowRuleChecks.ValidateOwnerAndStepServicesAsync(
                 _serviceReadRepository,
+                _branchServiceReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
                 steps,
                 operation: "Reactivate",
                 cancellationToken);
@@ -144,6 +180,9 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
             new ServiceWorkflowActivationResponse
             {
                 WorkflowId = workflow.Id,
+                BranchId = workflow.BranchId,
+                LeafServiceId = workflow.LeafServiceId,
+                IsDefault = workflow.IsDefault,
                 IsActive = workflow.IsActive,
                 RowVersion = RowVersionConverter.ToBase64(workflow.RowVersion),
                 Message = ServiceWorkflowMessages.ReactivateSuccess

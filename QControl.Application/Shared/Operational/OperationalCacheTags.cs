@@ -48,6 +48,14 @@ internal static class OperationalCacheTags
     public static string ServiceWorkflow(int serviceWorkflowId) =>
         $"service-workflow:{serviceWorkflowId}";
 
+    public static string BranchServiceWorkflows(
+        int branchId,
+        int leafServiceId)
+        => $"service-workflows:branch:{branchId}:service:{leafServiceId}";
+
+    public static string BranchWorkflowCandidates(int branchId) =>
+        $"service-workflow-candidates:branch:{branchId}";
+
     public static string DisplayLinkedWindows(int displayId) =>
         $"display:{displayId}:windows";
 

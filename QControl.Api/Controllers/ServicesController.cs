@@ -18,8 +18,6 @@ using Qcontrol.Application.Features.Services.Query.GetServiceSelectionOptions;
 using Qcontrol.Application.Features.Services.Query.GetServiceById;
 using Qcontrol.Application.Features.Services.Query.GetServices;
 using Qcontrol.Application.Features.Services.Query.GetServicesTree;
-using Qcontrol.Application.Features.ServiceWorkflows.Query.GetServiceWorkflowsForService;
-using Qcontrol.Application.Features.ServiceWorkflows.Query.GetWorkflowStartOptions;
 using QControl.Api.Attribute;
 using QControl.Domain.Enums;
 
@@ -145,42 +143,6 @@ public sealed class ServicesController : ControllerBase
         var query = new GetServiceByIdQuery
         {
             Id = serviceId
-        };
-
-        var result = await sender.Send(
-            query,
-            cancellationToken);
-
-        return result.ToIActionResult();
-    }
-
-    [HttpGet("{serviceId:int}/workflows")]
-    [Permission("ServiceWorkflows.ViewServiceWorkflows")]
-    public async Task<IActionResult> GetWorkflowsForService(
-        int serviceId,
-        CancellationToken cancellationToken)
-    {
-        var query = new GetServiceWorkflowsForServiceQuery
-        {
-            ServiceId = serviceId
-        };
-
-        var result = await sender.Send(
-            query,
-            cancellationToken);
-
-        return result.ToIActionResult();
-    }
-
-    [HttpGet("{serviceId:int}/workflow-start-options")]
-    [Permission("ServiceWorkflows.ViewStartOptions")]
-    public async Task<IActionResult> GetWorkflowStartOptions(
-        int serviceId,
-        CancellationToken cancellationToken)
-    {
-        var query = new GetWorkflowStartOptionsQuery
-        {
-            ServiceId = serviceId
         };
 
         var result = await sender.Send(

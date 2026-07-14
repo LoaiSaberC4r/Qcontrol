@@ -6,5 +6,9 @@ namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetServiceWorkflo
 public sealed class GetServiceWorkflowByIdQuery
     : IQuery<ServiceWorkflowResponse>
 {
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
     public int Id { get; init; }
 }

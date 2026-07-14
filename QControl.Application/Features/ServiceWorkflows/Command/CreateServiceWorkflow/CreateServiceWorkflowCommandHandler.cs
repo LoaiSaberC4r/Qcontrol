@@ -4,6 +4,7 @@ using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceWorkflows.Command.CreateServiceWorkflow;
@@ -19,7 +20,12 @@ internal sealed class CreateServiceWorkflowCommandHandler
         _stepReadRepository;
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
+    private readonly IWriteReadRepository<Branch>
+        _branchReadRepository;
+    private readonly IWriteReadRepository<BranchService>
+        _branchServiceReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IBranchAccessValidator _branchAccessValidator;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateServiceWorkflowCommandHandler(
@@ -27,7 +33,10 @@ internal sealed class CreateServiceWorkflowCommandHandler
         IWriteRepository<ServiceWorkflow> workflowWriteRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
         ICurrentUser currentUser,
+        IBranchAccessValidator branchAccessValidator,
         IUnitOfWork unitOfWork)
     {
         _workflowReadRepository = workflowReadRepository
@@ -38,8 +47,15 @@ internal sealed class CreateServiceWorkflowCommandHandler
             ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _branchAccessValidator = branchAccessValidator
+            ?? throw new ArgumentNullException(nameof(branchAccessValidator));
         _unitOfWork = unitOfWork
             ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -61,9 +77,24 @@ internal sealed class CreateServiceWorkflowCommandHandler
         var normalizedSteps = ServiceWorkflowRuleChecks.NormalizeSteps(
             request.Steps);
 
+        var branchResult =
+            await ServiceWorkflowRuleChecks.ValidateBranchAccessAndStateAsync(
+                _branchReadRepository,
+                _branchAccessValidator,
+                request.BranchId,
+                "Create",
+                cancellationToken);
+
+        if (branchResult.IsFailure)
+        {
+            return Result<ServiceWorkflowResponse>.Fail(branchResult.Errors);
+        }
+
         var duplicateError =
             await ServiceWorkflowRuleChecks.ValidateDuplicateNamesAsync(
                 _workflowReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
                 normalizedArabicName,
                 normalizedEnglishName,
                 excludedWorkflowId: null,
@@ -76,8 +107,11 @@ internal sealed class CreateServiceWorkflowCommandHandler
         }
 
         var serviceError =
-            await ServiceWorkflowRuleChecks.ValidateStepServicesAreEligibleAsync(
+            await ServiceWorkflowRuleChecks.ValidateOwnerAndStepServicesAsync(
                 _serviceReadRepository,
+                _branchServiceReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
                 normalizedSteps,
                 operation: "Create",
                 cancellationToken);
@@ -87,9 +121,18 @@ internal sealed class CreateServiceWorkflowCommandHandler
             return Result<ServiceWorkflowResponse>.Fail(serviceError);
         }
 
+        var hasExistingWorkflow = await _workflowReadRepository.Query()
+            .AnyAsync(x =>
+                x.BranchId == request.BranchId &&
+                x.LeafServiceId == request.LeafServiceId,
+                cancellationToken);
+
         var workflow = ServiceWorkflow.Create(
+            request.BranchId,
+            request.LeafServiceId,
             normalizedArabicName,
             normalizedEnglishName,
+            isDefault: !hasExistingWorkflow,
             ServiceWorkflowRuleChecks.ToDomainSteps(normalizedSteps),
             _currentUser.UserId.Value);
 
@@ -114,6 +157,8 @@ internal sealed class CreateServiceWorkflowCommandHandler
                 _workflowReadRepository,
                 _stepReadRepository,
                 _serviceReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
                 workflow.Id,
                 ServiceWorkflowMessages.CreateSuccess,
                 cancellationToken);

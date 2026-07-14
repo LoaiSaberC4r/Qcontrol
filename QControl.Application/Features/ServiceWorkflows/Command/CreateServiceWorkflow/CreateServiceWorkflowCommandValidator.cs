@@ -9,6 +9,14 @@ internal sealed class CreateServiceWorkflowCommandValidator
 {
     public CreateServiceWorkflowCommandValidator()
     {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.BranchIdRequired);
+
+        RuleFor(x => x.LeafServiceId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.LeafServiceIdRequired);
+
         Include(new ServiceWorkflowFieldsValidator<CreateServiceWorkflowCommand>(
             x => x.ArabicName,
             x => x.EnglishName,

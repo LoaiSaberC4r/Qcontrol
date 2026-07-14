@@ -8,8 +8,12 @@ internal sealed class GetWorkflowStartOptionsQueryValidator
 {
     public GetWorkflowStartOptionsQueryValidator()
     {
-        RuleFor(x => x.ServiceId)
+        RuleFor(x => x.BranchId)
             .GreaterThan(0)
-            .WithMessage(ServiceWorkflowMessages.ServiceIdRequired);
+            .WithMessage(ServiceWorkflowMessages.BranchIdRequired);
+
+        RuleFor(x => x.LeafServiceId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.LeafServiceIdRequired);
     }
 }

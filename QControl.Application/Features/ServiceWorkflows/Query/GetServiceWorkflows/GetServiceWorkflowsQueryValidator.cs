@@ -9,6 +9,14 @@ internal sealed class GetServiceWorkflowsQueryValidator
 {
     public GetServiceWorkflowsQueryValidator()
     {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.BranchIdRequired);
+
+        RuleFor(x => x.LeafServiceId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.LeafServiceIdRequired);
+
         RuleFor(x => x.PageNumber)
             .GreaterThanOrEqualTo(1)
             .WithMessage(ServiceWorkflowMessages.PageNumberInvalid);
@@ -24,9 +32,5 @@ internal sealed class GetServiceWorkflowsQueryValidator
             .WithMessage(ErrorMessage.SearchTerm_MaxLength)
             .When(x => !string.IsNullOrWhiteSpace(x.SearchText));
 
-        RuleFor(x => x.StartServiceId)
-            .GreaterThan(0)
-            .WithMessage(ServiceWorkflowMessages.ServiceIdRequired)
-            .When(x => x.StartServiceId.HasValue);
     }
 }

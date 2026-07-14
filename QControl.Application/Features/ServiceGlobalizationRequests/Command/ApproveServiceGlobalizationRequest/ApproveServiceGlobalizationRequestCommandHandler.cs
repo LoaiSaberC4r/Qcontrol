@@ -83,6 +83,7 @@ internal sealed class ApproveServiceGlobalizationRequestCommandHandler
         }
 
         var entity = await _requestReadRepository.Query()
+            .AsTracking()
             .Include(x => x.Items)
             .FirstOrDefaultAsync(
                 x => x.Id == request.RequestId,
@@ -124,6 +125,7 @@ internal sealed class ApproveServiceGlobalizationRequestCommandHandler
         }
 
         var services = await _serviceReadRepository.Query()
+            .AsTracking()
             .IgnoreQueryFilters()
             .Where(x => itemServiceIds.Contains(x.Id))
             .ToListAsync(cancellationToken);

@@ -46,7 +46,7 @@ internal static class ServiceWorkflowUniqueConstraintErrorMapper
         var message = sqlException.Message;
 
         if (message.Contains(
-                "UX_ServiceWorkflows_ArabicName",
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_ArabicName",
                 StringComparison.OrdinalIgnoreCase))
         {
             error = new Error(
@@ -58,7 +58,7 @@ internal static class ServiceWorkflowUniqueConstraintErrorMapper
         }
 
         if (message.Contains(
-                "UX_ServiceWorkflows_EnglishName",
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_EnglishName",
                 StringComparison.OrdinalIgnoreCase))
         {
             error = new Error(
@@ -76,6 +76,18 @@ internal static class ServiceWorkflowUniqueConstraintErrorMapper
             error = new Error(
                 stepOrderCode,
                 ServiceWorkflowMessages.StepOrderDuplicate,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (message.Contains(
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_Default",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                "ServiceWorkflows.Default.Conflict",
+                ServiceWorkflowMessages.FirstWorkflowDefaultConflict,
                 ErrorType.Conflict);
 
             return true;

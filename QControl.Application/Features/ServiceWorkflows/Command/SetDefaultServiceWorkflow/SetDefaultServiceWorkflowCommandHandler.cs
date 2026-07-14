@@ -1,5 +1,6 @@
 using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
+using BuildingBlock.Application.Time;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
@@ -9,15 +10,13 @@ using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Operational;
 using QControl.Domain.Entities;
 
-namespace Qcontrol.Application.Features.ServiceWorkflows.Command.UpdateServiceWorkflow;
+namespace Qcontrol.Application.Features.ServiceWorkflows.Command.SetDefaultServiceWorkflow;
 
-internal sealed class UpdateServiceWorkflowCommandHandler
-    : ICommandHandler<UpdateServiceWorkflowCommand, ServiceWorkflowResponse>
+internal sealed class SetDefaultServiceWorkflowCommandHandler
+    : ICommandHandler<SetDefaultServiceWorkflowCommand, ServiceWorkflowResponse>
 {
     private readonly IWriteReadRepository<ServiceWorkflow>
         _workflowReadRepository;
-    private readonly IWriteRepository<ServiceWorkflow>
-        _workflowWriteRepository;
     private readonly IWriteReadRepository<ServiceWorkflowStep>
         _stepReadRepository;
     private readonly IWriteReadRepository<Service>
@@ -26,27 +25,24 @@ internal sealed class UpdateServiceWorkflowCommandHandler
         _branchReadRepository;
     private readonly IWriteReadRepository<BranchService>
         _branchServiceReadRepository;
-    private readonly IConcurrencyTokenManager _concurrencyTokenManager;
+    private readonly IServiceWorkflowDefaultRepository _defaultRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IBranchAccessValidator _branchAccessValidator;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public UpdateServiceWorkflowCommandHandler(
+    public SetDefaultServiceWorkflowCommandHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
-        IWriteRepository<ServiceWorkflow> workflowWriteRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<Branch> branchReadRepository,
         IWriteReadRepository<BranchService> branchServiceReadRepository,
-        IConcurrencyTokenManager concurrencyTokenManager,
+        IServiceWorkflowDefaultRepository defaultRepository,
         ICurrentUser currentUser,
         IBranchAccessValidator branchAccessValidator,
-        IUnitOfWork unitOfWork)
+        IDateTimeProvider dateTimeProvider)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
-        _workflowWriteRepository = workflowWriteRepository
-            ?? throw new ArgumentNullException(nameof(workflowWriteRepository));
         _stepReadRepository = stepReadRepository
             ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
@@ -56,18 +52,18 @@ internal sealed class UpdateServiceWorkflowCommandHandler
         _branchServiceReadRepository = branchServiceReadRepository
             ?? throw new ArgumentNullException(
                 nameof(branchServiceReadRepository));
-        _concurrencyTokenManager = concurrencyTokenManager
-            ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
+        _defaultRepository = defaultRepository
+            ?? throw new ArgumentNullException(nameof(defaultRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _branchAccessValidator = branchAccessValidator
             ?? throw new ArgumentNullException(nameof(branchAccessValidator));
-        _unitOfWork = unitOfWork
-            ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
     }
 
     public async Task<Result<ServiceWorkflowResponse>> Handle(
-        UpdateServiceWorkflowCommand request,
+        SetDefaultServiceWorkflowCommand request,
         CancellationToken cancellationToken)
     {
         if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
@@ -83,7 +79,7 @@ internal sealed class UpdateServiceWorkflowCommandHandler
                 out var rowVersion))
         {
             return Result<ServiceWorkflowResponse>.Fail(new Error(
-                "ServiceWorkflows.Update.InvalidRowVersion",
+                "ServiceWorkflows.SetDefault.InvalidRowVersion",
                 ErrorMessage.RowVersion_Invalid,
                 ErrorType.Validation));
         }
@@ -93,7 +89,7 @@ internal sealed class UpdateServiceWorkflowCommandHandler
                 _branchReadRepository,
                 _branchAccessValidator,
                 request.BranchId,
-                "Update",
+                "SetDefault",
                 cancellationToken);
 
         if (branchResult.IsFailure)
@@ -101,41 +97,53 @@ internal sealed class UpdateServiceWorkflowCommandHandler
             return Result<ServiceWorkflowResponse>.Fail(branchResult.Errors);
         }
 
-        var workflow = await _workflowReadRepository.FirstOrDefaultAsync(
-            new GetServiceWorkflowForMutationSpec(
-                request.BranchId,
-                request.LeafServiceId,
-                request.Id),
-            cancellationToken);
+        var workflowState = await _workflowReadRepository.Query()
+            .AsNoTracking()
+            .Where(x =>
+                x.Id == request.Id &&
+                x.BranchId == request.BranchId &&
+                x.LeafServiceId == request.LeafServiceId)
+            .Select(x => new
+            {
+                x.Id,
+                x.IsActive,
+                x.IsDefault
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (workflow is null)
+        if (workflowState is null)
         {
             return Result<ServiceWorkflowResponse>.Fail(new Error(
-                "ServiceWorkflows.Update.NotFound",
+                "ServiceWorkflows.SetDefault.NotFound",
                 ServiceWorkflowMessages.NotFound,
                 ErrorType.NotFound));
         }
 
-        var normalizedArabicName = request.ArabicName.Trim();
-        var normalizedEnglishName = request.EnglishName.Trim();
-        var normalizedSteps = ServiceWorkflowRuleChecks.NormalizeSteps(
-            request.Steps);
-
-        var duplicateError =
-            await ServiceWorkflowRuleChecks.ValidateDuplicateNamesAsync(
-                _workflowReadRepository,
-                request.BranchId,
-                request.LeafServiceId,
-                normalizedArabicName,
-                normalizedEnglishName,
-                workflow.Id,
-                operation: "Update",
-                cancellationToken);
-
-        if (duplicateError is not null)
+        if (!workflowState.IsActive)
         {
-            return Result<ServiceWorkflowResponse>.Fail(duplicateError);
+            return Result<ServiceWorkflowResponse>.Fail(new Error(
+                "ServiceWorkflows.SetDefault.Inactive",
+                ServiceWorkflowMessages.InactiveWorkflowCannotBecomeDefault,
+                ErrorType.Conflict));
         }
+
+        if (workflowState.IsDefault)
+        {
+            return Result<ServiceWorkflowResponse>.Fail(new Error(
+                "ServiceWorkflows.SetDefault.AlreadyDefault",
+                ServiceWorkflowMessages.WorkflowAlreadyDefault,
+                ErrorType.Conflict));
+        }
+
+        var steps = await _stepReadRepository.Query()
+            .AsNoTracking()
+            .Where(x => x.ServiceWorkflowId == request.Id)
+            .Select(x => new ServiceWorkflowStepCommandItem
+            {
+                ServiceId = x.ServiceId,
+                StepOrder = x.StepOrder
+            })
+            .ToListAsync(cancellationToken);
 
         var serviceError =
             await ServiceWorkflowRuleChecks.ValidateOwnerAndStepServicesAsync(
@@ -143,8 +151,8 @@ internal sealed class UpdateServiceWorkflowCommandHandler
                 _branchServiceReadRepository,
                 request.BranchId,
                 request.LeafServiceId,
-                normalizedSteps,
-                operation: "Update",
+                steps,
+                "SetDefault",
                 cancellationToken);
 
         if (serviceError is not null)
@@ -152,35 +160,20 @@ internal sealed class UpdateServiceWorkflowCommandHandler
             return Result<ServiceWorkflowResponse>.Fail(serviceError);
         }
 
-        _concurrencyTokenManager.SetOriginalRowVersion(
-            workflow,
-            rowVersion);
+        var setDefaultResult = await _defaultRepository.SetDefaultAsync(
+            request.BranchId,
+            request.LeafServiceId,
+            request.Id,
+            rowVersion,
+            _currentUser.UserId.Value,
+            _dateTimeProvider.UtcNow,
+            cancellationToken);
 
-        workflow.Update(
-            normalizedArabicName,
-            normalizedEnglishName,
-            ServiceWorkflowRuleChecks.ToDomainSteps(normalizedSteps),
-            _currentUser.UserId.Value);
-
-        _workflowWriteRepository.Update(workflow);
-
-        try
+        if (setDefaultResult.Status !=
+            ServiceWorkflowSetDefaultStatus.Success)
         {
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Result<ServiceWorkflowResponse>.Fail(new Error(
-                "ServiceWorkflows.Update.ConcurrencyConflict",
-                ErrorMessage.Concurrency_Conflict,
-                ErrorType.Conflict));
-        }
-        catch (DbUpdateException ex)
-            when (ServiceWorkflowUniqueConstraintErrorMapper.TryMapUpdate(
-                ex,
-                out var error))
-        {
-            return Result<ServiceWorkflowResponse>.Fail(error);
+            return Result<ServiceWorkflowResponse>.Fail(
+                MapFailure(setDefaultResult.Status));
         }
 
         var response =
@@ -190,15 +183,49 @@ internal sealed class UpdateServiceWorkflowCommandHandler
                 _serviceReadRepository,
                 request.BranchId,
                 request.LeafServiceId,
-                workflow.Id,
-                ServiceWorkflowMessages.UpdateSuccess,
+                request.Id,
+                ServiceWorkflowMessages.DefaultWorkflowChangedSuccessfully,
                 cancellationToken);
 
         return response is null
             ? Result<ServiceWorkflowResponse>.Fail(new Error(
-                "ServiceWorkflows.Update.NotFoundAfterSave",
+                "ServiceWorkflows.SetDefault.NotFoundAfterSave",
                 ServiceWorkflowMessages.NotFound,
                 ErrorType.Infrastructure))
             : Result<ServiceWorkflowResponse>.Ok(response);
     }
+
+    private static Error MapFailure(ServiceWorkflowSetDefaultStatus status)
+        => status switch
+        {
+            ServiceWorkflowSetDefaultStatus.NotFound => new Error(
+                "ServiceWorkflows.SetDefault.NotFound",
+                ServiceWorkflowMessages.NotFound,
+                ErrorType.NotFound),
+
+            ServiceWorkflowSetDefaultStatus.InvalidOwnership => new Error(
+                "ServiceWorkflows.SetDefault.OwnershipMismatch",
+                ServiceWorkflowMessages.WorkflowOwnershipMismatch,
+                ErrorType.NotFound),
+
+            ServiceWorkflowSetDefaultStatus.Inactive => new Error(
+                "ServiceWorkflows.SetDefault.Inactive",
+                ServiceWorkflowMessages.InactiveWorkflowCannotBecomeDefault,
+                ErrorType.Conflict),
+
+            ServiceWorkflowSetDefaultStatus.ConcurrencyConflict => new Error(
+                "ServiceWorkflows.SetDefault.ConcurrencyConflict",
+                ErrorMessage.Concurrency_Conflict,
+                ErrorType.Conflict),
+
+            ServiceWorkflowSetDefaultStatus.AlreadyDefault => new Error(
+                "ServiceWorkflows.SetDefault.AlreadyDefault",
+                ServiceWorkflowMessages.WorkflowAlreadyDefault,
+                ErrorType.Conflict),
+
+            _ => new Error(
+                "ServiceWorkflows.SetDefault.PersistenceConflict",
+                ServiceWorkflowMessages.FirstWorkflowDefaultConflict,
+                ErrorType.Conflict)
+        };
 }

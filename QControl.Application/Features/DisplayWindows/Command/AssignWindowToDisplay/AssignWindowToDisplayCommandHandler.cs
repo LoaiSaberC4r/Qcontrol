@@ -83,6 +83,14 @@ internal sealed class AssignWindowToDisplayCommandHandler
                 ErrorType.NotFound);
         }
 
+        if (display.BranchId != window.BranchId)
+        {
+            return Failure(
+                "DisplayWindows.Assign.DifferentBranch",
+                ErrorMessage.DisplayWindow_Assign_DifferentBranch,
+                ErrorType.Conflict);
+        }
+
         var alreadyLinked =
             await _displayWindowReadRepository.AnyAsync(
                 x =>

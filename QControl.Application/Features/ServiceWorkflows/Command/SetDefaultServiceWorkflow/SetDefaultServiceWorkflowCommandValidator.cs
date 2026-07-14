@@ -1,15 +1,14 @@
 using FluentValidation;
-using Qcontrol.Application.Features.ServiceWorkflows.Command.CreateServiceWorkflow;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Shared.Operational;
 
-namespace Qcontrol.Application.Features.ServiceWorkflows.Command.UpdateServiceWorkflow;
+namespace Qcontrol.Application.Features.ServiceWorkflows.Command.SetDefaultServiceWorkflow;
 
-internal sealed class UpdateServiceWorkflowCommandValidator
-    : AbstractValidator<UpdateServiceWorkflowCommand>
+internal sealed class SetDefaultServiceWorkflowCommandValidator
+    : AbstractValidator<SetDefaultServiceWorkflowCommand>
 {
-    public UpdateServiceWorkflowCommandValidator()
+    public SetDefaultServiceWorkflowCommandValidator()
     {
         RuleFor(x => x.BranchId)
             .GreaterThan(0)
@@ -29,10 +28,5 @@ internal sealed class UpdateServiceWorkflowCommandValidator
             .WithMessage(ErrorMessage.RowVersion_Required)
             .Must(value => RowVersionConverter.TryDecode(value, out _))
             .WithMessage(ErrorMessage.RowVersion_Invalid);
-
-        Include(new ServiceWorkflowFieldsValidator<UpdateServiceWorkflowCommand>(
-            x => x.ArabicName,
-            x => x.EnglishName,
-            x => x.Steps));
     }
 }

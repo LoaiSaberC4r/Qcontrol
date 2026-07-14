@@ -10,8 +10,44 @@ internal static class ServiceWorkflowMessages
     public static string IdRequired =>
         Get("ServiceWorkflow_Id_Required", "A valid workflow id is required.");
 
+    public static string BranchIdRequired =>
+        Get("ServiceWorkflow_BranchId_Required", "A valid branch id is required.");
+
     public static string NotFound =>
         Get("ServiceWorkflow_NotFound", "The service workflow could not be found.");
+
+    public static string BranchNotFound =>
+        Get("ServiceWorkflow_Branch_NotFound", "The selected branch could not be found.");
+
+    public static string BranchInactive =>
+        Get("ServiceWorkflow_Branch_Inactive", "The selected branch is inactive.");
+
+    public static string LeafServiceIdRequired =>
+        Get("ServiceWorkflow_LeafServiceId_Required", "A valid leaf service id is required.");
+
+    public static string LeafServiceNotFound =>
+        Get("ServiceWorkflow_LeafService_NotFound", "The selected owner leaf service could not be found.");
+
+    public static string LeafServiceNotAssignedToBranch =>
+        Get("ServiceWorkflow_LeafService_NotAssignedToBranch", "The selected owner service is not assigned to the branch.");
+
+    public static string LeafServiceIsNotLeaf =>
+        Get("ServiceWorkflow_LeafService_IsNotLeaf", "The selected owner service is not a leaf service.");
+
+    public static string LeafServiceDeleted =>
+        Get("ServiceWorkflow_LeafService_Deleted", "The selected owner service is deleted.");
+
+    public static string LeafServiceInactive =>
+        Get("ServiceWorkflow_LeafService_Inactive", "The selected owner service is inactive.");
+
+    public static string LeafServiceNotEffectivelyActive =>
+        Get("ServiceWorkflow_LeafService_NotEffectivelyActive", "The selected owner service is not effectively active.");
+
+    public static string LeafServiceNotTicketIssuable =>
+        Get("ServiceWorkflow_LeafService_NotTicketIssuable", "The selected owner service cannot issue tickets.");
+
+    public static string WorkflowOwnershipMismatch =>
+        Get("ServiceWorkflow_Ownership_Mismatch", "The service workflow does not belong to the requested branch and leaf service.");
 
     public static string ArabicNameRequired =>
         Get("ServiceWorkflow_ArabicName_Required", "The Arabic workflow name is required.");
@@ -60,6 +96,27 @@ internal static class ServiceWorkflowMessages
 
     public static string ServiceNotEffectivelyActive =>
         Get("ServiceWorkflow_Service_NotEffectivelyActive", "The selected service cannot be used in a workflow because it is not effectively active.");
+
+    public static string WorkflowStepNotAssignedToBranch =>
+        Get("ServiceWorkflow_Step_NotAssignedToBranch", "The selected workflow step service is not assigned to the branch.");
+
+    public static string WorkflowStepIsNotLeaf =>
+        Get("ServiceWorkflow_Step_IsNotLeaf", "The selected workflow step service is not a leaf service.");
+
+    public static string DefaultWorkflowCannotBeDeactivated =>
+        Get("ServiceWorkflow_Default_CannotBeDeactivated", "The default workflow cannot be deactivated. Assign another active workflow as default first.");
+
+    public static string InactiveWorkflowCannotBecomeDefault =>
+        Get("ServiceWorkflow_Default_InactiveWorkflow", "An inactive workflow cannot become the default workflow.");
+
+    public static string WorkflowAlreadyDefault =>
+        Get("ServiceWorkflow_Default_AlreadyDefault", "The selected workflow is already the default workflow.");
+
+    public static string DefaultWorkflowChangedSuccessfully =>
+        Get("ServiceWorkflow_Default_Changed_Success", "Default workflow changed successfully.");
+
+    public static string FirstWorkflowDefaultConflict =>
+        Get("ServiceWorkflow_Default_FirstWorkflowConflict", "Another workflow was made default for this branch service. Refresh and try again.");
 
     public static string AlreadyInactive =>
         Get("ServiceWorkflow_AlreadyInactive", "The service workflow is already inactive.");
