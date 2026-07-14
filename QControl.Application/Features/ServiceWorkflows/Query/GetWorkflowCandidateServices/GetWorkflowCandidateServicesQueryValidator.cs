@@ -9,6 +9,10 @@ internal sealed class GetWorkflowCandidateServicesQueryValidator
 {
     public GetWorkflowCandidateServicesQueryValidator()
     {
+        RuleFor(x => x.BranchId)
+            .GreaterThan(0)
+            .WithMessage(ServiceWorkflowMessages.BranchIdRequired);
+
         RuleFor(x => x.PageNumber)
             .GreaterThanOrEqualTo(1)
             .WithMessage(ServiceWorkflowMessages.PageNumberInvalid);

@@ -15,6 +15,16 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
 
     public string EnglishName { get; private set; } = string.Empty;
 
+    public int BranchId { get; private set; }
+
+    public Branch Branch { get; private set; } = null!;
+
+    public int LeafServiceId { get; private set; }
+
+    public Service LeafService { get; private set; } = null!;
+
+    public bool IsDefault { get; private set; }
+
     public bool IsActive { get; private set; } = true;
 
     public Guid CreatedByApplicationUserId { get; private set; }
@@ -43,16 +53,22 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
         _steps.AsReadOnly();
 
     public static ServiceWorkflow Create(
+        int branchId,
+        int leafServiceId,
         string arabicName,
         string englishName,
+        bool isDefault,
         IEnumerable<ServiceWorkflowStepData> steps,
         Guid createdByApplicationUserId)
     {
         var workflow = new ServiceWorkflow
         {
+            BranchId = branchId,
+            LeafServiceId = leafServiceId,
             ArabicName = NormalizeRequired(arabicName),
             EnglishName = NormalizeRequired(englishName),
             IsActive = true,
+            IsDefault = isDefault,
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
@@ -93,6 +109,18 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
         ReactivatedOnUtc = reactivatedOnUtc;
         ReactivatedByApplicationUserId = reactivatedByApplicationUserId;
         LastModifiedByApplicationUserId = reactivatedByApplicationUserId;
+    }
+
+    public void MarkAsDefault(Guid modifiedByApplicationUserId)
+    {
+        IsDefault = true;
+        LastModifiedByApplicationUserId = modifiedByApplicationUserId;
+    }
+
+    public void RemoveDefault(Guid modifiedByApplicationUserId)
+    {
+        IsDefault = false;
+        LastModifiedByApplicationUserId = modifiedByApplicationUserId;
     }
 
     private void ReplaceSteps(IEnumerable<ServiceWorkflowStepData> steps)

@@ -8,6 +8,10 @@ public sealed record CreateServiceWorkflowCommand
     : ICommand<ServiceWorkflowResponse>,
       ICacheInvalidator
 {
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
@@ -18,6 +22,10 @@ public sealed record CreateServiceWorkflowCommand
     public IEnumerable<string> Tags => new[]
     {
         OperationalCacheTags.ServiceWorkflows,
+        OperationalCacheTags.BranchServiceWorkflows(BranchId, LeafServiceId),
+        OperationalCacheTags.BranchWorkflowCandidates(BranchId),
+        OperationalCacheTags.BranchServices,
+        OperationalCacheTags.BranchServicesForBranch(BranchId),
         OperationalCacheTags.Services
     };
 }

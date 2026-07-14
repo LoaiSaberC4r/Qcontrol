@@ -19,6 +19,8 @@ internal sealed class PermanentDeleteBranchCommandHandler
     private readonly IWriteRepository<Location> _locationWriteRepository;
     private readonly IWriteReadRepository<WaitingArea> _waitingAreaReadRepository;
     private readonly IWriteReadRepository<Display> _displayReadRepository;
+    private readonly IWriteReadRepository<ServiceWorkflow>?
+        _serviceWorkflowReadRepository;
     private readonly IWriteReadRepository<QControl.Domain.Entities.BranchBranding>? _brandingReadRepository;
     private readonly IWriteRepository<QControl.Domain.Entities.BranchBranding>? _brandingWriteRepository;
     private readonly IWriteReadRepository<BranchAdvertisement>? _advertisementReadRepository;
@@ -43,7 +45,8 @@ internal sealed class PermanentDeleteBranchCommandHandler
         IWriteReadRepository<BranchAdvertisement>? advertisementReadRepository = null,
         IWriteRepository<BranchAdvertisement>? advertisementWriteRepository = null,
         IMediaService? mediaService = null,
-        ILogger<PermanentDeleteBranchCommandHandler>? logger = null)
+        ILogger<PermanentDeleteBranchCommandHandler>? logger = null,
+        IWriteReadRepository<ServiceWorkflow>? serviceWorkflowReadRepository = null)
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
@@ -55,6 +58,7 @@ internal sealed class PermanentDeleteBranchCommandHandler
             ?? throw new ArgumentNullException(nameof(waitingAreaReadRepository));
         _displayReadRepository = displayReadRepository
             ?? throw new ArgumentNullException(nameof(displayReadRepository));
+        _serviceWorkflowReadRepository = serviceWorkflowReadRepository;
         _brandingReadRepository = brandingReadRepository;
         _brandingWriteRepository = brandingWriteRepository;
         _advertisementReadRepository = advertisementReadRepository;
@@ -117,7 +121,13 @@ internal sealed class PermanentDeleteBranchCommandHandler
             x => x.BranchId == branch.Id,
             cancellationToken);
 
-        if (hasWaitingAreas || hasDisplays)
+        var hasServiceWorkflows =
+            _serviceWorkflowReadRepository is not null &&
+            await _serviceWorkflowReadRepository.AnyAsync(
+                x => x.BranchId == branch.Id,
+                cancellationToken);
+
+        if (hasWaitingAreas || hasDisplays || hasServiceWorkflows)
         {
             return Result<PermanentDeleteBranchResponse>.Fail(new Error(
                 "Branches.PermanentDelete.HasRelatedData",

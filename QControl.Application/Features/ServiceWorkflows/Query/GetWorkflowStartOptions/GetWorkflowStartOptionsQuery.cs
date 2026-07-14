@@ -6,5 +6,7 @@ namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetWorkflowStartO
 public sealed class GetWorkflowStartOptionsQuery
     : IQuery<ServiceWorkflowStartOptionsResponse>
 {
-    public int ServiceId { get; init; }
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
 }

@@ -8,6 +8,10 @@ public sealed record DeactivateServiceWorkflowCommand
     : ICommand<ServiceWorkflowActivationResponse>,
       ICacheInvalidator
 {
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
     public int Id { get; init; }
 
     public string RowVersion { get; init; } = string.Empty;
@@ -16,6 +20,8 @@ public sealed record DeactivateServiceWorkflowCommand
     {
         OperationalCacheTags.ServiceWorkflows,
         OperationalCacheTags.ServiceWorkflow(Id),
+        OperationalCacheTags.BranchServiceWorkflows(BranchId, LeafServiceId),
+        OperationalCacheTags.BranchWorkflowCandidates(BranchId),
         OperationalCacheTags.Services
     };
 }

@@ -3,6 +3,7 @@ using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Abstraction.Presistence;
+using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.ServiceWorkflows.Query.GetServiceWorkflowById;
@@ -16,13 +17,18 @@ internal sealed class GetServiceWorkflowByIdQueryHandler
         _stepReadRepository;
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
+    private readonly IWriteReadRepository<Branch>
+        _branchReadRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IBranchAccessValidator _branchAccessValidator;
 
     public GetServiceWorkflowByIdQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
-        ICurrentUser currentUser)
+        IWriteReadRepository<Branch> branchReadRepository,
+        ICurrentUser currentUser,
+        IBranchAccessValidator branchAccessValidator)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
@@ -30,8 +36,12 @@ internal sealed class GetServiceWorkflowByIdQueryHandler
             ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
+        _branchAccessValidator = branchAccessValidator
+            ?? throw new ArgumentNullException(nameof(branchAccessValidator));
     }
 
     public async Task<Result<ServiceWorkflowResponse>> Handle(
@@ -46,11 +56,26 @@ internal sealed class GetServiceWorkflowByIdQueryHandler
                 ErrorType.Unauthorized));
         }
 
+        var branchResult =
+            await ServiceWorkflowRuleChecks.ValidateBranchAccessAndStateAsync(
+                _branchReadRepository,
+                _branchAccessValidator,
+                request.BranchId,
+                "GetById",
+                cancellationToken);
+
+        if (branchResult.IsFailure)
+        {
+            return Result<ServiceWorkflowResponse>.Fail(branchResult.Errors);
+        }
+
         var response =
             await ServiceWorkflowRuleChecks.BuildDetailsResponseAsync(
                 _workflowReadRepository,
                 _stepReadRepository,
                 _serviceReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
                 request.Id,
                 message: null,
                 cancellationToken);

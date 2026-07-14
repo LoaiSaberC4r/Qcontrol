@@ -20,6 +20,10 @@ internal sealed class ServiceWorkflowConfiguration
             table.HasCheckConstraint(
                 "CK_ServiceWorkflows_EnglishName_NotBlank",
                 "LEN(LTRIM(RTRIM([EnglishName]))) > 0");
+
+            table.HasCheckConstraint(
+                "CK_ServiceWorkflows_DefaultMustBeActive",
+                "[IsDefault] = 0 OR [IsActive] = 1");
         });
 
         builder.HasKey(x => x.Id);
@@ -33,6 +37,16 @@ internal sealed class ServiceWorkflowConfiguration
 
         builder.Property(x => x.EnglishName)
             .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.BranchId)
+            .IsRequired();
+
+        builder.Property(x => x.LeafServiceId)
+            .IsRequired();
+
+        builder.Property(x => x.IsDefault)
+            .HasDefaultValue(false)
             .IsRequired();
 
         builder.Property(x => x.IsActive)
@@ -79,6 +93,16 @@ internal sealed class ServiceWorkflowConfiguration
         builder.Navigation(x => x.Steps)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.HasOne(x => x.Branch)
+            .WithMany()
+            .HasForeignKey(x => x.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.LeafService)
+            .WithMany()
+            .HasForeignKey(x => x.LeafServiceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(x => x.CreatedByApplicationUser)
             .WithMany()
             .HasForeignKey(x => x.CreatedByApplicationUserId)
@@ -102,19 +126,63 @@ internal sealed class ServiceWorkflowConfiguration
         builder.HasIndex(x => x.IsActive)
             .HasDatabaseName("IX_ServiceWorkflows_IsActive");
 
+        builder.HasIndex(x => x.BranchId)
+            .HasDatabaseName("IX_ServiceWorkflows_BranchId");
+
+        builder.HasIndex(x => x.LeafServiceId)
+            .HasDatabaseName("IX_ServiceWorkflows_LeafServiceId");
+
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.LeafServiceId
+        })
+            .HasDatabaseName("IX_ServiceWorkflows_BranchId_LeafServiceId");
+
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.LeafServiceId,
+            x.IsActive
+        })
+            .HasDatabaseName(
+                "IX_ServiceWorkflows_BranchId_LeafServiceId_IsActive");
+
         builder.HasIndex(x => x.ArabicName)
             .HasDatabaseName("IX_ServiceWorkflows_ArabicName");
 
         builder.HasIndex(x => x.EnglishName)
             .HasDatabaseName("IX_ServiceWorkflows_EnglishName");
 
-        builder.HasIndex(x => x.ArabicName)
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.LeafServiceId,
+            x.ArabicName
+        })
             .IsUnique()
-            .HasDatabaseName("UX_ServiceWorkflows_ArabicName");
+            .HasDatabaseName(
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_ArabicName");
 
-        builder.HasIndex(x => x.EnglishName)
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.LeafServiceId,
+            x.EnglishName
+        })
             .IsUnique()
-            .HasDatabaseName("UX_ServiceWorkflows_EnglishName");
+            .HasDatabaseName(
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_EnglishName");
+
+        builder.HasIndex(x => new
+        {
+            x.BranchId,
+            x.LeafServiceId
+        })
+            .IsUnique()
+            .HasFilter("[IsDefault] = 1")
+            .HasDatabaseName(
+                "UX_ServiceWorkflows_BranchId_LeafServiceId_Default");
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 

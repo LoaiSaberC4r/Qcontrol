@@ -19,15 +19,21 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
         _stepReadRepository;
     private readonly IWriteReadRepository<Service>
         _serviceReadRepository;
+    private readonly IWriteReadRepository<Branch>
+        _branchReadRepository;
+    private readonly IWriteReadRepository<BranchService>
+        _branchServiceReadRepository;
     private readonly ICurrentUser _currentUser;
-    private readonly IServiceVisibilityPolicy _visibilityPolicy;
+    private readonly IBranchAccessValidator _branchAccessValidator;
 
     public GetWorkflowStartOptionsQueryHandler(
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         IWriteReadRepository<ServiceWorkflowStep> stepReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
         ICurrentUser currentUser,
-        IServiceVisibilityPolicy visibilityPolicy)
+        IBranchAccessValidator branchAccessValidator)
     {
         _workflowReadRepository = workflowReadRepository
             ?? throw new ArgumentNullException(nameof(workflowReadRepository));
@@ -35,10 +41,15 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
             ?? throw new ArgumentNullException(nameof(stepReadRepository));
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
+        _branchReadRepository = branchReadRepository
+            ?? throw new ArgumentNullException(nameof(branchReadRepository));
+        _branchServiceReadRepository = branchServiceReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
-        _visibilityPolicy = visibilityPolicy
-            ?? throw new ArgumentNullException(nameof(visibilityPolicy));
+        _branchAccessValidator = branchAccessValidator
+            ?? throw new ArgumentNullException(nameof(branchAccessValidator));
     }
 
     public async Task<Result<ServiceWorkflowStartOptionsResponse>> Handle(
@@ -53,59 +64,53 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                 ErrorType.Unauthorized));
         }
 
-        var requestedService = await _serviceReadRepository.FirstOrDefaultAsync(
-            new GetServiceHierarchyItemByIdSpec(request.ServiceId),
-            cancellationToken);
-        if (requestedService is null)
-        {
-            return Result<ServiceWorkflowStartOptionsResponse>.Fail(new Error(
-                "ServiceWorkflows.StartOptions.ServiceNotFound",
-                ServiceWorkflowMessages.ServiceNotFound,
-                ErrorType.NotFound));
-        }
-
-        var visibility = _visibilityPolicy.EnsureCanView(
-            requestedService.Scope,
-            requestedService.OwnerBranchId,
-            "ServiceWorkflows.StartOptions");
-        if (visibility.IsFailure)
-        {
-            return Result<ServiceWorkflowStartOptionsResponse>.Fail(
-                visibility.Errors);
-        }
-
-        var serviceError =
-            await ServiceWorkflowRuleChecks.ValidateStepServicesAreEligibleAsync(
-                _serviceReadRepository,
-                new[]
-                {
-                    new ServiceWorkflowStepCommandItem
-                    {
-                        ServiceId = request.ServiceId,
-                        StepOrder = 1
-                    }
-                },
-                operation: "StartOptions",
+        var branchResult =
+            await ServiceWorkflowRuleChecks.ValidateBranchAccessAndStateAsync(
+                _branchReadRepository,
+                _branchAccessValidator,
+                request.BranchId,
+                "StartOptions",
                 cancellationToken);
 
-        if (serviceError is not null)
+        if (branchResult.IsFailure)
         {
             return Result<ServiceWorkflowStartOptionsResponse>.Fail(
-                serviceError);
+                branchResult.Errors);
+        }
+
+        var ownerError =
+            await ServiceWorkflowRuleChecks.ValidateOwnerAndStepServicesAsync(
+                _serviceReadRepository,
+                _branchServiceReadRepository,
+                request.BranchId,
+                request.LeafServiceId,
+                Array.Empty<ServiceWorkflowStepCommandItem>(),
+                "StartOptions",
+                cancellationToken);
+
+        if (ownerError is not null)
+        {
+            return Result<ServiceWorkflowStartOptionsResponse>.Fail(
+                ownerError);
         }
 
         var workflows = await _workflowReadRepository.Query()
-            .Where(x => x.IsActive)
-            .Where(x => x.Steps.Any(step =>
-                step.StepOrder == 1 &&
-                step.ServiceId == request.ServiceId))
-            .OrderBy(x => x.ArabicName)
+            .AsNoTracking()
+            .Where(x =>
+                x.BranchId == request.BranchId &&
+                x.LeafServiceId == request.LeafServiceId &&
+                x.IsActive)
+            .OrderByDescending(x => x.IsDefault)
+            .ThenBy(x => x.ArabicName)
             .ThenBy(x => x.Id)
             .Select(x => new ServiceWorkflowBasicProjection
             {
                 WorkflowId = x.Id,
+                BranchId = x.BranchId,
+                LeafServiceId = x.LeafServiceId,
                 ArabicName = x.ArabicName,
                 EnglishName = x.EnglishName,
+                IsDefault = x.IsDefault,
                 IsActive = x.IsActive,
                 RowVersion = x.RowVersion,
                 CreatedByApplicationUserId = x.CreatedByApplicationUserId,
@@ -124,25 +129,24 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
 
         var workflowItems = await BuildWorkflowItemsAsync(
             workflows,
-            request.ServiceId,
             cancellationToken);
-
-        var mode = workflowItems.Count switch
-        {
-            0 => "NoWorkflow",
-            1 => "AutoApply",
-            _ => "SelectionRequired"
-        };
+        var defaultWorkflowId = workflowItems
+            .FirstOrDefault(x => x.IsDefault)
+            ?.WorkflowId;
 
         return Result<ServiceWorkflowStartOptionsResponse>.Ok(
             new ServiceWorkflowStartOptionsResponse
             {
-                ServiceId = request.ServiceId,
-                Mode = mode,
-                RequiresWorkflowSelection = workflowItems.Count > 1,
-                AutoApplyWorkflowId = workflowItems.Count == 1
-                    ? workflowItems[0].WorkflowId
-                    : null,
+                ServiceId = request.LeafServiceId,
+                BranchId = request.BranchId,
+                LeafServiceId = request.LeafServiceId,
+                HasWorkflows = workflowItems.Count > 0,
+                DefaultWorkflowId = defaultWorkflowId,
+                Mode = workflowItems.Count == 0
+                    ? "NoWorkflow"
+                    : "DefaultAvailable",
+                RequiresWorkflowSelection = false,
+                AutoApplyWorkflowId = defaultWorkflowId,
                 Workflows = workflowItems
             });
     }
@@ -150,7 +154,6 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
     private async Task<IReadOnlyList<ServiceWorkflowStartOptionItemResponse>>
         BuildWorkflowItemsAsync(
             IReadOnlyList<ServiceWorkflowBasicProjection> workflows,
-            int matchedServiceId,
             CancellationToken cancellationToken)
     {
         if (workflows.Count == 0)
@@ -161,9 +164,6 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
         var serviceItems = await _serviceReadRepository.ListAsync(
             new GetAllServiceHierarchyItemsSpec(),
             cancellationToken);
-        serviceItems = serviceItems
-            .Where(x => _visibilityPolicy.CanView(x.Scope, x.OwnerBranchId))
-            .ToList();
         var servicesById = serviceItems.ToDictionary(x => x.Id);
         var serviceStates = ServiceHierarchyCalculator.ComputeStates(
             serviceItems);
@@ -173,6 +173,7 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
             .ToArray();
 
         var steps = await _stepReadRepository.Query()
+            .AsNoTracking()
             .Where(x => workflowIds.Contains(x.ServiceWorkflowId))
             .OrderBy(x => x.ServiceWorkflowId)
             .ThenBy(x => x.StepOrder)
@@ -208,7 +209,7 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                         x,
                         servicesById,
                         serviceStates,
-                        matchedServiceId))
+                        matchedServiceId: null))
                     .ToList();
 
                 return new ServiceWorkflowStartOptionItemResponse
@@ -217,12 +218,14 @@ internal sealed class GetWorkflowStartOptionsQueryHandler
                     ArabicName = workflow.ArabicName,
                     EnglishName = workflow.EnglishName,
                     IsActive = workflow.IsActive,
+                    IsDefault = workflow.IsDefault,
                     StartServiceId = stepResponses.FirstOrDefault()?.ServiceId,
                     StepsCount = stepResponses.Count,
                     Steps = stepResponses
                 };
             })
-            .OrderBy(x => x.ArabicName)
+            .OrderByDescending(x => x.IsDefault)
+            .ThenBy(x => x.ArabicName)
             .ThenBy(x => x.WorkflowId)
             .ToList();
     }

@@ -2,10 +2,10 @@ using BuildingBlock.Application.Abstraction;
 using Qcontrol.Application.Features.ServiceWorkflows.Shared;
 using QControl.Application.Shared.Operational;
 
-namespace Qcontrol.Application.Features.ServiceWorkflows.Command.ReactivateServiceWorkflow;
+namespace Qcontrol.Application.Features.ServiceWorkflows.Command.SetDefaultServiceWorkflow;
 
-public sealed record ReactivateServiceWorkflowCommand
-    : ICommand<ServiceWorkflowActivationResponse>,
+public sealed record SetDefaultServiceWorkflowCommand
+    : ICommand<ServiceWorkflowResponse>,
       ICacheInvalidator
 {
     public int BranchId { get; init; }

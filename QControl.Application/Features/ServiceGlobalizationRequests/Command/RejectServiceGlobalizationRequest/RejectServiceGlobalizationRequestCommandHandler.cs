@@ -78,6 +78,7 @@ internal sealed class RejectServiceGlobalizationRequestCommandHandler
         }
 
         var entity = await _requestReadRepository.Query()
+            .AsTracking()
             .FirstOrDefaultAsync(
                 x => x.Id == request.RequestId,
                 cancellationToken);

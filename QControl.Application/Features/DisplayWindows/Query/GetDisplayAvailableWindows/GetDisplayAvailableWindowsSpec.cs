@@ -8,9 +8,12 @@ internal sealed class GetDisplayAvailableWindowsSpec
     : Specification<Window, AvailableWindowResponse>
 {
     public GetDisplayAvailableWindowsSpec(
-        GetDisplayAvailableWindowsQuery query)
+        GetDisplayAvailableWindowsQuery query,
+        int branchId)
     {
         UseNoTracking();
+
+        AddCriteria(x => x.BranchId == branchId);
 
         AddCriteria(x =>
             !x.DisplayWindows.Any(link => link.DisplayId == query.DisplayId));

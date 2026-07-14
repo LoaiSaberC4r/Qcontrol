@@ -41,11 +41,23 @@ public sealed class ServiceWorkflowResponse
 {
     public int WorkflowId { get; init; }
 
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
+    public string OwnerServiceArabicName { get; init; } = string.Empty;
+
+    public string OwnerServiceEnglishName { get; init; } = string.Empty;
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
 
+    public bool IsDefault { get; init; }
+
     public bool IsActive { get; init; }
+
+    public int StepsCount { get; init; }
 
     public int? StartServiceId { get; init; }
 
@@ -77,9 +89,15 @@ public sealed class ServiceWorkflowListItemResponse
 {
     public int WorkflowId { get; init; }
 
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
+
+    public bool IsDefault { get; init; }
 
     public int? StartServiceId { get; init; }
 
@@ -91,6 +109,9 @@ public sealed class ServiceWorkflowListItemResponse
 
     public bool IsActive { get; init; }
 
+    public IReadOnlyList<ServiceWorkflowStepResponse> Steps { get; init; } =
+        Array.Empty<ServiceWorkflowStepResponse>();
+
     public string RowVersion { get; init; } = string.Empty;
 
     public DateTime CreatedOnUtc { get; init; }
@@ -98,44 +119,17 @@ public sealed class ServiceWorkflowListItemResponse
     public DateTime? ModifiedOnUtc { get; init; }
 }
 
-public sealed class ServiceWorkflowContainingServiceResponse
-{
-    public int WorkflowId { get; init; }
-
-    public string ArabicName { get; init; } = string.Empty;
-
-    public string EnglishName { get; init; } = string.Empty;
-
-    public bool IsActive { get; init; }
-
-    public int ContainsServiceOccurrenceCount { get; init; }
-
-    public IReadOnlyList<int> ContainsServiceStepOrders { get; init; } =
-        Array.Empty<int>();
-
-    public bool IsStartService { get; init; }
-
-    public IReadOnlyList<ServiceWorkflowStepResponse> Steps { get; init; } =
-        Array.Empty<ServiceWorkflowStepResponse>();
-}
-
-public sealed class ServiceWorkflowForServiceResponse
-{
-    public int ServiceId { get; init; }
-
-    public string ArabicName { get; init; } = string.Empty;
-
-    public string EnglishName { get; init; } = string.Empty;
-
-    public IReadOnlyList<ServiceWorkflowContainingServiceResponse> Workflows
-    {
-        get; init;
-    } = Array.Empty<ServiceWorkflowContainingServiceResponse>();
-}
-
 public sealed class ServiceWorkflowStartOptionsResponse
 {
     public int ServiceId { get; init; }
+
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
+    public bool HasWorkflows { get; init; }
+
+    public int? DefaultWorkflowId { get; init; }
 
     public string Mode { get; init; } = string.Empty;
 
@@ -158,6 +152,8 @@ public sealed class ServiceWorkflowStartOptionItemResponse
     public string EnglishName { get; init; } = string.Empty;
 
     public bool IsActive { get; init; }
+
+    public bool IsDefault { get; init; }
 
     public int? StartServiceId { get; init; }
 
@@ -188,16 +184,17 @@ public sealed class ServiceWorkflowCandidateServiceResponse
     public bool EffectiveIsActive { get; init; }
 
     public bool IsTicketIssuable { get; init; }
-
-    public IReadOnlyList<ServiceWorkflowContainingServiceResponse> Workflows
-    {
-        get; init;
-    } = Array.Empty<ServiceWorkflowContainingServiceResponse>();
 }
 
 public sealed class ServiceWorkflowActivationResponse
 {
     public int WorkflowId { get; init; }
+
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
+    public bool IsDefault { get; init; }
 
     public bool IsActive { get; init; }
 
@@ -210,9 +207,15 @@ internal sealed class ServiceWorkflowBasicProjection
 {
     public int WorkflowId { get; init; }
 
+    public int BranchId { get; init; }
+
+    public int LeafServiceId { get; init; }
+
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
+
+    public bool IsDefault { get; init; }
 
     public bool IsActive { get; init; }
 
@@ -266,9 +269,20 @@ internal static class ServiceWorkflowResponseFactory
         return new ServiceWorkflowResponse
         {
             WorkflowId = workflow.WorkflowId,
+            BranchId = workflow.BranchId,
+            LeafServiceId = workflow.LeafServiceId,
+            OwnerServiceArabicName = servicesById.TryGetValue(
+                workflow.LeafServiceId,
+                out var ownerService)
+                ? ownerService.ArabicName
+                : string.Empty,
+            OwnerServiceEnglishName = ownerService?.EnglishName ??
+                string.Empty,
             ArabicName = workflow.ArabicName,
             EnglishName = workflow.EnglishName,
+            IsDefault = workflow.IsDefault,
             IsActive = workflow.IsActive,
+            StepsCount = orderedSteps.Count,
             StartServiceId = orderedSteps.FirstOrDefault()?.ServiceId,
             Steps = orderedSteps,
             RowVersion = RowVersionConverter.ToBase64(workflow.RowVersion),
@@ -284,43 +298,6 @@ internal static class ServiceWorkflowResponseFactory
             CreatedOnUtc = workflow.CreatedOnUtc,
             ModifiedOnUtc = workflow.ModifiedOnUtc,
             Message = message
-        };
-    }
-
-    public static ServiceWorkflowContainingServiceResponse ToContainingService(
-        ServiceWorkflowBasicProjection workflow,
-        IReadOnlyCollection<ServiceWorkflowStepProjection> steps,
-        IReadOnlyDictionary<int, ServiceHierarchyItem> servicesById,
-        IReadOnlyDictionary<int, ServiceHierarchyState> serviceStates,
-        int matchedServiceId)
-    {
-        var orderedSteps = steps
-            .OrderBy(x => x.StepOrder)
-            .ThenBy(x => x.ServiceId)
-            .ToList();
-        var matchedOrders = orderedSteps
-            .Where(x => x.ServiceId == matchedServiceId)
-            .Select(x => x.StepOrder)
-            .ToList();
-
-        return new ServiceWorkflowContainingServiceResponse
-        {
-            WorkflowId = workflow.WorkflowId,
-            ArabicName = workflow.ArabicName,
-            EnglishName = workflow.EnglishName,
-            IsActive = workflow.IsActive,
-            ContainsServiceOccurrenceCount = matchedOrders.Count,
-            ContainsServiceStepOrders = matchedOrders,
-            IsStartService = orderedSteps.Any(x =>
-                x.StepOrder == 1 &&
-                x.ServiceId == matchedServiceId),
-            Steps = orderedSteps
-                .Select(x => ToStepResponse(
-                    x,
-                    servicesById,
-                    serviceStates,
-                    matchedServiceId))
-                .ToList()
         };
     }
 

@@ -1251,4 +1251,61 @@
   <data name="ServiceGlobalizationRequests_Authentication_Required" xml:space="preserve">
     <value>Authentication is required.</value>
   </data>
+  <data name="ServiceWorkflow_BranchId_Required" xml:space="preserve">
+    <value>A valid branch id is required.</value>
+  </data>
+  <data name="ServiceWorkflow_Branch_NotFound" xml:space="preserve">
+    <value>The selected branch could not be found.</value>
+  </data>
+  <data name="ServiceWorkflow_Branch_Inactive" xml:space="preserve">
+    <value>The selected branch is inactive.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafServiceId_Required" xml:space="preserve">
+    <value>A valid leaf service id is required.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotFound" xml:space="preserve">
+    <value>The selected owner leaf service could not be found.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotAssignedToBranch" xml:space="preserve">
+    <value>The selected owner service is not assigned to the branch.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_IsNotLeaf" xml:space="preserve">
+    <value>The selected owner service is not a leaf service.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_Deleted" xml:space="preserve">
+    <value>The selected owner service is deleted.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_Inactive" xml:space="preserve">
+    <value>The selected owner service is inactive.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotEffectivelyActive" xml:space="preserve">
+    <value>The selected owner service is not effectively active.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotTicketIssuable" xml:space="preserve">
+    <value>The selected owner service cannot issue tickets.</value>
+  </data>
+  <data name="ServiceWorkflow_Ownership_Mismatch" xml:space="preserve">
+    <value>The service workflow does not belong to the requested branch and leaf service.</value>
+  </data>
+  <data name="ServiceWorkflow_Step_NotAssignedToBranch" xml:space="preserve">
+    <value>The selected workflow step service is not assigned to the branch.</value>
+  </data>
+  <data name="ServiceWorkflow_Step_IsNotLeaf" xml:space="preserve">
+    <value>The selected workflow step service is not a leaf service.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_CannotBeDeactivated" xml:space="preserve">
+    <value>The default workflow cannot be deactivated. Assign another active workflow as default first.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_InactiveWorkflow" xml:space="preserve">
+    <value>An inactive workflow cannot become the default workflow.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_AlreadyDefault" xml:space="preserve">
+    <value>The selected workflow is already the default workflow.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_Changed_Success" xml:space="preserve">
+    <value>Default workflow changed successfully.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_FirstWorkflowConflict" xml:space="preserve">
+    <value>Another workflow was made default for this branch service. Refresh and try again.</value>
+  </data>
 </root>

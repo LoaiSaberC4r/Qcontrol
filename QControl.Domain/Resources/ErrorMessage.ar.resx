@@ -1251,4 +1251,61 @@
   <data name="ServiceGlobalizationRequests_Authentication_Required" xml:space="preserve">
     <value>المصادقة مطلوبة.</value>
   </data>
+  <data name="ServiceWorkflow_BranchId_Required" xml:space="preserve">
+    <value>معرف الفرع الصحيح مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_Branch_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الفرع المحدد.</value>
+  </data>
+  <data name="ServiceWorkflow_Branch_Inactive" xml:space="preserve">
+    <value>الفرع المحدد غير نشط.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafServiceId_Required" xml:space="preserve">
+    <value>معرف خدمة نهائية صحيح مطلوب.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotFound" xml:space="preserve">
+    <value>تعذر العثور على خدمة المالك النهائية.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotAssignedToBranch" xml:space="preserve">
+    <value>خدمة المالك المحددة غير مسندة إلى الفرع.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_IsNotLeaf" xml:space="preserve">
+    <value>خدمة المالك المحددة ليست خدمة نهائية.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_Deleted" xml:space="preserve">
+    <value>خدمة المالك المحددة محذوفة.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_Inactive" xml:space="preserve">
+    <value>خدمة المالك المحددة غير نشطة.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotEffectivelyActive" xml:space="preserve">
+    <value>خدمة المالك المحددة غير نشطة فعليا.</value>
+  </data>
+  <data name="ServiceWorkflow_LeafService_NotTicketIssuable" xml:space="preserve">
+    <value>خدمة المالك المحددة لا تصدر تذاكر.</value>
+  </data>
+  <data name="ServiceWorkflow_Ownership_Mismatch" xml:space="preserve">
+    <value>مسار الخدمة لا ينتمي إلى الفرع والخدمة النهائية المطلوبين.</value>
+  </data>
+  <data name="ServiceWorkflow_Step_NotAssignedToBranch" xml:space="preserve">
+    <value>خدمة خطوة المسار المحددة غير مسندة إلى الفرع.</value>
+  </data>
+  <data name="ServiceWorkflow_Step_IsNotLeaf" xml:space="preserve">
+    <value>خدمة خطوة المسار المحددة ليست خدمة نهائية.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_CannotBeDeactivated" xml:space="preserve">
+    <value>لا يمكن إيقاف المسار الافتراضي. عين مسارا نشطا آخر كافتراضي أولا.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_InactiveWorkflow" xml:space="preserve">
+    <value>لا يمكن تعيين مسار غير نشط كمسار افتراضي.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_AlreadyDefault" xml:space="preserve">
+    <value>المسار المحدد هو المسار الافتراضي بالفعل.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_Changed_Success" xml:space="preserve">
+    <value>تم تغيير المسار الافتراضي بنجاح.</value>
+  </data>
+  <data name="ServiceWorkflow_Default_FirstWorkflowConflict" xml:space="preserve">
+    <value>تم تعيين مسار آخر كافتراضي لهذه الخدمة في الفرع. حدث البيانات ثم حاول مرة أخرى.</value>
+  </data>
 </root>

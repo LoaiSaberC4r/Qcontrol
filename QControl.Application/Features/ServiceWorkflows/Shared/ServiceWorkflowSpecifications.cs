@@ -7,10 +7,16 @@ namespace Qcontrol.Application.Features.ServiceWorkflows.Shared;
 internal sealed class GetServiceWorkflowForMutationSpec
     : Specification<ServiceWorkflow>
 {
-    public GetServiceWorkflowForMutationSpec(int workflowId)
+    public GetServiceWorkflowForMutationSpec(
+        int branchId,
+        int leafServiceId,
+        int workflowId)
     {
         UseTracking();
-        AddCriteria(x => x.Id == workflowId);
+        AddCriteria(x =>
+            x.Id == workflowId &&
+            x.BranchId == branchId &&
+            x.LeafServiceId == leafServiceId);
         Include(x => x.Steps);
     }
 }
@@ -19,10 +25,14 @@ internal sealed class ServiceWorkflowDuplicateArabicNameSpec
     : Specification<ServiceWorkflow, int>
 {
     public ServiceWorkflowDuplicateArabicNameSpec(
+        int branchId,
+        int leafServiceId,
         string arabicName,
         int? excludedWorkflowId = null)
     {
         UseNoTracking();
+        AddCriteria(x => x.BranchId == branchId);
+        AddCriteria(x => x.LeafServiceId == leafServiceId);
         AddCriteria(x => x.ArabicName == arabicName);
 
         if (excludedWorkflowId.HasValue)
@@ -39,10 +49,14 @@ internal sealed class ServiceWorkflowDuplicateEnglishNameSpec
     : Specification<ServiceWorkflow, int>
 {
     public ServiceWorkflowDuplicateEnglishNameSpec(
+        int branchId,
+        int leafServiceId,
         string englishName,
         int? excludedWorkflowId = null)
     {
         UseNoTracking();
+        AddCriteria(x => x.BranchId == branchId);
+        AddCriteria(x => x.LeafServiceId == leafServiceId);
         AddCriteria(x => x.EnglishName == englishName);
 
         if (excludedWorkflowId.HasValue)
