@@ -855,14 +855,8 @@
   <data name="ServiceWorkflow_NotFound" xml:space="preserve">
     <value>The service workflow could not be found.</value>
   </data>
-  <data name="ServiceWorkflow_ArabicName_Required" xml:space="preserve">
-    <value>The Arabic workflow name is required.</value>
-  </data>
   <data name="ServiceWorkflow_ArabicName_MaxLength" xml:space="preserve">
     <value>The Arabic workflow name must not exceed 100 characters.</value>
-  </data>
-  <data name="ServiceWorkflow_EnglishName_Required" xml:space="preserve">
-    <value>The English workflow name is required.</value>
   </data>
   <data name="ServiceWorkflow_EnglishName_MaxLength" xml:space="preserve">
     <value>The English workflow name must not exceed 100 characters.</value>

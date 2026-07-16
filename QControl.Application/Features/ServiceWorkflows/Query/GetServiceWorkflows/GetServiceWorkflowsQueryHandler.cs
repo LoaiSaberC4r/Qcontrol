@@ -116,8 +116,10 @@ internal sealed class GetServiceWorkflowsQueryHandler
         {
             var searchText = request.SearchText.Trim();
             query = query.Where(x =>
-                x.ArabicName.Contains(searchText) ||
-                x.EnglishName.Contains(searchText));
+                (x.ArabicName != null &&
+                 x.ArabicName.Contains(searchText)) ||
+                (x.EnglishName != null &&
+                 x.EnglishName.Contains(searchText)));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

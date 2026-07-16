@@ -116,8 +116,10 @@ internal sealed class UpdateServiceWorkflowCommandHandler
                 ErrorType.NotFound));
         }
 
-        var normalizedArabicName = request.ArabicName.Trim();
-        var normalizedEnglishName = request.EnglishName.Trim();
+        var normalizedArabicName = ServiceWorkflowNameNormalizer.Normalize(
+            request.ArabicName);
+        var normalizedEnglishName = ServiceWorkflowNameNormalizer.Normalize(
+            request.EnglishName);
         var normalizedSteps = ServiceWorkflowRuleChecks.NormalizeSteps(
             request.Steps);
 

@@ -15,11 +15,11 @@ internal sealed class ServiceWorkflowConfiguration
         {
             table.HasCheckConstraint(
                 "CK_ServiceWorkflows_ArabicName_NotBlank",
-                "LEN(LTRIM(RTRIM([ArabicName]))) > 0");
+                "[ArabicName] IS NULL OR LEN(LTRIM(RTRIM([ArabicName]))) > 0");
 
             table.HasCheckConstraint(
                 "CK_ServiceWorkflows_EnglishName_NotBlank",
-                "LEN(LTRIM(RTRIM([EnglishName]))) > 0");
+                "[EnglishName] IS NULL OR LEN(LTRIM(RTRIM([EnglishName]))) > 0");
 
             table.HasCheckConstraint(
                 "CK_ServiceWorkflows_DefaultMustBeActive",
@@ -33,11 +33,11 @@ internal sealed class ServiceWorkflowConfiguration
 
         builder.Property(x => x.ArabicName)
             .HasMaxLength(100)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(x => x.EnglishName)
             .HasMaxLength(100)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(x => x.BranchId)
             .IsRequired();
@@ -161,6 +161,7 @@ internal sealed class ServiceWorkflowConfiguration
             x.ArabicName
         })
             .IsUnique()
+            .HasFilter("[ArabicName] IS NOT NULL")
             .HasDatabaseName(
                 "UX_ServiceWorkflows_BranchId_LeafServiceId_ArabicName");
 
@@ -171,6 +172,7 @@ internal sealed class ServiceWorkflowConfiguration
             x.EnglishName
         })
             .IsUnique()
+            .HasFilter("[EnglishName] IS NOT NULL")
             .HasDatabaseName(
                 "UX_ServiceWorkflows_BranchId_LeafServiceId_EnglishName");
 

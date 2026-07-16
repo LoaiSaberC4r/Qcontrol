@@ -855,14 +855,8 @@
   <data name="ServiceWorkflow_NotFound" xml:space="preserve">
     <value>تعذر العثور على مسار الخدمة.</value>
   </data>
-  <data name="ServiceWorkflow_ArabicName_Required" xml:space="preserve">
-    <value>اسم مسار الخدمة باللغة العربية مطلوب.</value>
-  </data>
   <data name="ServiceWorkflow_ArabicName_MaxLength" xml:space="preserve">
     <value>يجب ألا يتجاوز اسم مسار الخدمة باللغة العربية 100 حرف.</value>
-  </data>
-  <data name="ServiceWorkflow_EnglishName_Required" xml:space="preserve">
-    <value>اسم مسار الخدمة باللغة الإنجليزية مطلوب.</value>
   </data>
   <data name="ServiceWorkflow_EnglishName_MaxLength" xml:space="preserve">
     <value>يجب ألا يتجاوز اسم مسار الخدمة باللغة الإنجليزية 100 حرف.</value>

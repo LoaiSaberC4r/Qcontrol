@@ -11,9 +11,9 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
     {
     }
 
-    public string ArabicName { get; private set; } = string.Empty;
+    public string? ArabicName { get; private set; }
 
-    public string EnglishName { get; private set; } = string.Empty;
+    public string? EnglishName { get; private set; }
 
     public int BranchId { get; private set; }
 
@@ -55,8 +55,8 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
     public static ServiceWorkflow Create(
         int branchId,
         int leafServiceId,
-        string arabicName,
-        string englishName,
+        string? arabicName,
+        string? englishName,
         bool isDefault,
         IEnumerable<ServiceWorkflowStepData> steps,
         Guid createdByApplicationUserId)
@@ -65,8 +65,8 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
         {
             BranchId = branchId,
             LeafServiceId = leafServiceId,
-            ArabicName = NormalizeRequired(arabicName),
-            EnglishName = NormalizeRequired(englishName),
+            ArabicName = NormalizeOptional(arabicName),
+            EnglishName = NormalizeOptional(englishName),
             IsActive = true,
             IsDefault = isDefault,
             CreatedByApplicationUserId = createdByApplicationUserId,
@@ -79,13 +79,13 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
     }
 
     public void Update(
-        string arabicName,
-        string englishName,
+        string? arabicName,
+        string? englishName,
         IEnumerable<ServiceWorkflowStepData> steps,
         Guid lastModifiedByApplicationUserId)
     {
-        ArabicName = NormalizeRequired(arabicName);
-        EnglishName = NormalizeRequired(englishName);
+        ArabicName = NormalizeOptional(arabicName);
+        EnglishName = NormalizeOptional(englishName);
         LastModifiedByApplicationUserId = lastModifiedByApplicationUserId;
 
         ReplaceSteps(steps);
@@ -135,7 +135,10 @@ public sealed class ServiceWorkflow : AggregateRoot<int>
         }
     }
 
-    private static string NormalizeRequired(string value) => value.Trim();
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim();
 }
 
 public sealed record ServiceWorkflowStepData(

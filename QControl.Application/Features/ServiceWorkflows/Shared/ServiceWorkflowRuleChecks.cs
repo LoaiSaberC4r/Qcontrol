@@ -60,44 +60,50 @@ internal static class ServiceWorkflowRuleChecks
         IWriteReadRepository<ServiceWorkflow> workflowReadRepository,
         int branchId,
         int leafServiceId,
-        string arabicName,
-        string englishName,
+        string? arabicName,
+        string? englishName,
         int? excludedWorkflowId,
         string operation,
         CancellationToken cancellationToken)
     {
-        var duplicateArabicId =
-            await workflowReadRepository.FirstOrDefaultAsync(
-                new ServiceWorkflowDuplicateArabicNameSpec(
-                    branchId,
-                    leafServiceId,
-                    arabicName,
-                    excludedWorkflowId),
-                cancellationToken);
-
-        if (duplicateArabicId > 0)
+        if (arabicName is not null)
         {
-            return new Error(
-                $"ServiceWorkflows.{operation}.DuplicateArabicName",
-                ServiceWorkflowMessages.NameAlreadyExists,
-                ErrorType.Conflict);
+            var duplicateArabicId =
+                await workflowReadRepository.FirstOrDefaultAsync(
+                    new ServiceWorkflowDuplicateArabicNameSpec(
+                        branchId,
+                        leafServiceId,
+                        arabicName,
+                        excludedWorkflowId),
+                    cancellationToken);
+
+            if (duplicateArabicId > 0)
+            {
+                return new Error(
+                    $"ServiceWorkflows.{operation}.DuplicateArabicName",
+                    ServiceWorkflowMessages.NameAlreadyExists,
+                    ErrorType.Conflict);
+            }
         }
 
-        var duplicateEnglishId =
-            await workflowReadRepository.FirstOrDefaultAsync(
-                new ServiceWorkflowDuplicateEnglishNameSpec(
-                    branchId,
-                    leafServiceId,
-                    englishName,
-                    excludedWorkflowId),
-                cancellationToken);
-
-        if (duplicateEnglishId > 0)
+        if (englishName is not null)
         {
-            return new Error(
-                $"ServiceWorkflows.{operation}.DuplicateEnglishName",
-                ServiceWorkflowMessages.NameAlreadyExists,
-                ErrorType.Conflict);
+            var duplicateEnglishId =
+                await workflowReadRepository.FirstOrDefaultAsync(
+                    new ServiceWorkflowDuplicateEnglishNameSpec(
+                        branchId,
+                        leafServiceId,
+                        englishName,
+                        excludedWorkflowId),
+                    cancellationToken);
+
+            if (duplicateEnglishId > 0)
+            {
+                return new Error(
+                    $"ServiceWorkflows.{operation}.DuplicateEnglishName",
+                    ServiceWorkflowMessages.NameAlreadyExists,
+                    ErrorType.Conflict);
+            }
         }
 
         return null;

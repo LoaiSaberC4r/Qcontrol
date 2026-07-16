@@ -12,9 +12,9 @@ public sealed record CreateServiceWorkflowCommand
 
     public int LeafServiceId { get; init; }
 
-    public string ArabicName { get; init; } = string.Empty;
+    public string? ArabicName { get; init; }
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string? EnglishName { get; init; }
 
     public IReadOnlyList<ServiceWorkflowStepCommandItem> Steps { get; init; } =
         Array.Empty<ServiceWorkflowStepCommandItem>();

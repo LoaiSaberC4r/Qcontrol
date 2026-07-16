@@ -182,6 +182,8 @@ internal sealed class ReactivateServiceWorkflowCommandHandler
                 WorkflowId = workflow.Id,
                 BranchId = workflow.BranchId,
                 LeafServiceId = workflow.LeafServiceId,
+                ArabicName = workflow.ArabicName,
+                EnglishName = workflow.EnglishName,
                 IsDefault = workflow.IsDefault,
                 IsActive = workflow.IsActive,
                 RowVersion = RowVersionConverter.ToBase64(workflow.RowVersion),
