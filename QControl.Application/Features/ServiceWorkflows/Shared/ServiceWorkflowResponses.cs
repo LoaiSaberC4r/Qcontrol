@@ -49,9 +49,9 @@ public sealed class ServiceWorkflowResponse
 
     public string OwnerServiceEnglishName { get; init; } = string.Empty;
 
-    public string ArabicName { get; init; } = string.Empty;
+    public string? ArabicName { get; init; }
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string? EnglishName { get; init; }
 
     public bool IsDefault { get; init; }
 
@@ -93,9 +93,9 @@ public sealed class ServiceWorkflowListItemResponse
 
     public int LeafServiceId { get; init; }
 
-    public string ArabicName { get; init; } = string.Empty;
+    public string? ArabicName { get; init; }
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string? EnglishName { get; init; }
 
     public bool IsDefault { get; init; }
 
@@ -147,9 +147,9 @@ public sealed class ServiceWorkflowStartOptionItemResponse
 {
     public int WorkflowId { get; init; }
 
-    public string ArabicName { get; init; } = string.Empty;
+    public string? ArabicName { get; init; }
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string? EnglishName { get; init; }
 
     public bool IsActive { get; init; }
 
@@ -194,6 +194,10 @@ public sealed class ServiceWorkflowActivationResponse
 
     public int LeafServiceId { get; init; }
 
+    public string? ArabicName { get; init; }
+
+    public string? EnglishName { get; init; }
+
     public bool IsDefault { get; init; }
 
     public bool IsActive { get; init; }
@@ -211,9 +215,9 @@ internal sealed class ServiceWorkflowBasicProjection
 
     public int LeafServiceId { get; init; }
 
-    public string ArabicName { get; init; } = string.Empty;
+    public string? ArabicName { get; init; }
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string? EnglishName { get; init; }
 
     public bool IsDefault { get; init; }
 

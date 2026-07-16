@@ -2284,15 +2284,6 @@ namespace Qcontrol.Domain.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Arabic workflow name is required..
-        /// </summary>
-        public static string ServiceWorkflow_ArabicName_Required {
-            get {
-                return ResourceManager.GetString("ServiceWorkflow_ArabicName_Required", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Authentication is required..
         /// </summary>
         public static string ServiceWorkflow_Authentication_Required {
@@ -2325,15 +2316,6 @@ namespace Qcontrol.Domain.Resources {
         public static string ServiceWorkflow_EnglishName_MaxLength {
             get {
                 return ResourceManager.GetString("ServiceWorkflow_EnglishName_MaxLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The English workflow name is required..
-        /// </summary>
-        public static string ServiceWorkflow_EnglishName_Required {
-            get {
-                return ResourceManager.GetString("ServiceWorkflow_EnglishName_Required", resourceCulture);
             }
         }
         

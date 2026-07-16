@@ -49,14 +49,8 @@ internal static class ServiceWorkflowMessages
     public static string WorkflowOwnershipMismatch =>
         Get("ServiceWorkflow_Ownership_Mismatch", "The service workflow does not belong to the requested branch and leaf service.");
 
-    public static string ArabicNameRequired =>
-        Get("ServiceWorkflow_ArabicName_Required", "The Arabic workflow name is required.");
-
     public static string ArabicNameMaxLength =>
         Get("ServiceWorkflow_ArabicName_MaxLength", "The Arabic workflow name must not exceed 100 characters.");
-
-    public static string EnglishNameRequired =>
-        Get("ServiceWorkflow_EnglishName_Required", "The English workflow name is required.");
 
     public static string EnglishNameMaxLength =>
         Get("ServiceWorkflow_EnglishName_MaxLength", "The English workflow name must not exceed 100 characters.");

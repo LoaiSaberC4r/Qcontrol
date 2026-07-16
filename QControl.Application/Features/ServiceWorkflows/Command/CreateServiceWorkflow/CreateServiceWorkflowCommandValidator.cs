@@ -28,23 +28,17 @@ internal sealed class ServiceWorkflowFieldsValidator<T>
     : AbstractValidator<T>
 {
     public ServiceWorkflowFieldsValidator(
-        Expression<Func<T, string>> arabicName,
-        Expression<Func<T, string>> englishName,
+        Expression<Func<T, string?>> arabicName,
+        Expression<Func<T, string?>> englishName,
         Expression<Func<T, IReadOnlyList<ServiceWorkflowStepCommandItem>?>>
             steps)
     {
         RuleFor(arabicName)
-            .Cascade(CascadeMode.Stop)
-            .Must(x => !string.IsNullOrWhiteSpace(x))
-            .WithMessage(ServiceWorkflowMessages.ArabicNameRequired)
-            .MaximumLength(100)
+            .Must(HaveValidOptionalNameLength)
             .WithMessage(ServiceWorkflowMessages.ArabicNameMaxLength);
 
         RuleFor(englishName)
-            .Cascade(CascadeMode.Stop)
-            .Must(x => !string.IsNullOrWhiteSpace(x))
-            .WithMessage(ServiceWorkflowMessages.EnglishNameRequired)
-            .MaximumLength(100)
+            .Must(HaveValidOptionalNameLength)
             .WithMessage(ServiceWorkflowMessages.EnglishNameMaxLength);
 
         RuleFor(steps)
@@ -104,5 +98,11 @@ internal sealed class ServiceWorkflowFieldsValidator<T>
         IReadOnlyList<ServiceWorkflowStepCommandItem>? steps)
     {
         return steps is not null && steps.All(x => x.StepOrder > 0);
+    }
+
+    private static bool HaveValidOptionalNameLength(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ||
+            value.Trim().Length <= 100;
     }
 }

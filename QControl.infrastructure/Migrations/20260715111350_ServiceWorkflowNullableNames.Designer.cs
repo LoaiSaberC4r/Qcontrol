@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QControl.infrastructure.Persistence;
 
 #nullable disable
 
-namespace Qcontrol.Infrastructure.Migrations
+namespace QControl.infrastructure.Migrations
 {
     [DbContext(typeof(PlatformWriteDbContext))]
-    partial class PlatformWriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715111350_ServiceWorkflowNullableNames")]
+    partial class ServiceWorkflowNullableNames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
