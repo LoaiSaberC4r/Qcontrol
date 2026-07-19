@@ -220,6 +220,15 @@ internal static class SeedConstants
         public const string ServiceWorkflowsViewStartOptions =
             "ServiceWorkflows.ViewStartOptions";
 
+        public const string ServiceSchedulesView =
+            "ServiceSchedules.View";
+
+        public const string ServiceSchedulesCreate =
+            "ServiceSchedules.Create";
+
+        public const string ServiceSchedulesUpdate =
+            "ServiceSchedules.Update";
+
         public const string DisplayWindowsViewLinked =
             "DisplayWindows.ViewLinked";
 
@@ -542,6 +551,18 @@ internal static class SeedConstants
             public static readonly Guid ServiceWorkflowsSetDefault =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000073");
+
+            public static readonly Guid ServiceSchedulesView =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000074");
+
+            public static readonly Guid ServiceSchedulesCreate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000075");
+
+            public static readonly Guid ServiceSchedulesUpdate =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000076");
         }
     }
 
@@ -805,6 +826,18 @@ internal static class SeedConstants
                     PermissionNames.ServiceWorkflowsSetDefault),
 
                 new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceSchedulesView,
+                    PermissionNames.ServiceSchedulesView),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceSchedulesCreate,
+                    PermissionNames.ServiceSchedulesCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.ServiceSchedulesUpdate,
+                    PermissionNames.ServiceSchedulesUpdate),
+
+                new PermissionSeedItem(
                     SeedIds.Permissions.DisplayWindowsViewLinked,
                     PermissionNames.DisplayWindowsViewLinked),
 
@@ -887,7 +920,10 @@ internal static class SeedConstants
         SeedIds.Permissions.ServiceWorkflowsReactivate,
         SeedIds.Permissions.ServiceWorkflowsSetDefault,
         SeedIds.Permissions.ServiceWorkflowsViewCandidateServices,
-        SeedIds.Permissions.ServiceWorkflowsViewStartOptions
+        SeedIds.Permissions.ServiceWorkflowsViewStartOptions,
+        SeedIds.Permissions.ServiceSchedulesView,
+        SeedIds.Permissions.ServiceSchedulesCreate,
+        SeedIds.Permissions.ServiceSchedulesUpdate
     }
             .Select(permissionId =>
                 new RolePermissionSeedItem(

@@ -214,6 +214,54 @@ internal static class EntityTestFactory
         return service;
     }
 
+    public static void SetServiceActive(
+        Service service,
+        bool isActive)
+    {
+        SetPrivateProperty(
+            service,
+            nameof(QControl.Domain.Entities.Service.IsActive),
+            isActive);
+    }
+
+    public static BranchService BranchService(
+        int id,
+        int branchId,
+        int serviceId)
+    {
+        var branchService = QControl.Domain.Entities.BranchService.Create(
+            branchId,
+            serviceId,
+            CurrentUserId);
+
+        SetId(branchService, id);
+
+        return branchService;
+    }
+
+    public static ServiceSchedule ServiceSchedule(
+        int id,
+        int branchId,
+        int serviceId,
+        string? slotCode = null,
+        bool isSlotCodeRequired = false,
+        IReadOnlyCollection<DayOfWeek>? workDays = null)
+    {
+        var schedule = QControl.Domain.Entities.ServiceSchedule.Create(
+            branchId,
+            serviceId,
+            new TimeOnly(8, 0),
+            new TimeOnly(16, 0),
+            workDays ?? new[] { DayOfWeek.Sunday },
+            isSlotCodeRequired,
+            slotCode,
+            CurrentUserId);
+
+        SetId(schedule, id);
+
+        return schedule;
+    }
+
     public static DisplayWindow DisplayWindow(
         int id,
         int displayId,

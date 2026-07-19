@@ -18,6 +18,8 @@ internal sealed class TestUnitOfWork : IUnitOfWork
 
     public IsolationLevel? LastIsolationLevel { get; private set; }
 
+    public Exception? SaveChangesException { get; init; }
+
     public IWriteRepository<TEntity, PlatformWriteMarker> WriteRepository<TEntity>()
         where TEntity : class
         => throw new NotSupportedException();
@@ -25,6 +27,11 @@ internal sealed class TestUnitOfWork : IUnitOfWork
     public Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         SaveChangesCallCount++;
+
+        if (SaveChangesException is not null)
+        {
+            throw SaveChangesException;
+        }
 
         return Task.FromResult(1);
     }

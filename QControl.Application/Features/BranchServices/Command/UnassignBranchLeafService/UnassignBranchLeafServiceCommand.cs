@@ -17,6 +17,9 @@ public sealed record UnassignBranchLeafServiceCommand
             OperationalCacheTags.Services,
             OperationalCacheTags.ServiceCentral,
             OperationalCacheTags.BranchServices,
-            OperationalCacheTags.BranchServicesForBranch(BranchId)
+            OperationalCacheTags.BranchServicesForBranch(BranchId),
+            OperationalCacheTags.ServiceSchedules,
+            OperationalCacheTags.ServiceSchedulesForBranch(BranchId),
+            OperationalCacheTags.ServiceSchedule(BranchId, LeafServiceId)
         };
 }

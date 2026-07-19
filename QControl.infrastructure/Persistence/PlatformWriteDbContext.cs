@@ -25,6 +25,12 @@ namespace QControl.infrastructure.Persistence
 
         public int? CurrentBranchId => _branchContext.ActiveBranchId;
 
+        public DbSet<ServiceSchedule> ServiceSchedules =>
+            Set<ServiceSchedule>();
+
+        public DbSet<ServiceScheduleWorkDay> ServiceScheduleWorkDays =>
+            Set<ServiceScheduleWorkDay>();
+
         public PlatformWriteDbContext(
             DbContextOptions<PlatformWriteDbContext> options,
             ICurrentTenantContext tenantContext,
@@ -126,6 +132,20 @@ namespace QControl.infrastructure.Persistence
                     (CurrentBranchId.HasValue &&
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
+
+            modelBuilder.Entity<ServiceSchedule>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<ServiceScheduleWorkDay>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.ServiceSchedule.BranchId == CurrentBranchId &&
+                     x.ServiceSchedule.Branch.IsActive));
 
             modelBuilder.Entity<ApplicationUserBranch>()
                 .HasQueryFilter(x =>
