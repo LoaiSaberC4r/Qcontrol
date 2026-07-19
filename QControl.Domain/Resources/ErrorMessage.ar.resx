@@ -1359,17 +1359,35 @@
   <data name="ServiceSchedule_AlreadyExists" xml:space="preserve">
     <value>يوجد جدول خدمة بالفعل لهذه الخدمة في الفرع المحدد.</value>
   </data>
+  <data name="ServiceSchedule_Days_Required" xml:space="preserve">
+    <value>يجب إضافة يوم واحد على الأقل إلى جدول الخدمة.</value>
+  </data>
+  <data name="ServiceSchedule_Day_Duplicate" xml:space="preserve">
+    <value>لا يمكن إرسال اليوم نفسه أكثر من مرة.</value>
+  </data>
+  <data name="ServiceSchedule_Day_Invalid" xml:space="preserve">
+    <value>اليوم المرسل غير صحيح.</value>
+  </data>
+  <data name="ServiceSchedule_TimeSlots_Required" xml:space="preserve">
+    <value>يجب أن يحتوي كل يوم في الجدول على فترة زمنية واحدة على الأقل.</value>
+  </data>
+  <data name="ServiceSchedule_StartTime_Required" xml:space="preserve">
+    <value>وقت البداية مطلوب.</value>
+  </data>
+  <data name="ServiceSchedule_EndTime_Required" xml:space="preserve">
+    <value>وقت النهاية مطلوب.</value>
+  </data>
   <data name="ServiceSchedule_TimeRange_Invalid" xml:space="preserve">
     <value>يجب أن يكون وقت البداية قبل وقت النهاية.</value>
   </data>
-  <data name="ServiceSchedule_WorkDays_Required" xml:space="preserve">
-    <value>يجب اختيار يوم عمل واحد على الأقل.</value>
+  <data name="ServiceSchedule_TimeSlot_Duplicate" xml:space="preserve">
+    <value>لا يُسمح بتكرار الفترات الزمنية في اليوم نفسه.</value>
   </data>
-  <data name="ServiceSchedule_WorkDay_Duplicate" xml:space="preserve">
-    <value>لا يمكن اختيار يوم العمل نفسه أكثر من مرة.</value>
+  <data name="ServiceSchedule_TimeSlots_Overlapping" xml:space="preserve">
+    <value>لا يمكن أن تتداخل الفترات الزمنية في اليوم نفسه.</value>
   </data>
-  <data name="ServiceSchedule_WorkDay_Invalid" xml:space="preserve">
-    <value>يوم العمل المرسل غير صحيح.</value>
+  <data name="ServiceSchedule_Invalid" xml:space="preserve">
+    <value>جدول الخدمة المرسل غير صحيح.</value>
   </data>
   <data name="ServiceSchedule_SlotCode_Required" xml:space="preserve">
     <value>كود الدور مطلوب لهذا الجدول.</value>

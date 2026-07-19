@@ -10,12 +10,8 @@ public sealed class ServiceScheduleResponse
 
     public int ServiceId { get; init; }
 
-    public TimeOnly StartTime { get; init; }
-
-    public TimeOnly EndTime { get; init; }
-
-    public IReadOnlyCollection<DayOfWeek> WorkDays { get; init; } =
-        Array.Empty<DayOfWeek>();
+    public IReadOnlyCollection<ServiceScheduleDayResponse> Days { get; init; } =
+        Array.Empty<ServiceScheduleDayResponse>();
 
     public bool IsSlotCodeRequired { get; init; }
 
@@ -36,6 +32,21 @@ public sealed class ServiceScheduleResponse
     public string? Message { get; init; }
 }
 
+public sealed class ServiceScheduleDayResponse
+{
+    public DayOfWeek DayOfWeek { get; init; }
+
+    public IReadOnlyCollection<ServiceScheduleTimeSlotResponse> TimeSlots
+        { get; init; } = Array.Empty<ServiceScheduleTimeSlotResponse>();
+}
+
+public sealed class ServiceScheduleTimeSlotResponse
+{
+    public TimeOnly StartTime { get; init; }
+
+    public TimeOnly EndTime { get; init; }
+}
+
 internal sealed class ServiceScheduleProjection
 {
     public int ScheduleId { get; init; }
@@ -44,12 +55,8 @@ internal sealed class ServiceScheduleProjection
 
     public int ServiceId { get; init; }
 
-    public TimeOnly StartTime { get; init; }
-
-    public TimeOnly EndTime { get; init; }
-
-    public IReadOnlyCollection<DayOfWeek> WorkDays { get; init; } =
-        Array.Empty<DayOfWeek>();
+    public IReadOnlyCollection<ServiceScheduleTimeSlotProjection> TimeSlots
+        { get; init; } = Array.Empty<ServiceScheduleTimeSlotProjection>();
 
     public bool IsSlotCodeRequired { get; init; }
 
@@ -66,6 +73,15 @@ internal sealed class ServiceScheduleProjection
     public DateTime? ModifiedOnUtc { get; init; }
 }
 
+internal sealed class ServiceScheduleTimeSlotProjection
+{
+    public DayOfWeek DayOfWeek { get; init; }
+
+    public TimeOnly StartTime { get; init; }
+
+    public TimeOnly EndTime { get; init; }
+}
+
 internal static class ServiceScheduleResponseFactory
 {
     public static ServiceScheduleResponse ToResponse(
@@ -78,10 +94,22 @@ internal static class ServiceScheduleResponseFactory
             ScheduleId = schedule.ScheduleId,
             BranchId = schedule.BranchId,
             ServiceId = schedule.ServiceId,
-            StartTime = schedule.StartTime,
-            EndTime = schedule.EndTime,
-            WorkDays = schedule.WorkDays
-                .OrderBy(x => x)
+            Days = schedule.TimeSlots
+                .GroupBy(slot => slot.DayOfWeek)
+                .OrderBy(group => group.Key)
+                .Select(group => new ServiceScheduleDayResponse
+                {
+                    DayOfWeek = group.Key,
+                    TimeSlots = group
+                        .OrderBy(slot => slot.StartTime)
+                        .ThenBy(slot => slot.EndTime)
+                        .Select(slot => new ServiceScheduleTimeSlotResponse
+                        {
+                            StartTime = slot.StartTime,
+                            EndTime = slot.EndTime
+                        })
+                        .ToArray()
+                })
                 .ToArray(),
             IsSlotCodeRequired = schedule.IsSlotCodeRequired,
             SlotCode = schedule.SlotCode,

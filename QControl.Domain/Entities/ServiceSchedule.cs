@@ -5,7 +5,7 @@ namespace QControl.Domain.Entities;
 
 public sealed class ServiceSchedule : AggregateRoot<int>
 {
-    private readonly List<ServiceScheduleWorkDay> _workDays = new();
+    private readonly List<ServiceScheduleTimeSlot> _timeSlots = new();
 
     private ServiceSchedule()
     {
@@ -18,10 +18,6 @@ public sealed class ServiceSchedule : AggregateRoot<int>
     public int ServiceId { get; private set; }
 
     public Service Service { get; private set; } = null!;
-
-    public TimeOnly StartTime { get; private set; }
-
-    public TimeOnly EndTime { get; private set; }
 
     public bool IsSlotCodeRequired { get; private set; }
 
@@ -37,85 +33,145 @@ public sealed class ServiceSchedule : AggregateRoot<int>
 
     public ApplicationUser? LastModifiedByApplicationUser { get; private set; }
 
-    public IReadOnlyCollection<ServiceScheduleWorkDay> WorkDays =>
-        _workDays.AsReadOnly();
+    public IReadOnlyCollection<ServiceScheduleTimeSlot> TimeSlots =>
+        _timeSlots.AsReadOnly();
 
     public static ServiceSchedule Create(
         int branchId,
         int serviceId,
-        TimeOnly startTime,
-        TimeOnly endTime,
-        IReadOnlyCollection<DayOfWeek> workDays,
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition> timeSlots,
         bool isSlotCodeRequired,
         string? slotCode,
         Guid createdByApplicationUserId)
     {
         EnsurePositive(branchId, nameof(branchId));
         EnsurePositive(serviceId, nameof(serviceId));
-        EnsureTimeRange(startTime, endTime);
         EnsureUserId(createdByApplicationUserId, nameof(createdByApplicationUserId));
+
+        var replacementTimeSlots = BuildTimeSlots(timeSlots);
+        var normalizedSlotCode = NormalizeSlotCode(
+            isSlotCodeRequired,
+            slotCode);
 
         var schedule = new ServiceSchedule
         {
             BranchId = branchId,
             ServiceId = serviceId,
-            StartTime = startTime,
-            EndTime = endTime,
             IsSlotCodeRequired = isSlotCodeRequired,
-            SlotCode = NormalizeSlotCode(isSlotCodeRequired, slotCode),
+            SlotCode = normalizedSlotCode,
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
 
-        schedule.ReplaceWorkDays(workDays);
+        schedule._timeSlots.AddRange(replacementTimeSlots);
 
         return schedule;
     }
 
     public void Update(
-        TimeOnly startTime,
-        TimeOnly endTime,
-        IReadOnlyCollection<DayOfWeek> workDays,
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition> timeSlots,
         bool isSlotCodeRequired,
         string? slotCode,
         Guid modifiedByApplicationUserId,
         DateTime modifiedOnUtc)
     {
-        EnsureTimeRange(startTime, endTime);
         EnsureUserId(modifiedByApplicationUserId, nameof(modifiedByApplicationUserId));
 
-        StartTime = startTime;
-        EndTime = endTime;
+        var replacementTimeSlots = BuildTimeSlots(timeSlots);
+        var normalizedSlotCode = NormalizeSlotCode(
+            isSlotCodeRequired,
+            slotCode);
+
+        _timeSlots.Clear();
+        _timeSlots.AddRange(replacementTimeSlots);
         IsSlotCodeRequired = isSlotCodeRequired;
-        SlotCode = NormalizeSlotCode(isSlotCodeRequired, slotCode);
+        SlotCode = normalizedSlotCode;
         LastModifiedByApplicationUserId = modifiedByApplicationUserId;
         ModifiedOnUtc = modifiedOnUtc;
-
-        ReplaceWorkDays(workDays);
     }
 
     public bool IsAvailableAt(
         DayOfWeek dayOfWeek,
         TimeOnly currentTime)
     {
-        return _workDays.Any(x => x.DayOfWeek == dayOfWeek) &&
-            currentTime >= StartTime &&
-            currentTime < EndTime;
+        return _timeSlots.Any(slot =>
+            slot.DayOfWeek == dayOfWeek &&
+            currentTime >= slot.StartTime &&
+            currentTime < slot.EndTime);
     }
 
-    private void ReplaceWorkDays(
-        IReadOnlyCollection<DayOfWeek> workDays)
+    private static IReadOnlyCollection<ServiceScheduleTimeSlot> BuildTimeSlots(
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition> timeSlots)
     {
-        EnsureValidWorkDays(workDays);
-
-        _workDays.Clear();
-
-        foreach (var workDay in workDays
-            .Distinct()
-            .OrderBy(x => x))
+        if (timeSlots is null || timeSlots.Count == 0)
         {
-            _workDays.Add(ServiceScheduleWorkDay.Create(workDay));
+            throw new ArgumentException(
+                "At least one service schedule time slot is required.",
+                nameof(timeSlots));
         }
+
+        var orderedDefinitions = timeSlots
+            .OrderBy(slot => slot.DayOfWeek)
+            .ThenBy(slot => slot.StartTime)
+            .ThenBy(slot => slot.EndTime)
+            .ToArray();
+
+        foreach (var definition in orderedDefinitions)
+        {
+            if (!Enum.IsDefined(definition.DayOfWeek))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(timeSlots),
+                    "Every time slot must have a valid day of week.");
+            }
+
+            if (definition.StartTime >= definition.EndTime)
+            {
+                throw new ArgumentException(
+                    "Every time slot start time must be earlier than its end time.",
+                    nameof(timeSlots));
+            }
+        }
+
+        if (orderedDefinitions
+            .GroupBy(slot => new
+            {
+                slot.DayOfWeek,
+                slot.StartTime,
+                slot.EndTime
+            })
+            .Any(group => group.Count() > 1))
+        {
+            throw new ArgumentException(
+                "Duplicate time slots are not allowed for the same day.",
+                nameof(timeSlots));
+        }
+
+        foreach (var daySlots in orderedDefinitions.GroupBy(x => x.DayOfWeek))
+        {
+            TimeOnly? greatestEndTime = null;
+
+            foreach (var current in daySlots)
+            {
+                if (greatestEndTime.HasValue &&
+                    current.StartTime < greatestEndTime.Value)
+                {
+                    throw new ArgumentException(
+                        "Time slots cannot overlap within the same day.",
+                        nameof(timeSlots));
+                }
+
+                if (!greatestEndTime.HasValue ||
+                    current.EndTime > greatestEndTime.Value)
+                {
+                    greatestEndTime = current.EndTime;
+                }
+            }
+        }
+
+        return orderedDefinitions
+            .Select(ServiceScheduleTimeSlot.Create)
+            .ToArray();
     }
 
     private static string? NormalizeSlotCode(
@@ -134,44 +190,6 @@ public sealed class ServiceSchedule : AggregateRoot<int>
             throw new ArgumentOutOfRangeException(
                 parameterName,
                 $"{parameterName} must be greater than zero.");
-        }
-    }
-
-    private static void EnsureTimeRange(
-        TimeOnly startTime,
-        TimeOnly endTime)
-    {
-        if (startTime >= endTime)
-        {
-            throw new ArgumentException(
-                "Start time must be earlier than end time.",
-                nameof(startTime));
-        }
-    }
-
-    private static void EnsureValidWorkDays(
-        IReadOnlyCollection<DayOfWeek> workDays)
-    {
-        if (workDays is null || workDays.Count == 0)
-        {
-            throw new ArgumentException(
-                "At least one working day is required.",
-                nameof(workDays));
-        }
-
-        if (workDays.Any(day => !Enum.IsDefined(day)))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(workDays),
-                "Every working day must be a valid day of week.");
-        }
-
-        if (workDays.Select(day => (int)day).Distinct().Count() !=
-            workDays.Count)
-        {
-            throw new ArgumentException(
-                "Working days must be distinct.",
-                nameof(workDays));
         }
     }
 

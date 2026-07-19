@@ -14,10 +14,6 @@ internal sealed class ServiceScheduleConfiguration
         builder.ToTable("ServiceSchedule", table =>
         {
             table.HasCheckConstraint(
-                "CK_ServiceSchedule_TimeRange",
-                "[StartTime] < [EndTime]");
-
-            table.HasCheckConstraint(
                 "CK_ServiceSchedule_SlotCode_NotBlank",
                 "[SlotCode] IS NULL OR LEN(LTRIM(RTRIM([SlotCode]))) > 0");
 
@@ -35,14 +31,6 @@ internal sealed class ServiceScheduleConfiguration
             .IsRequired();
 
         builder.Property(x => x.ServiceId)
-            .IsRequired();
-
-        builder.Property(x => x.StartTime)
-            .HasColumnType("time(0)")
-            .IsRequired();
-
-        builder.Property(x => x.EndTime)
-            .HasColumnType("time(0)")
             .IsRequired();
 
         builder.Property(x => x.IsSlotCodeRequired)
@@ -71,12 +59,12 @@ internal sealed class ServiceScheduleConfiguration
         builder.Property(x => x.LastModifiedByApplicationUserId)
             .IsRequired(false);
 
-        builder.HasMany(x => x.WorkDays)
+        builder.HasMany(x => x.TimeSlots)
             .WithOne(x => x.ServiceSchedule)
             .HasForeignKey(x => x.ServiceScheduleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Navigation(x => x.WorkDays)
+        builder.Navigation(x => x.TimeSlots)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasOne(x => x.Branch)

@@ -28,8 +28,8 @@ namespace QControl.infrastructure.Persistence
         public DbSet<ServiceSchedule> ServiceSchedules =>
             Set<ServiceSchedule>();
 
-        public DbSet<ServiceScheduleWorkDay> ServiceScheduleWorkDays =>
-            Set<ServiceScheduleWorkDay>();
+        public DbSet<ServiceScheduleTimeSlot> ServiceScheduleTimeSlots =>
+            Set<ServiceScheduleTimeSlot>();
 
         public PlatformWriteDbContext(
             DbContextOptions<PlatformWriteDbContext> options,
@@ -140,7 +140,7 @@ namespace QControl.infrastructure.Persistence
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
 
-            modelBuilder.Entity<ServiceScheduleWorkDay>()
+            modelBuilder.Entity<ServiceScheduleTimeSlot>()
                 .HasQueryFilter(x =>
                     !IsBranchScopeEnabled ||
                     (CurrentBranchId.HasValue &&

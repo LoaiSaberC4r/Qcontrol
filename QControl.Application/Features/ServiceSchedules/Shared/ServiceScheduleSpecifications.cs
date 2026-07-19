@@ -16,7 +16,7 @@ internal sealed class GetServiceScheduleForMutationSpec
         AddCriteria(x =>
             x.BranchId == branchId &&
             x.ServiceId == serviceId);
-        Include(x => x.WorkDays);
+        Include(x => x.TimeSlots);
     }
 }
 
@@ -45,11 +45,16 @@ internal sealed class GetServiceScheduleProjectionSpec
             ScheduleId = x.Id,
             BranchId = x.BranchId,
             ServiceId = x.ServiceId,
-            StartTime = x.StartTime,
-            EndTime = x.EndTime,
-            WorkDays = x.WorkDays
-                .OrderBy(day => day.DayOfWeek)
-                .Select(day => day.DayOfWeek)
+            TimeSlots = x.TimeSlots
+                .OrderBy(slot => slot.DayOfWeek)
+                .ThenBy(slot => slot.StartTime)
+                .ThenBy(slot => slot.EndTime)
+                .Select(slot => new ServiceScheduleTimeSlotProjection
+                {
+                    DayOfWeek = slot.DayOfWeek,
+                    StartTime = slot.StartTime,
+                    EndTime = slot.EndTime
+                })
                 .ToArray(),
             IsSlotCodeRequired = x.IsSlotCodeRequired,
             SlotCode = x.SlotCode,

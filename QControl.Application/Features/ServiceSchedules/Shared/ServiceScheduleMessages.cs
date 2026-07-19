@@ -46,17 +46,35 @@ internal static class ServiceScheduleMessages
     public static string ScheduleAlreadyExists =>
         Get("ServiceSchedule_AlreadyExists", "A service schedule already exists for this service in the selected branch.");
 
+    public static string DaysRequired =>
+        Get("ServiceSchedule_Days_Required", "At least one schedule day is required.");
+
+    public static string DuplicateDay =>
+        Get("ServiceSchedule_Day_Duplicate", "The same day cannot be supplied more than once.");
+
+    public static string InvalidDay =>
+        Get("ServiceSchedule_Day_Invalid", "The supplied day is invalid.");
+
+    public static string TimeSlotsRequired =>
+        Get("ServiceSchedule_TimeSlots_Required", "Every schedule day must contain at least one time slot.");
+
+    public static string StartTimeRequired =>
+        Get("ServiceSchedule_StartTime_Required", "Start time is required.");
+
+    public static string EndTimeRequired =>
+        Get("ServiceSchedule_EndTime_Required", "End time is required.");
+
     public static string InvalidTimeRange =>
         Get("ServiceSchedule_TimeRange_Invalid", "The start time must be earlier than the end time.");
 
-    public static string WorkDaysRequired =>
-        Get("ServiceSchedule_WorkDays_Required", "At least one working day is required.");
+    public static string DuplicateTimeSlot =>
+        Get("ServiceSchedule_TimeSlot_Duplicate", "Duplicate time slots are not allowed for the same day.");
 
-    public static string DuplicateWorkDay =>
-        Get("ServiceSchedule_WorkDay_Duplicate", "The same working day cannot be selected more than once.");
+    public static string OverlappingTimeSlots =>
+        Get("ServiceSchedule_TimeSlots_Overlapping", "Time slots cannot overlap within the same day.");
 
-    public static string InvalidWorkDay =>
-        Get("ServiceSchedule_WorkDay_Invalid", "The supplied working day is invalid.");
+    public static string InvalidSchedule =>
+        Get("ServiceSchedule_Invalid", "The supplied service schedule is invalid.");
 
     public static string SlotCodeRequired =>
         Get("ServiceSchedule_SlotCode_Required", "A slot code is required for this schedule.");

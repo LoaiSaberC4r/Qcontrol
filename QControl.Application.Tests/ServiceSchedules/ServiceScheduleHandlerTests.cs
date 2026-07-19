@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.ServiceSchedules.Command.CreateServiceSchedule;
 using Qcontrol.Application.Features.ServiceSchedules.Command.UpdateServiceSchedule;
 using Qcontrol.Application.Features.ServiceSchedules.Query.GetServiceSchedule;
+using Qcontrol.Application.Features.ServiceSchedules.Shared;
 using QControl.Application.Tests.TestSupport;
 using QControl.Domain.Entities;
 
@@ -31,6 +32,36 @@ public sealed class ServiceScheduleHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Single(fixture.Schedules);
         Assert.Equal("MED-01", fixture.Schedules[0].SlotCode);
+        Assert.Equal(3, fixture.Schedules[0].TimeSlots.Count);
+        Assert.Collection(
+            result.Value.Days,
+            day =>
+            {
+                Assert.Equal(DayOfWeek.Sunday, day.DayOfWeek);
+                Assert.Collection(
+                    day.TimeSlots,
+                    slot =>
+                    {
+                        Assert.Equal(new TimeOnly(9, 0), slot.StartTime);
+                        Assert.Equal(new TimeOnly(12, 0), slot.EndTime);
+                    });
+            },
+            day =>
+            {
+                Assert.Equal(DayOfWeek.Saturday, day.DayOfWeek);
+                Assert.Collection(
+                    day.TimeSlots,
+                    slot =>
+                    {
+                        Assert.Equal(new TimeOnly(8, 0), slot.StartTime);
+                        Assert.Equal(new TimeOnly(10, 0), slot.EndTime);
+                    },
+                    slot =>
+                    {
+                        Assert.Equal(new TimeOnly(14, 0), slot.StartTime);
+                        Assert.Equal(new TimeOnly(18, 0), slot.EndTime);
+                    });
+            });
         Assert.Equal(1, scheduleWriteRepository.AddCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
@@ -303,13 +334,17 @@ public sealed class ServiceScheduleHandlerTests
     }
 
     [Fact]
-    public async Task Update_succeeds_and_replaces_work_days()
+    public async Task Update_succeeds_and_replaces_all_time_slots()
     {
         var schedule = EntityTestFactory.ServiceSchedule(
             20,
             1,
             10,
-            workDays: new[] { DayOfWeek.Sunday });
+            timeSlots: new[]
+            {
+                Definition(DayOfWeek.Sunday, 8, 12),
+                Definition(DayOfWeek.Monday, 8, 12)
+            });
         var fixture = CreateFixture(schedules: new List<ServiceSchedule>
         {
             schedule
@@ -325,18 +360,27 @@ public sealed class ServiceScheduleHandlerTests
         var result = await handler.Handle(
             ValidUpdateCommand() with
             {
-                WorkDays = new[]
+                Days = new[]
                 {
-                    DayOfWeek.Tuesday,
-                    DayOfWeek.Wednesday
+                    Day(
+                        DayOfWeek.Tuesday,
+                        Slot(8, 10),
+                        Slot(14, 18)),
+                    Day(DayOfWeek.Wednesday, Slot(9, 12))
                 }
             },
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(
-            new[] { DayOfWeek.Tuesday, DayOfWeek.Wednesday },
-            schedule.WorkDays.Select(x => x.DayOfWeek));
+            new[]
+            {
+                (DayOfWeek.Tuesday, new TimeOnly(8, 0), new TimeOnly(10, 0)),
+                (DayOfWeek.Tuesday, new TimeOnly(14, 0), new TimeOnly(18, 0)),
+                (DayOfWeek.Wednesday, new TimeOnly(9, 0), new TimeOnly(12, 0))
+            },
+            schedule.TimeSlots.Select(x =>
+                (x.DayOfWeek, x.StartTime, x.EndTime)));
         Assert.Equal(1, scheduleWriteRepository.UpdateCallCount);
         Assert.Equal(1, tokenManager.SetOriginalRowVersionCallCount);
     }
@@ -356,6 +400,46 @@ public sealed class ServiceScheduleHandlerTests
             result.Errors,
             error => error.Code ==
                 "ServiceSchedules.Update.ScheduleNotFound");
+    }
+
+    [Fact]
+    public async Task Update_maps_invalid_time_slots_without_mutating_or_saving()
+    {
+        var schedule = EntityTestFactory.ServiceSchedule(20, 1, 10);
+        var fixture = CreateFixture(schedules: new List<ServiceSchedule>
+        {
+            schedule
+        });
+        var unitOfWork = new TestUnitOfWork();
+        var handler = UpdateHandler(fixture, unitOfWork: unitOfWork);
+
+        var result = await handler.Handle(
+            ValidUpdateCommand() with
+            {
+                Days = new[]
+                {
+                    Day(
+                        DayOfWeek.Monday,
+                        Slot(8, 12),
+                        Slot(10, 14))
+                }
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code ==
+                "ServiceSchedules.Update.InvalidSchedule");
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Collection(
+            schedule.TimeSlots,
+            slot =>
+            {
+                Assert.Equal(DayOfWeek.Sunday, slot.DayOfWeek);
+                Assert.Equal(new TimeOnly(8, 0), slot.StartTime);
+                Assert.Equal(new TimeOnly(16, 0), slot.EndTime);
+            });
     }
 
     [Fact]
@@ -437,7 +521,19 @@ public sealed class ServiceScheduleHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.IsCurrentlyOperational);
-        Assert.Equal(new[] { DayOfWeek.Sunday }, result.Value.WorkDays);
+        Assert.Collection(
+            result.Value.Days,
+            day =>
+            {
+                Assert.Equal(DayOfWeek.Sunday, day.DayOfWeek);
+                Assert.Collection(
+                    day.TimeSlots,
+                    slot =>
+                    {
+                        Assert.Equal(new TimeOnly(8, 0), slot.StartTime);
+                        Assert.Equal(new TimeOnly(16, 0), slot.EndTime);
+                    });
+            });
     }
 
     private static CreateServiceScheduleCommand ValidCreateCommand()
@@ -445,9 +541,14 @@ public sealed class ServiceScheduleHandlerTests
         {
             BranchId = 1,
             LeafServiceId = 10,
-            StartTime = new TimeOnly(8, 0),
-            EndTime = new TimeOnly(16, 0),
-            WorkDays = new[] { DayOfWeek.Sunday },
+            Days = new[]
+            {
+                Day(
+                    DayOfWeek.Saturday,
+                    Slot(14, 18),
+                    Slot(8, 10)),
+                Day(DayOfWeek.Sunday, Slot(9, 12))
+            },
             IsSlotCodeRequired = false,
             SlotCode = null
         };
@@ -457,13 +558,35 @@ public sealed class ServiceScheduleHandlerTests
         {
             BranchId = 1,
             LeafServiceId = 10,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(14, 0),
-            WorkDays = new[] { DayOfWeek.Monday },
+            Days = new[] { Day(DayOfWeek.Monday, Slot(9, 14)) },
             IsSlotCodeRequired = false,
             SlotCode = null,
             RowVersion = ValidRowVersion
         };
+
+    private static ServiceScheduleDayCommandItem Day(
+        DayOfWeek day,
+        params ServiceScheduleTimeSlotCommandItem[] timeSlots) => new()
+        {
+            DayOfWeek = day,
+            TimeSlots = timeSlots
+        };
+
+    private static ServiceScheduleTimeSlotCommandItem Slot(
+        int startHour,
+        int endHour) => new()
+        {
+            StartTime = new TimeOnly(startHour, 0),
+            EndTime = new TimeOnly(endHour, 0)
+        };
+
+    private static ServiceScheduleTimeSlotDefinition Definition(
+        DayOfWeek day,
+        int startHour,
+        int endHour) => new(
+            day,
+            new TimeOnly(startHour, 0),
+            new TimeOnly(endHour, 0));
 
     private static CreateServiceScheduleCommandHandler CreateHandler(
         Fixture fixture,

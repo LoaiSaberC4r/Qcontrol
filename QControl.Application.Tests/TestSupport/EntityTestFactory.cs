@@ -249,14 +249,18 @@ internal static class EntityTestFactory
         int serviceId,
         string? slotCode = null,
         bool isSlotCodeRequired = false,
-        IReadOnlyCollection<DayOfWeek>? workDays = null)
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition>? timeSlots = null)
     {
         var schedule = QControl.Domain.Entities.ServiceSchedule.Create(
             branchId,
             serviceId,
-            new TimeOnly(8, 0),
-            new TimeOnly(16, 0),
-            workDays ?? new[] { DayOfWeek.Sunday },
+            timeSlots ?? new[]
+            {
+                new ServiceScheduleTimeSlotDefinition(
+                    DayOfWeek.Sunday,
+                    new TimeOnly(8, 0),
+                    new TimeOnly(16, 0))
+            },
             isSlotCodeRequired,
             slotCode,
             CurrentUserId);
