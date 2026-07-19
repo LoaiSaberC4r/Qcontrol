@@ -303,6 +303,38 @@ public sealed class ServiceCommandHandlerTests
     }
 
     [Fact]
+    public async Task Delete_branch_scoped_service_preserves_branch_assignment()
+    {
+        var service = EntityTestFactory.BranchScopedService(1, ownerBranchId: 7);
+        var services = new List<ServiceEntity> { service };
+        var assignments = new List<QControl.Domain.Entities.BranchService>
+        {
+            EntityTestFactory.BranchService(1, 7, service.Id)
+        };
+        var handler = new DeleteServiceCommandHandler(
+            new InMemoryWriteReadRepository<ServiceEntity>(services),
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            new TestDateTimeProvider(),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            new DeleteServiceCommand
+            {
+                Id = service.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(service.IsDeleted);
+        Assert.False(service.IsActive);
+        Assert.Single(assignments);
+        Assert.Equal(service.Id, assignments[0].ServiceId);
+    }
+
+    [Fact]
     public async Task Restore_child_under_deleted_parent_is_allowed_but_not_effectively_active()
     {
         var parent = Service(1);
@@ -340,6 +372,39 @@ public sealed class ServiceCommandHandlerTests
         Assert.False(result.Value.CanIssueTicket);
         Assert.Equal(1, writeRepository.UpdateCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task Restore_branch_scoped_service_keeps_existing_assignment_without_duplicate()
+    {
+        var service = EntityTestFactory.BranchScopedService(1, ownerBranchId: 7);
+        service.SoftDelete(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var services = new List<ServiceEntity> { service };
+        var assignments = new List<QControl.Domain.Entities.BranchService>
+        {
+            EntityTestFactory.BranchService(1, 7, service.Id)
+        };
+        var handler = new RestoreServiceCommandHandler(
+            new InMemoryWriteReadRepository<ServiceEntity>(services),
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            new TestDateTimeProvider(),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            new RestoreServiceCommand
+            {
+                Id = service.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(service.IsDeleted);
+        Assert.True(service.IsActive);
+        Assert.Single(assignments);
+        Assert.Equal(service.Id, assignments[0].ServiceId);
     }
 
     private static CreateServiceCommand ValidCreate()

@@ -16,9 +16,13 @@ internal sealed class InMemoryWriteRepository<TEntity>
 
     public int AddCallCount { get; private set; }
 
+    public int AddRangeCallCount { get; private set; }
+
     public int UpdateCallCount { get; private set; }
 
     public int DeleteCallCount { get; private set; }
+
+    public int DeleteRangeCallCount { get; private set; }
 
     public Task AddAsync(
         TEntity entity,
@@ -34,6 +38,7 @@ internal sealed class InMemoryWriteRepository<TEntity>
         List<TEntity> entities,
         CancellationToken ct = default)
     {
+        AddRangeCallCount++;
         _items.AddRange(entities);
 
         return Task.CompletedTask;
@@ -68,6 +73,8 @@ internal sealed class InMemoryWriteRepository<TEntity>
 
     public void DeleteRange(IEnumerable<TEntity> entities)
     {
+        DeleteRangeCallCount++;
+
         foreach (var entity in entities.ToArray())
         {
             Delete(entity);

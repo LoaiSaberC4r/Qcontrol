@@ -1413,4 +1413,40 @@
   <data name="Branch_PermanentDelete_ServiceSchedulesExist" xml:space="preserve">
     <value>The branch cannot be permanently deleted because service schedules exist.</value>
   </data>
+  <data name="BranchServices_Assign_BranchScopedNotSupported" xml:space="preserve">
+    <value>Branch-scoped services cannot be assigned manually because they are owned by their branch.</value>
+  </data>
+  <data name="BranchServices_Assign_InvalidScopeHierarchy" xml:space="preserve">
+    <value>The service hierarchy contains an invalid service scope.</value>
+  </data>
+  <data name="BranchServices_Unassign_BranchScopedNotSupported" xml:space="preserve">
+    <value>Branch-scoped services cannot be unassigned. Use the service soft-delete operation instead.</value>
+  </data>
+  <data name="BranchServices_Unassign_InvalidScopeHierarchy" xml:space="preserve">
+    <value>The service hierarchy contains an invalid service scope and cannot be unassigned safely.</value>
+  </data>
+  <data name="Service_PermanentDelete_Success" xml:space="preserve">
+    <value>Service permanently deleted successfully.</value>
+  </data>
+  <data name="Service_PermanentDelete_GlobalNotSupported" xml:space="preserve">
+    <value>Global services cannot be permanently deleted through this operation.</value>
+  </data>
+  <data name="Service_PermanentDelete_MustBeSoftDeletedFirst" xml:space="preserve">
+    <value>The service must be soft deleted before it can be permanently deleted.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasHistoricalTickets" xml:space="preserve">
+    <value>The service cannot be permanently deleted because historical tickets exist.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasChildren" xml:space="preserve">
+    <value>The service cannot be permanently deleted because it has child services.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasWorkflowReferences" xml:space="preserve">
+    <value>The service cannot be permanently deleted because workflows still reference it.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasPendingGlobalizationRequest" xml:space="preserve">
+    <value>The service cannot be permanently deleted while a globalization request is pending.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasDependencies" xml:space="preserve">
+    <value>The service cannot be permanently deleted because related records still exist.</value>
+  </data>
 </root>

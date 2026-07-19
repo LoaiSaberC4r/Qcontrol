@@ -7,6 +7,7 @@ using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
 using QControl.Domain.Entities;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.BranchServices.Command.AssignBranchServices;
 
@@ -68,15 +69,9 @@ internal sealed class AssignBranchServicesCommandHandler
                 branchAccess.Errors);
         }
 
-        var branch = await _branchReadRepository.Query()
-            .IgnoreQueryFilters()
-            .Where(x => x.Id == request.BranchId)
-            .Select(x => new
-            {
-                x.Id,
-                x.IsActive
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+        var branch = await _branchReadRepository.FirstOrDefaultAsync(
+            new GetBranchForBranchServiceOperationSpec(request.BranchId),
+            cancellationToken);
 
         if (branch is null)
         {
@@ -109,7 +104,6 @@ internal sealed class AssignBranchServicesCommandHandler
         {
             var validation = ResolveLeafPath(
                 leafId,
-                request.BranchId,
                 itemsById,
                 states,
                 serviceIdsToAssign);
@@ -124,12 +118,9 @@ internal sealed class AssignBranchServicesCommandHandler
             .OrderBy(x => x)
             .ToArray();
 
-        var existingAssignments = await _branchServiceReadRepository.Query()
-            .Where(x =>
-                x.BranchId == request.BranchId &&
-                resolvedIds.Contains(x.ServiceId))
-            .Select(x => x.ServiceId)
-            .ToArrayAsync(cancellationToken);
+        var existingAssignments = await _branchServiceReadRepository.ListAsync(
+            new GetBranchServiceIdsSpec(request.BranchId, resolvedIds),
+            cancellationToken);
         var existingSet = existingAssignments.ToHashSet();
 
         var newAssignments = resolvedIds
@@ -177,7 +168,6 @@ internal sealed class AssignBranchServicesCommandHandler
 
     private static Error? ResolveLeafPath(
         int leafId,
-        int branchId,
         IReadOnlyDictionary<int, ServiceHierarchyItem> itemsById,
         IReadOnlyDictionary<int, ServiceHierarchyState> states,
         ISet<int> serviceIdsToAssign)
@@ -222,6 +212,15 @@ internal sealed class AssignBranchServicesCommandHandler
                 ErrorType.Conflict);
         }
 
+        if (leaf.Scope == ServiceScope.BranchScoped)
+        {
+            return new Error(
+                "BranchServices.Assign.BranchScopedServiceNotSupported",
+                ServiceFeatureMessages
+                    .BranchServicesAssignBranchScopedNotSupported,
+                ErrorType.Conflict);
+        }
+
         var current = leaf;
         var visited = new HashSet<int>();
 
@@ -235,13 +234,14 @@ internal sealed class AssignBranchServicesCommandHandler
                     ErrorType.Conflict);
             }
 
-            if (current.Scope == QControl.Domain.Enums.ServiceScope.BranchScoped &&
-                current.OwnerBranchId != branchId)
+            if (current.Scope != ServiceScope.Global ||
+                current.OwnerBranchId.HasValue)
             {
                 return new Error(
-                    "BranchServices.Assign.ForeignBranchServiceForbidden",
-                    ServiceFeatureMessages.ForeignBranchServiceForbidden,
-                    ErrorType.Security);
+                    "BranchServices.Assign.InvalidScopeHierarchy",
+                    ServiceFeatureMessages
+                        .BranchServicesAssignInvalidScopeHierarchy,
+                    ErrorType.Conflict);
             }
 
             serviceIdsToAssign.Add(current.Id);
@@ -272,14 +272,11 @@ internal sealed class AssignBranchServicesCommandHandler
             IReadOnlyList<int> resolvedIds,
             CancellationToken cancellationToken)
     {
-        var assignedAfterRace = await _branchServiceReadRepository.Query()
-            .Where(x =>
-                x.BranchId == branchId &&
-                resolvedIds.Contains(x.ServiceId))
-            .Select(x => x.ServiceId)
-            .ToArrayAsync(cancellationToken);
+        var assignedAfterRace = await _branchServiceReadRepository.ListAsync(
+            new GetBranchServiceIdsSpec(branchId, resolvedIds),
+            cancellationToken);
 
-        if (assignedAfterRace.Length != resolvedIds.Count)
+        if (assignedAfterRace.Count != resolvedIds.Count)
         {
             return Failure(
                 "BranchServices.Assign.PersistenceConflict",
@@ -294,7 +291,7 @@ internal sealed class AssignBranchServicesCommandHandler
                 RequestedLeafServiceIds = requestedLeafIds,
                 AssignedServiceIds = resolvedIds,
                 CreatedAssignmentsCount = 0,
-                ExistingAssignmentsCount = assignedAfterRace.Length,
+                ExistingAssignmentsCount = assignedAfterRace.Count,
                 Message = ServiceFeatureMessages.BranchServicesAssignSuccess
             });
     }

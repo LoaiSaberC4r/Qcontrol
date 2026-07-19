@@ -218,6 +218,57 @@ internal static class EntityTestFactory
         return service;
     }
 
+    public static Service BranchScopedService(
+        int id,
+        int ownerBranchId,
+        int? parentServiceId = null,
+        bool isTicketIssuable = false)
+    {
+        var service = QControl.Domain.Entities.Service.CreateBranchScoped(
+            parentServiceId,
+            ownerBranchId,
+            $"Arabic Branch Service {id}",
+            $"English Branch Service {id}",
+            serviceCode: null,
+            isServiceCodeRequired: false,
+            arabicUserMessage: null,
+            englishUserMessage: null,
+            isTicketIssuable,
+            isClientInputRequired: false,
+            hasReservation: false,
+            orderNo: id,
+            priority: 0,
+            rangePrefix: $"B{id}",
+            rangeStartNumber: 1,
+            rangeEndNumber: 999,
+            waitingDuration: 0,
+            noOfTicketCopies: 1,
+            createdByApplicationUserId: CurrentUserId);
+
+        SetId(service, id);
+
+        return service;
+    }
+
+    public static ServiceImage ServiceImage(
+        int id,
+        int serviceId,
+        string imagePath,
+        QControl.Domain.Enums.ServiceImageType imageType =
+            QControl.Domain.Enums.ServiceImageType.Ads)
+    {
+        var image = QControl.Domain.Entities.ServiceImage.Create(
+            serviceId,
+            imagePath,
+            imageType,
+            displayOrder: 0,
+            CurrentUserId);
+
+        SetId(image, id);
+
+        return image;
+    }
+
     public static void SetServiceActive(
         Service service,
         bool isActive)
