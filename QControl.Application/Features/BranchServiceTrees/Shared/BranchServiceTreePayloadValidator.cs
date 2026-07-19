@@ -1,6 +1,7 @@
 using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
 using Qcontrol.Application.Features.Services.Shared;
+using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.BranchServiceTrees.Shared;
 
@@ -28,12 +29,14 @@ internal static class BranchServiceTreePayloadValidator
 {
     public static Error? Validate(
         CreateBranchServiceTreeNodeCommand root,
-        BranchServiceTreePayloadValidationOptions options)
+        BranchServiceTreePayloadValidationOptions options,
+        ICollection<string>? normalizedServiceCodes = null)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(options);
 
         var total = 0;
+        var serviceCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var stack = new Stack<CreateBranchServiceTreeNodeCommand>();
         stack.Push(root);
 
@@ -54,6 +57,22 @@ internal static class BranchServiceTreePayloadValidator
             if (nodeValidation is not null)
             {
                 return nodeValidation;
+            }
+
+            var normalizedServiceCode =
+                ServiceCodeNormalizer.Normalize(node.ServiceCode);
+            if (normalizedServiceCode is not null &&
+                !serviceCodes.Add(normalizedServiceCode))
+            {
+                return new Error(
+                    $"{options.CodePrefix}.DuplicateServiceCodeInTreePayload",
+                    ServiceFeatureMessages.DuplicateServiceCodeInTreePayload,
+                    ErrorType.Validation);
+            }
+
+            if (normalizedServiceCode is not null)
+            {
+                normalizedServiceCodes?.Add(normalizedServiceCode);
             }
 
             var children = node.Children ??
@@ -116,6 +135,33 @@ internal static class BranchServiceTreePayloadValidator
             return new Error(
                 $"{options.CodePrefix}.EnglishNameMaxLength",
                 ServiceFeatureMessages.EnglishNameMaxLength,
+                ErrorType.Validation);
+        }
+
+        var normalizedServiceCode =
+            ServiceCodeNormalizer.Normalize(node.ServiceCode);
+
+        if (node.IsServiceCodeRequired && normalizedServiceCode is null)
+        {
+            return new Error(
+                $"{options.CodePrefix}.ServiceCodeRequired",
+                ServiceFeatureMessages.ServiceCodeRequired,
+                ErrorType.Validation);
+        }
+
+        if (!node.IsServiceCodeRequired && normalizedServiceCode is not null)
+        {
+            return new Error(
+                $"{options.CodePrefix}.ServiceCodeMustBeNull",
+                ServiceFeatureMessages.ServiceCodeMustBeNull,
+                ErrorType.Validation);
+        }
+
+        if (normalizedServiceCode?.Length > ServiceCodeNormalizer.MaxLength)
+        {
+            return new Error(
+                $"{options.CodePrefix}.ServiceCodeMaximumLength",
+                ServiceFeatureMessages.ServiceCodeMaximumLength,
                 ErrorType.Validation);
         }
 

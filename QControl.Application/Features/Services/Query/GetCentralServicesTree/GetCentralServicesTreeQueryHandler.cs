@@ -138,6 +138,8 @@ internal sealed class GetCentralServicesTreeQueryHandler
             CanEditDefinition = access.CanEditDefinition,
             ArabicName = item.ArabicName,
             EnglishName = item.EnglishName,
+            ServiceCode = item.ServiceCode,
+            IsServiceCodeRequired = item.IsServiceCodeRequired,
             IsActive = item.IsActive,
             EffectiveIsActive = state.EffectiveIsActive,
             IsTicketIssuable = item.IsTicketIssuable,

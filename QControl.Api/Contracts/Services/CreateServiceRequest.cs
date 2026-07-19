@@ -8,6 +8,10 @@ public sealed class CreateServiceRequest
 
     public string EnglishName { get; init; } = string.Empty;
 
+    public string? ServiceCode { get; init; }
+
+    public bool IsServiceCodeRequired { get; init; }
+
     public string? ArabicUserMessage { get; init; }
 
     public string? EnglishUserMessage { get; init; }

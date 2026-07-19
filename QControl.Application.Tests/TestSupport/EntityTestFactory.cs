@@ -189,12 +189,16 @@ internal static class EntityTestFactory
         int? parentServiceId = null,
         string? arabicName = null,
         string? englishName = null,
-        bool isTicketIssuable = false)
+        bool isTicketIssuable = false,
+        string? serviceCode = null,
+        bool isServiceCodeRequired = false)
     {
         var service = QControl.Domain.Entities.Service.Create(
             parentServiceId,
             arabicName ?? $"Arabic Service {id}",
             englishName ?? $"English Service {id}",
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage: null,
             englishUserMessage: null,
             isTicketIssuable,

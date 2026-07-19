@@ -22,6 +22,10 @@ internal sealed class ServiceConfiguration
                 "LEN(LTRIM(RTRIM([EnglishName]))) > 0");
 
             table.HasCheckConstraint(
+                "CK_Service_ServiceCode_Requirement",
+                "([IsServiceCodeRequired] = 1 AND [ServiceCode] IS NOT NULL AND LEN(LTRIM(RTRIM([ServiceCode]))) > 0) OR ([IsServiceCodeRequired] = 0 AND [ServiceCode] IS NULL)");
+
+            table.HasCheckConstraint(
                 "CK_Service_RangePrefix_NullOrNotBlank",
                 "[RangePrefix] IS NULL OR LEN(LTRIM(RTRIM([RangePrefix]))) > 0");
 
@@ -83,6 +87,15 @@ internal sealed class ServiceConfiguration
 
         builder.Property(x => x.EnglishName)
             .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.ServiceCode)
+            .HasMaxLength(ServiceCodeNormalizer.MaxLength)
+            .IsUnicode(false)
+            .IsRequired(false);
+
+        builder.Property(x => x.IsServiceCodeRequired)
+            .HasDefaultValue(false)
             .IsRequired();
 
         builder.Property(x => x.ArabicUserMessage)
@@ -201,6 +214,11 @@ internal sealed class ServiceConfiguration
         builder.HasIndex(x => x.IsActive);
 
         builder.HasIndex(x => x.IsDeleted);
+
+        builder.HasIndex(x => x.ServiceCode)
+            .IsUnique()
+            .HasFilter("[ServiceCode] IS NOT NULL")
+            .HasDatabaseName("UX_Service_ServiceCode");
 
         builder.HasIndex(x => x.CreatedByApplicationUserId);
 

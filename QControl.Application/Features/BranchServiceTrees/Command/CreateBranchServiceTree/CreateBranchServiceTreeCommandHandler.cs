@@ -114,6 +114,7 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                 ErrorType.Validation);
         }
 
+        var requestedServiceCodes = new List<string>();
         var payloadValidation = BranchServiceTreePayloadValidator.Validate(
             request.Root,
             new BranchServiceTreePayloadValidationOptions
@@ -131,11 +132,25 @@ internal sealed class CreateBranchServiceTreeCommandHandler
                     ServiceFeatureMessages.BranchServiceTreeDuplicateArabicName,
                 DuplicateEnglishNameMessage =
                     ServiceFeatureMessages.BranchServiceTreeDuplicateEnglishName
-            });
+            },
+            requestedServiceCodes);
         if (payloadValidation is not null)
         {
             return Result<CreateBranchServiceTreeResponse>.Fail(
                 payloadValidation);
+        }
+
+        var duplicateServiceCode =
+            await ServiceRuleChecks.ValidateServiceCodesAreUniqueAsync(
+                _serviceReadRepository,
+                requestedServiceCodes,
+                "BranchServiceTrees.Create.ServiceCodeAlreadyExists",
+                cancellationToken);
+
+        if (duplicateServiceCode is not null)
+        {
+            return Result<CreateBranchServiceTreeResponse>.Fail(
+                duplicateServiceCode);
         }
 
         var duplicateRoot = await ValidateDuplicateRootNamesAsync(
@@ -192,7 +207,8 @@ internal sealed class CreateBranchServiceTreeCommandHandler
             return Result<CreateBranchServiceTreeResponse>.Fail(error);
         }
         catch (DbUpdateException ex)
-            when (ServiceUniqueConstraintErrorMapper.TryMapCreate(
+            when (ServiceUniqueConstraintErrorMapper
+                .TryMapBranchServiceTreeCreate(
                 ex,
                 out var error))
         {

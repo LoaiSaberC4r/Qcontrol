@@ -38,6 +38,10 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
 
     public string EnglishName { get; private set; } = string.Empty;
 
+    public string? ServiceCode { get; private set; }
+
+    public bool IsServiceCodeRequired { get; private set; }
+
     public string? ArabicUserMessage { get; private set; }
 
     public string? EnglishUserMessage { get; private set; }
@@ -84,6 +88,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int? parentServiceId,
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -101,6 +107,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             parentServiceId,
             arabicName,
             englishName,
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage,
             englishUserMessage,
             isTicketIssuable,
@@ -119,6 +127,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int? parentServiceId,
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -139,6 +149,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             ownerBranchId: null,
             arabicName,
             englishName,
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage,
             englishUserMessage,
             isTicketIssuable,
@@ -158,6 +170,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int ownerBranchId,
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -178,6 +192,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             ownerBranchId,
             arabicName,
             englishName,
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage,
             englishUserMessage,
             isTicketIssuable,
@@ -197,6 +213,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int ownerBranchId,
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -217,6 +235,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             ownerBranchId,
             arabicName,
             englishName,
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage,
             englishUserMessage,
             isTicketIssuable,
@@ -234,6 +254,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
     public void Update(
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -250,6 +272,7 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
     {
         ArabicName = NormalizeRequired(arabicName);
         EnglishName = NormalizeRequired(englishName);
+        SetServiceCode(serviceCode, isServiceCodeRequired);
         ArabicUserMessage = NormalizeOptional(arabicUserMessage);
         EnglishUserMessage = NormalizeOptional(englishUserMessage);
         IsTicketIssuable = isTicketIssuable;
@@ -346,6 +369,24 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             : value.Trim();
     }
 
+    private void SetServiceCode(
+        string? serviceCode,
+        bool isServiceCodeRequired)
+    {
+        var normalizedServiceCode =
+            ServiceCodeNormalizer.Normalize(serviceCode);
+
+        if (isServiceCodeRequired != (normalizedServiceCode is not null))
+        {
+            throw new ArgumentException(
+                "The service-code requirement must match the presence of a service code.",
+                nameof(isServiceCodeRequired));
+        }
+
+        ServiceCode = normalizedServiceCode;
+        IsServiceCodeRequired = isServiceCodeRequired;
+    }
+
     private static Service CreateCore(
         int? parentServiceId,
         Service? parentService,
@@ -353,6 +394,8 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int? ownerBranchId,
         string arabicName,
         string englishName,
+        string? serviceCode,
+        bool isServiceCodeRequired,
         string? arabicUserMessage,
         string? englishUserMessage,
         bool isTicketIssuable,
@@ -367,7 +410,7 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         int? noOfTicketCopies,
         Guid createdByApplicationUserId)
     {
-        return new Service
+        var service = new Service
         {
             ParentServiceId = parentServiceId,
             ParentService = parentService,
@@ -392,6 +435,22 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
             CreatedByApplicationUserId = createdByApplicationUserId,
             LastModifiedByApplicationUserId = null
         };
+
+        service.SetServiceCode(serviceCode, isServiceCodeRequired);
+
+        return service;
     }
 
+}
+
+public static class ServiceCodeNormalizer
+{
+    public const int MaxLength = 100;
+
+    public static string? Normalize(string? serviceCode)
+    {
+        return string.IsNullOrWhiteSpace(serviceCode)
+            ? null
+            : serviceCode.Trim();
+    }
 }

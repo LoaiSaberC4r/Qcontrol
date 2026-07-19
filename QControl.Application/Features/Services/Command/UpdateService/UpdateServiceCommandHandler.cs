@@ -129,11 +129,26 @@ internal sealed class UpdateServiceCommandHandler
 
         var normalizedArabicName = request.ArabicName.Trim();
         var normalizedEnglishName = request.EnglishName.Trim();
+        var normalizedServiceCode =
+            ServiceCodeNormalizer.Normalize(request.ServiceCode);
         var normalizedRangePrefix = string.IsNullOrWhiteSpace(request.RangePrefix)
             ? null
             : request.RangePrefix.Trim();
         var requestedTicketIssuable =
             request.IsTicketIssuable.GetValueOrDefault();
+
+        var duplicateServiceCodeError =
+            await ServiceRuleChecks.ValidateServiceCodeIsUniqueAsync(
+                _serviceReadRepository,
+                normalizedServiceCode,
+                service.Id,
+                "Services.Update.ServiceCodeAlreadyExists",
+                cancellationToken);
+
+        if (duplicateServiceCodeError is not null)
+        {
+            return Result<ServiceResponse>.Fail(duplicateServiceCodeError);
+        }
 
         var ticketSettingsError = ServiceRuleChecks.ValidateTicketSettings(
             requestedTicketIssuable,
@@ -223,6 +238,8 @@ internal sealed class UpdateServiceCommandHandler
         service.Update(
             arabicName: normalizedArabicName,
             englishName: normalizedEnglishName,
+            serviceCode: normalizedServiceCode,
+            isServiceCodeRequired: request.IsServiceCodeRequired,
             arabicUserMessage: request.ArabicUserMessage,
             englishUserMessage: request.EnglishUserMessage,
             isTicketIssuable: requestedTicketIssuable,

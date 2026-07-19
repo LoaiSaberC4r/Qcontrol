@@ -2,6 +2,7 @@ using FluentValidation;
 using Qcontrol.Application.Features.Services.Command.CreateService;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Shared.Operational;
+using QControl.Domain.Entities;
 
 namespace Qcontrol.Application.Features.Services.Command.UpdateService;
 
@@ -47,6 +48,25 @@ internal sealed class UpdateServiceCommandValidator
                 .WithMessage(ServiceFeatureMessages.EnglishNameRequired)
                 .MaximumLength(100)
                 .WithMessage(ServiceFeatureMessages.EnglishNameMaxLength);
+
+            RuleFor(x => x.ServiceCode)
+                .Must(value =>
+                {
+                    var normalized = ServiceCodeNormalizer.Normalize(value);
+                    return normalized is null ||
+                        normalized.Length <= ServiceCodeNormalizer.MaxLength;
+                })
+                .WithMessage(ServiceFeatureMessages.ServiceCodeMaximumLength);
+
+            RuleFor(x => x.ServiceCode)
+                .Must(value => !string.IsNullOrWhiteSpace(value))
+                .When(x => x.IsServiceCodeRequired)
+                .WithMessage(ServiceFeatureMessages.ServiceCodeRequired);
+
+            RuleFor(x => x.ServiceCode)
+                .Must(string.IsNullOrWhiteSpace)
+                .When(x => !x.IsServiceCodeRequired)
+                .WithMessage(ServiceFeatureMessages.ServiceCodeMustBeNull);
 
             RuleFor(x => x.ArabicUserMessage)
                 .MaximumLength(500)

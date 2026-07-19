@@ -223,6 +223,21 @@ internal static class ServiceFeatureMessages
     public static string EnglishNameMaxLength =>
         Get("Service_EnglishName_MaxLength", "The English service name must not exceed 100 characters.");
 
+    public static string ServiceCodeRequired =>
+        Get("Service_Code_Required", "Service code is required when service code is marked as required.");
+
+    public static string ServiceCodeMustBeNull =>
+        Get("Service_Code_MustBeNull", "Service code must be null when service code is not required.");
+
+    public static string ServiceCodeMaximumLength =>
+        Get("Service_Code_MaxLength", "Service code cannot exceed 100 characters.");
+
+    public static string ServiceCodeAlreadyExists =>
+        Get("Service_Code_AlreadyExists", "The specified service code is already used by another service.");
+
+    public static string DuplicateServiceCodeInTreePayload =>
+        Get("Service_Tree_DuplicateServiceCode", "The service tree request contains duplicate service codes.");
+
     public static string ArabicUserMessageMaxLength =>
         Get("Service_ArabicUserMessage_MaxLength", "The Arabic user message must not exceed 500 characters.");
 

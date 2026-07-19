@@ -49,6 +49,18 @@ internal static class CreateBranchServiceSubtreeUniqueConstraintErrorMapper
             return true;
         }
 
+        if (message.Contains(
+                "UX_Service_ServiceCode",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                "BranchServiceTrees.CreateSubtree.ServiceCodeAlreadyExists",
+                ServiceFeatureMessages.ServiceCodeAlreadyExists,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
         error = new Error(
             "BranchServiceTrees.CreateSubtree.PersistenceConflict",
             ServiceFeatureMessages.BranchServiceSubtreePersistenceConflict,

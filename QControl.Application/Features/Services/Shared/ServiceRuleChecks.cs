@@ -166,6 +166,63 @@ internal static class ServiceRuleChecks
         return null;
     }
 
+    public static async Task<Error?> ValidateServiceCodeIsUniqueAsync(
+        IWriteReadRepository<Service> serviceReadRepository,
+        string? normalizedServiceCode,
+        int? excludedServiceId,
+        string errorCode,
+        CancellationToken cancellationToken)
+    {
+        if (normalizedServiceCode is null)
+        {
+            return null;
+        }
+
+        var duplicateServiceId =
+            await serviceReadRepository.FirstOrDefaultAsync(
+                new ServiceDuplicateCodeSpec(
+                    normalizedServiceCode,
+                    excludedServiceId),
+                cancellationToken);
+
+        return duplicateServiceId > 0
+            ? new Error(
+                errorCode,
+                ServiceFeatureMessages.ServiceCodeAlreadyExists,
+                ErrorType.Conflict)
+            : null;
+    }
+
+    public static async Task<Error?> ValidateServiceCodesAreUniqueAsync(
+        IWriteReadRepository<Service> serviceReadRepository,
+        IEnumerable<string?> serviceCodes,
+        string errorCode,
+        CancellationToken cancellationToken)
+    {
+        var normalizedCodes = serviceCodes
+            .Select(ServiceCodeNormalizer.Normalize)
+            .Where(x => x is not null)
+            .Select(x => x!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (normalizedCodes.Length == 0)
+        {
+            return null;
+        }
+
+        var conflicts = await serviceReadRepository.ListAsync(
+            new ServiceCodesInUseSpec(normalizedCodes),
+            cancellationToken);
+
+        return conflicts.Count > 0
+            ? new Error(
+                errorCode,
+                ServiceFeatureMessages.ServiceCodeAlreadyExists,
+                ErrorType.Conflict)
+            : null;
+    }
+
     public static Error? ValidateTicketSettings(
         bool isTicketIssuable,
         string? rangePrefix,

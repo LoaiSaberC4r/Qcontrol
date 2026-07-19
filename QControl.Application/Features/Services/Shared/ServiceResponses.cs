@@ -28,6 +28,10 @@ public sealed class ServiceResponse
 
     public string EnglishName { get; init; } = string.Empty;
 
+    public string? ServiceCode { get; init; }
+
+    public bool IsServiceCodeRequired { get; init; }
+
     public string? LogoUrl { get; init; }
 
     public string? IconUrl { get; init; }
@@ -80,6 +84,10 @@ public sealed class ServiceDetailsResponse
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
+
+    public string? ServiceCode { get; init; }
+
+    public bool IsServiceCodeRequired { get; init; }
 
     public string? ArabicUserMessage { get; init; }
 
@@ -160,6 +168,10 @@ public sealed class ServiceTreeNodeResponse
     public string ArabicName { get; init; } = string.Empty;
 
     public string EnglishName { get; init; } = string.Empty;
+
+    public string? ServiceCode { get; init; }
+
+    public bool IsServiceCodeRequired { get; init; }
 
     public bool IsActive { get; init; }
 
@@ -284,6 +296,8 @@ internal static class ServiceResponseFactory
             CanEditDefinition = access.CanEditDefinition,
             ArabicName = item.ArabicName,
             EnglishName = item.EnglishName,
+            ServiceCode = item.ServiceCode,
+            IsServiceCodeRequired = item.IsServiceCodeRequired,
             LogoUrl = images?.LogoUrl,
             IconUrl = images?.IconUrl,
             IsActive = item.IsActive,
@@ -323,6 +337,8 @@ internal static class ServiceResponseFactory
             ParentServiceNameEn = parent?.EnglishName,
             ArabicName = item.ArabicName,
             EnglishName = item.EnglishName,
+            ServiceCode = item.ServiceCode,
+            IsServiceCodeRequired = item.IsServiceCodeRequired,
             ArabicUserMessage = item.ArabicUserMessage,
             EnglishUserMessage = item.EnglishUserMessage,
             LogoUrl = images?.LogoUrl,
