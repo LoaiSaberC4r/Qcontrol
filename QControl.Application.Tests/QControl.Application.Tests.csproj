@@ -20,6 +20,7 @@
     <ProjectReference Include="..\QControl.Application\QControl.Application.csproj" />
     <ProjectReference Include="..\QControl.Domain\QControl.Domain.csproj" />
     <ProjectReference Include="..\QControl.infrastructure\QControl.infrastructure.csproj" />
+    <ProjectReference Include="..\QControl.Api\QControl.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

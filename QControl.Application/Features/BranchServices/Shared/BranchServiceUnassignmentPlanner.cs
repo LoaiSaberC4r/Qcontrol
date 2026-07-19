@@ -1,5 +1,6 @@
 ﻿using BuildingBlock.Domain.Results;
 using Qcontrol.Application.Features.Services.Shared;
+using QControl.Domain.Enums;
 
 namespace Qcontrol.Application.Features.BranchServices.Shared;
 
@@ -43,6 +44,21 @@ internal static class BranchServiceUnassignmentPlanner
                 ServiceFeatureMessages
                     .BranchServicesUnassignAssignmentNotFound,
                 ErrorType.NotFound);
+        }
+
+        if (selectedLeaf.Scope == ServiceScope.BranchScoped)
+        {
+            return new Error(
+                "BranchServices.Unassign.BranchScopedServiceNotSupported",
+                ServiceFeatureMessages
+                    .BranchServicesUnassignBranchScopedNotSupported,
+                ErrorType.Conflict);
+        }
+
+        if (selectedLeaf.Scope != ServiceScope.Global ||
+            selectedLeaf.OwnerBranchId.HasValue)
+        {
+            return InvalidScopeHierarchyError();
         }
 
         foreach (var assignedServiceId in assignedServiceIds)
@@ -97,6 +113,12 @@ internal static class BranchServiceUnassignmentPlanner
                     out var currentParent))
             {
                 return InvalidHierarchyError();
+            }
+
+            if (currentParent.Scope != ServiceScope.Global ||
+                currentParent.OwnerBranchId.HasValue)
+            {
+                return InvalidScopeHierarchyError();
             }
 
             if (ancestorsRequiredByOtherLeaves.Contains(currentParent.Id))
@@ -155,5 +177,12 @@ internal static class BranchServiceUnassignmentPlanner
             "BranchServices.Unassign.InvalidHierarchy",
             ServiceFeatureMessages
                 .BranchServicesUnassignInvalidHierarchy,
+            ErrorType.Conflict);
+
+    private static Error InvalidScopeHierarchyError()
+        => new(
+            "BranchServices.Unassign.InvalidScopeHierarchy",
+            ServiceFeatureMessages
+                .BranchServicesUnassignInvalidScopeHierarchy,
             ErrorType.Conflict);
 }

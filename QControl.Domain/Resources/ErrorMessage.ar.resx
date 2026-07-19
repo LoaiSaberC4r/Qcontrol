@@ -1413,4 +1413,40 @@
   <data name="Branch_PermanentDelete_ServiceSchedulesExist" xml:space="preserve">
     <value>لا يمكن حذف الفرع نهائيا لأن جداول خدمات موجودة له.</value>
   </data>
+  <data name="BranchServices_Assign_BranchScopedNotSupported" xml:space="preserve">
+    <value>لا يمكن ربط الخدمة المملوكة للفرع يدويًا لأنها مرتبطة بفرعها تلقائيًا.</value>
+  </data>
+  <data name="BranchServices_Assign_InvalidScopeHierarchy" xml:space="preserve">
+    <value>يحتوي التسلسل الهرمي للخدمات على نطاق خدمة غير صالح.</value>
+  </data>
+  <data name="BranchServices_Unassign_BranchScopedNotSupported" xml:space="preserve">
+    <value>لا يمكن إلغاء ربط خدمة مملوكة للفرع. استخدم عملية الحذف المنطقي للخدمة بدلًا من ذلك.</value>
+  </data>
+  <data name="BranchServices_Unassign_InvalidScopeHierarchy" xml:space="preserve">
+    <value>يحتوي التسلسل الهرمي للخدمات على نطاق خدمة غير صالح ولا يمكن إلغاء الربط بأمان.</value>
+  </data>
+  <data name="Service_PermanentDelete_Success" xml:space="preserve">
+    <value>تم حذف الخدمة نهائيًا بنجاح.</value>
+  </data>
+  <data name="Service_PermanentDelete_GlobalNotSupported" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة العامة نهائيًا من خلال هذه العملية.</value>
+  </data>
+  <data name="Service_PermanentDelete_MustBeSoftDeletedFirst" xml:space="preserve">
+    <value>يجب حذف الخدمة منطقيًا قبل حذفها نهائيًا.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasHistoricalTickets" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة نهائيًا لوجود تذاكر تاريخية مرتبطة بها.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasChildren" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة نهائيًا لوجود خدمات فرعية مرتبطة بها.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasWorkflowReferences" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة نهائيًا لوجود مسارات عمل مرتبطة بها.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasPendingGlobalizationRequest" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة نهائيًا أثناء وجود طلب تعميم قيد الانتظار.</value>
+  </data>
+  <data name="Service_PermanentDelete_HasDependencies" xml:space="preserve">
+    <value>لا يمكن حذف الخدمة نهائيًا لوجود بيانات مرتبطة بها.</value>
+  </data>
 </root>

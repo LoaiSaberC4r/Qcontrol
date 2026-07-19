@@ -88,16 +88,9 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
                 branchAccess.Errors);
         }
 
-        var branch = await _branchReadRepository.Query()
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(x => x.Id == request.BranchId)
-            .Select(x => new
-            {
-                x.Id,
-                x.IsActive
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+        var branch = await _branchReadRepository.FirstOrDefaultAsync(
+            new GetBranchForBranchServiceOperationSpec(request.BranchId),
+            cancellationToken);
 
         if (branch is null)
         {
@@ -120,10 +113,9 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
             cancellationToken);
 
         var branchAssignments =
-            await _branchServiceReadRepository.Query()
-                .AsTracking()
-                .Where(x => x.BranchId == request.BranchId)
-                .ToListAsync(cancellationToken);
+            await _branchServiceReadRepository.ListAsync(
+                new GetBranchServicesForUnassignmentSpec(request.BranchId),
+                cancellationToken);
 
         var assignedServiceIds = branchAssignments
             .Select(x => x.ServiceId)

@@ -106,6 +106,16 @@ internal static class ServiceFeatureMessages
     public static string BranchServicesAssignSuccess =>
         Get("BranchServices_Assign_Success", "Services were assigned to the branch successfully.");
 
+    public static string BranchServicesAssignBranchScopedNotSupported =>
+        Get(
+            "BranchServices_Assign_BranchScopedNotSupported",
+            "Branch-scoped services cannot be assigned manually because they are owned by their branch.");
+
+    public static string BranchServicesAssignInvalidScopeHierarchy =>
+        Get(
+            "BranchServices_Assign_InvalidScopeHierarchy",
+            "The service hierarchy contains an invalid service scope.");
+
     public static string BranchServiceTreeRootRequired =>
         Get("BranchServiceTrees_Create_RootRequired", "A root service node is required.");
 
@@ -174,6 +184,46 @@ internal static class ServiceFeatureMessages
 
     public static string RestoreSuccess =>
         Get("Service_Restore_Success", "Service restored successfully.");
+
+    public static string PermanentDeleteSuccess =>
+        Get(
+            "Service_PermanentDelete_Success",
+            "Service permanently deleted successfully.");
+
+    public static string PermanentDeleteGlobalNotSupported =>
+        Get(
+            "Service_PermanentDelete_GlobalNotSupported",
+            "Global services cannot be permanently deleted through this operation.");
+
+    public static string PermanentDeleteMustBeSoftDeletedFirst =>
+        Get(
+            "Service_PermanentDelete_MustBeSoftDeletedFirst",
+            "The service must be soft deleted before it can be permanently deleted.");
+
+    public static string PermanentDeleteHasHistoricalTickets =>
+        Get(
+            "Service_PermanentDelete_HasHistoricalTickets",
+            "The service cannot be permanently deleted because historical tickets exist.");
+
+    public static string PermanentDeleteHasChildren =>
+        Get(
+            "Service_PermanentDelete_HasChildren",
+            "The service cannot be permanently deleted because it has child services.");
+
+    public static string PermanentDeleteHasWorkflowReferences =>
+        Get(
+            "Service_PermanentDelete_HasWorkflowReferences",
+            "The service cannot be permanently deleted because workflows still reference it.");
+
+    public static string PermanentDeleteHasPendingGlobalizationRequest =>
+        Get(
+            "Service_PermanentDelete_HasPendingGlobalizationRequest",
+            "The service cannot be permanently deleted while a globalization request is pending.");
+
+    public static string PermanentDeleteHasDependencies =>
+        Get(
+            "Service_PermanentDelete_HasDependencies",
+            "The service cannot be permanently deleted because related records still exist.");
 
     public static string LogoUploaded =>
         Get("Service_Logo_Upload_Success", "Service logo uploaded successfully.");
@@ -309,6 +359,16 @@ internal static class ServiceFeatureMessages
         Get(
             "BranchServices_Unassign_InvalidHierarchy",
             "The service hierarchy is invalid.");
+
+    public static string BranchServicesUnassignBranchScopedNotSupported =>
+        Get(
+            "BranchServices_Unassign_BranchScopedNotSupported",
+            "Branch-scoped services cannot be unassigned. Use the service soft-delete operation instead.");
+
+    public static string BranchServicesUnassignInvalidScopeHierarchy =>
+        Get(
+            "BranchServices_Unassign_InvalidScopeHierarchy",
+            "The service hierarchy contains an invalid service scope and cannot be unassigned safely.");
 
     public static string BranchServicesUnassignPersistenceConflict =>
         Get(

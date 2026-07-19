@@ -166,6 +166,9 @@ internal static class SeedConstants
         public const string ServicesRestore =
             "Services.Restore";
 
+        public const string ServicesDeletePermanent =
+            "Services.DeletePermanent";
+
         public const string BranchServicesView =
             "BranchServices.View";
 
@@ -563,6 +566,10 @@ internal static class SeedConstants
             public static readonly Guid ServiceSchedulesUpdate =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000076");
+
+            public static readonly Guid ServicesDeletePermanent =
+                Guid.Parse(
+                    "30000000-0000-0000-0000-000000000077");
         }
     }
 
@@ -754,6 +761,10 @@ internal static class SeedConstants
                     PermissionNames.ServicesRestore),
 
                 new PermissionSeedItem(
+                    SeedIds.Permissions.ServicesDeletePermanent,
+                    PermissionNames.ServicesDeletePermanent),
+
+                new PermissionSeedItem(
                     SeedIds.Permissions.BranchServicesView,
                     PermissionNames.BranchServicesView),
 
@@ -907,6 +918,10 @@ internal static class SeedConstants
         // Allow branch admins to restore services
         // owned by their active branch.
         SeedIds.Permissions.ServicesRestore,
+
+        // Permanent deletion remains ownership-checked in the
+        // application layer and is distinct from soft deletion.
+        SeedIds.Permissions.ServicesDeletePermanent,
 
         SeedIds.Permissions.BranchServicesView,
         SeedIds.Permissions.BranchServicesAssign,

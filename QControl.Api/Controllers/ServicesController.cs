@@ -10,6 +10,7 @@ using Qcontrol.Application.Features.ServiceImages.Command.UploadServiceLogoImage
 using Qcontrol.Application.Features.ServiceImages.Query.GetServiceImages;
 using Qcontrol.Application.Features.Services.Command.CreateService;
 using Qcontrol.Application.Features.Services.Command.DeleteService;
+using Qcontrol.Application.Features.Services.Command.PermanentDeleteService;
 using Qcontrol.Application.Features.Services.Command.RestoreService;
 using Qcontrol.Application.Features.Services.Command.UpdateService;
 using Qcontrol.Application.Features.Services.Query.GetAvailableParentServices;
@@ -359,6 +360,26 @@ public sealed class ServicesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var command = new RestoreServiceCommand
+        {
+            Id = serviceId,
+            RowVersion = rowVersion
+        };
+
+        var result = await sender.Send(
+            command,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpDelete("{serviceId:int}/permanent")]
+    [Permission("Services.DeletePermanent")]
+    public async Task<IActionResult> DeletePermanently(
+        int serviceId,
+        [FromHeader(Name = "If-Match")] string rowVersion,
+        CancellationToken cancellationToken)
+    {
+        var command = new PermanentDeleteServiceCommand
         {
             Id = serviceId,
             RowVersion = rowVersion
