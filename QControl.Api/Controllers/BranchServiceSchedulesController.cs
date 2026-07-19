@@ -6,6 +6,7 @@ using Qcontrol.Api.Contracts.ServiceSchedules;
 using Qcontrol.Application.Features.ServiceSchedules.Command.CreateServiceSchedule;
 using Qcontrol.Application.Features.ServiceSchedules.Command.UpdateServiceSchedule;
 using Qcontrol.Application.Features.ServiceSchedules.Query.GetServiceSchedule;
+using Qcontrol.Application.Features.ServiceSchedules.Shared;
 using QControl.Api.Attribute;
 
 namespace Qcontrol.Api.Controllers;
@@ -55,9 +56,8 @@ public sealed class BranchServiceSchedulesController : ControllerBase
         {
             BranchId = branchId,
             LeafServiceId = leafServiceId,
-            StartTime = request.StartTime,
-            EndTime = request.EndTime,
-            WorkDays = request.WorkDays,
+            Days = request.Days?.Select(MapDay).ToArray() ??
+                Array.Empty<ServiceScheduleDayCommandItem>(),
             IsSlotCodeRequired = request.IsSlotCodeRequired,
             SlotCode = request.SlotCode
         };
@@ -81,9 +81,8 @@ public sealed class BranchServiceSchedulesController : ControllerBase
         {
             BranchId = branchId,
             LeafServiceId = leafServiceId,
-            StartTime = request.StartTime,
-            EndTime = request.EndTime,
-            WorkDays = request.WorkDays,
+            Days = request.Days?.Select(MapDay).ToArray() ??
+                Array.Empty<ServiceScheduleDayCommandItem>(),
             IsSlotCodeRequired = request.IsSlotCodeRequired,
             SlotCode = request.SlotCode,
             RowVersion = request.RowVersion
@@ -94,5 +93,29 @@ public sealed class BranchServiceSchedulesController : ControllerBase
             cancellationToken);
 
         return result.ToIActionResult();
+    }
+
+    private static ServiceScheduleDayCommandItem MapDay(
+        ServiceScheduleDayRequest? day)
+    {
+        if (day is null)
+        {
+            return new ServiceScheduleDayCommandItem
+            {
+                DayOfWeek = (DayOfWeek)(-1)
+            };
+        }
+
+        return new()
+        {
+            DayOfWeek = day.DayOfWeek,
+            TimeSlots = day.TimeSlots?.Select(slot =>
+                new ServiceScheduleTimeSlotCommandItem
+                {
+                    StartTime = slot?.StartTime,
+                    EndTime = slot?.EndTime
+                })
+                .ToArray() ?? Array.Empty<ServiceScheduleTimeSlotCommandItem>()
+        };
     }
 }

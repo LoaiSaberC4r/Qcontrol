@@ -1359,17 +1359,35 @@
   <data name="ServiceSchedule_AlreadyExists" xml:space="preserve">
     <value>A service schedule already exists for this service in the selected branch.</value>
   </data>
+  <data name="ServiceSchedule_Days_Required" xml:space="preserve">
+    <value>At least one schedule day is required.</value>
+  </data>
+  <data name="ServiceSchedule_Day_Duplicate" xml:space="preserve">
+    <value>The same day cannot be supplied more than once.</value>
+  </data>
+  <data name="ServiceSchedule_Day_Invalid" xml:space="preserve">
+    <value>The supplied day is invalid.</value>
+  </data>
+  <data name="ServiceSchedule_TimeSlots_Required" xml:space="preserve">
+    <value>Every schedule day must contain at least one time slot.</value>
+  </data>
+  <data name="ServiceSchedule_StartTime_Required" xml:space="preserve">
+    <value>Start time is required.</value>
+  </data>
+  <data name="ServiceSchedule_EndTime_Required" xml:space="preserve">
+    <value>End time is required.</value>
+  </data>
   <data name="ServiceSchedule_TimeRange_Invalid" xml:space="preserve">
     <value>The start time must be earlier than the end time.</value>
   </data>
-  <data name="ServiceSchedule_WorkDays_Required" xml:space="preserve">
-    <value>At least one working day is required.</value>
+  <data name="ServiceSchedule_TimeSlot_Duplicate" xml:space="preserve">
+    <value>Duplicate time slots are not allowed for the same day.</value>
   </data>
-  <data name="ServiceSchedule_WorkDay_Duplicate" xml:space="preserve">
-    <value>The same working day cannot be selected more than once.</value>
+  <data name="ServiceSchedule_TimeSlots_Overlapping" xml:space="preserve">
+    <value>Time slots cannot overlap within the same day.</value>
   </data>
-  <data name="ServiceSchedule_WorkDay_Invalid" xml:space="preserve">
-    <value>The supplied working day is invalid.</value>
+  <data name="ServiceSchedule_Invalid" xml:space="preserve">
+    <value>The supplied service schedule is invalid.</value>
   </data>
   <data name="ServiceSchedule_SlotCode_Required" xml:space="preserve">
     <value>A slot code is required for this schedule.</value>

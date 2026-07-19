@@ -2,12 +2,8 @@ namespace Qcontrol.Api.Contracts.ServiceSchedules;
 
 public sealed class CreateServiceScheduleRequest
 {
-    public TimeOnly? StartTime { get; init; }
-
-    public TimeOnly? EndTime { get; init; }
-
-    public IReadOnlyCollection<DayOfWeek> WorkDays { get; init; } =
-        Array.Empty<DayOfWeek>();
+    public IReadOnlyCollection<ServiceScheduleDayRequest> Days
+        { get; init; } = Array.Empty<ServiceScheduleDayRequest>();
 
     public bool IsSlotCodeRequired { get; init; }
 

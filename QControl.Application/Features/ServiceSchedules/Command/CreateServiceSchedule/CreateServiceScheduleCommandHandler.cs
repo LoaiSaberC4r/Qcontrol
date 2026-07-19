@@ -109,9 +109,24 @@ internal sealed class CreateServiceScheduleCommandHandler
                 duplicateScheduleError);
         }
 
-        var normalizedSlotCode = ServiceScheduleSlotCodeNormalizer.Normalize(
-            request.IsSlotCodeRequired,
-            request.SlotCode);
+        string? normalizedSlotCode;
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition> timeSlots;
+
+        try
+        {
+            normalizedSlotCode = ServiceScheduleSlotCodeNormalizer.Normalize(
+                request.IsSlotCodeRequired,
+                request.SlotCode);
+            timeSlots = ServiceScheduleCommandMapper.ToDefinitions(
+                request.Days);
+        }
+        catch (ArgumentException)
+        {
+            return Result<ServiceScheduleResponse>.Fail(new Error(
+                "ServiceSchedules.Create.InvalidSchedule",
+                ServiceScheduleMessages.InvalidSchedule,
+                ErrorType.Validation));
+        }
 
         var duplicateSlotCodeError =
             await ServiceScheduleRuleChecks.ValidateSlotCodeIsUniqueAsync(
@@ -128,15 +143,25 @@ internal sealed class CreateServiceScheduleCommandHandler
                 duplicateSlotCodeError);
         }
 
-        var schedule = ServiceSchedule.Create(
-            request.BranchId,
-            request.LeafServiceId,
-            request.StartTime.GetValueOrDefault(),
-            request.EndTime.GetValueOrDefault(),
-            request.WorkDays,
-            request.IsSlotCodeRequired,
-            normalizedSlotCode,
-            _currentUser.UserId.Value);
+        ServiceSchedule schedule;
+
+        try
+        {
+            schedule = ServiceSchedule.Create(
+                request.BranchId,
+                request.LeafServiceId,
+                timeSlots,
+                request.IsSlotCodeRequired,
+                normalizedSlotCode,
+                _currentUser.UserId.Value);
+        }
+        catch (ArgumentException)
+        {
+            return Result<ServiceScheduleResponse>.Fail(new Error(
+                "ServiceSchedules.Create.InvalidSchedule",
+                ServiceScheduleMessages.InvalidSchedule,
+                ErrorType.Validation));
+        }
 
         await _scheduleWriteRepository.AddAsync(
             schedule,

@@ -26,9 +26,8 @@ internal sealed class UpdateServiceScheduleCommandValidator
             .WithMessage(ErrorMessage.RowVersion_Invalid);
 
         Include(new ServiceScheduleFieldsValidator<UpdateServiceScheduleCommand>(
-            x => x.StartTime,
-            x => x.EndTime,
-            x => x.WorkDays,
+            "Update",
+            x => x.Days,
             x => x.IsSlotCodeRequired,
             x => x.SlotCode));
     }

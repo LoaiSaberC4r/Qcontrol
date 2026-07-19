@@ -130,9 +130,24 @@ internal sealed class UpdateServiceScheduleCommandHandler
             return Result<ServiceScheduleResponse>.Fail(serviceError);
         }
 
-        var normalizedSlotCode = ServiceScheduleSlotCodeNormalizer.Normalize(
-            request.IsSlotCodeRequired,
-            request.SlotCode);
+        string? normalizedSlotCode;
+        IReadOnlyCollection<ServiceScheduleTimeSlotDefinition> timeSlots;
+
+        try
+        {
+            normalizedSlotCode = ServiceScheduleSlotCodeNormalizer.Normalize(
+                request.IsSlotCodeRequired,
+                request.SlotCode);
+            timeSlots = ServiceScheduleCommandMapper.ToDefinitions(
+                request.Days);
+        }
+        catch (ArgumentException)
+        {
+            return Result<ServiceScheduleResponse>.Fail(new Error(
+                "ServiceSchedules.Update.InvalidSchedule",
+                ServiceScheduleMessages.InvalidSchedule,
+                ErrorType.Validation));
+        }
 
         var duplicateSlotCodeError =
             await ServiceScheduleRuleChecks.ValidateSlotCodeIsUniqueAsync(
@@ -153,14 +168,22 @@ internal sealed class UpdateServiceScheduleCommandHandler
             schedule,
             rowVersion);
 
-        schedule.Update(
-            request.StartTime.GetValueOrDefault(),
-            request.EndTime.GetValueOrDefault(),
-            request.WorkDays,
-            request.IsSlotCodeRequired,
-            normalizedSlotCode,
-            _currentUser.UserId.Value,
-            _dateTimeProvider.UtcNow);
+        try
+        {
+            schedule.Update(
+                timeSlots,
+                request.IsSlotCodeRequired,
+                normalizedSlotCode,
+                _currentUser.UserId.Value,
+                _dateTimeProvider.UtcNow);
+        }
+        catch (ArgumentException)
+        {
+            return Result<ServiceScheduleResponse>.Fail(new Error(
+                "ServiceSchedules.Update.InvalidSchedule",
+                ServiceScheduleMessages.InvalidSchedule,
+                ErrorType.Validation));
+        }
 
         _scheduleWriteRepository.Update(schedule);
 

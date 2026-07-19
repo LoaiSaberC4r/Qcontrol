@@ -12,12 +12,8 @@ public sealed record UpdateServiceScheduleCommand
 
     public int LeafServiceId { get; init; }
 
-    public TimeOnly? StartTime { get; init; }
-
-    public TimeOnly? EndTime { get; init; }
-
-    public IReadOnlyCollection<DayOfWeek> WorkDays { get; init; } =
-        Array.Empty<DayOfWeek>();
+    public IReadOnlyCollection<ServiceScheduleDayCommandItem> Days
+        { get; init; } = Array.Empty<ServiceScheduleDayCommandItem>();
 
     public bool IsSlotCodeRequired { get; init; }
 

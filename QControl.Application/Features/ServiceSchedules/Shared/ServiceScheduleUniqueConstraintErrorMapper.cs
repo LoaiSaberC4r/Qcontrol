@@ -58,12 +58,12 @@ internal static class ServiceScheduleUniqueConstraintErrorMapper
         }
 
         if (message.Contains(
-                "UX_ServiceScheduleWorkDay_ServiceScheduleId_DayOfWeek",
+                "UX_ServiceScheduleTimeSlot_ExactRange",
                 StringComparison.OrdinalIgnoreCase))
         {
             error = new Error(
-                $"ServiceSchedules.{operation}.DuplicateWorkDay",
-                ServiceScheduleMessages.DuplicateWorkDay,
+                $"ServiceSchedules.{operation}.DuplicateTimeSlot",
+                ServiceScheduleMessages.DuplicateTimeSlot,
                 ErrorType.Conflict);
 
             return true;
