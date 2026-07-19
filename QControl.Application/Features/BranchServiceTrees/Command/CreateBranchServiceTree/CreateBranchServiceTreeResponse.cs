@@ -36,6 +36,10 @@ public sealed class CreatedBranchServiceTreeNodeResponse
 
     public string EnglishName { get; init; } = string.Empty;
 
+    public string? ServiceCode { get; init; }
+
+    public bool IsServiceCodeRequired { get; init; }
+
     public ServiceScope Scope { get; init; }
 
     public int OwnerBranchId { get; init; }

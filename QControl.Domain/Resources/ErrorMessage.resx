@@ -789,6 +789,21 @@
   <data name="Service_EnglishName_MaxLength" xml:space="preserve">
     <value>The English service name must not exceed 100 characters.</value>
   </data>
+  <data name="Service_Code_Required" xml:space="preserve">
+    <value>Service code is required when service code is marked as required.</value>
+  </data>
+  <data name="Service_Code_MustBeNull" xml:space="preserve">
+    <value>Service code must be null when service code is not required.</value>
+  </data>
+  <data name="Service_Code_MaxLength" xml:space="preserve">
+    <value>Service code cannot exceed 100 characters.</value>
+  </data>
+  <data name="Service_Code_AlreadyExists" xml:space="preserve">
+    <value>The specified service code is already used by another service.</value>
+  </data>
+  <data name="Service_Tree_DuplicateServiceCode" xml:space="preserve">
+    <value>The service tree request contains duplicate service codes.</value>
+  </data>
   <data name="Service_ArabicUserMessage_MaxLength" xml:space="preserve">
     <value>The Arabic user message must not exceed 500 characters.</value>
   </data>

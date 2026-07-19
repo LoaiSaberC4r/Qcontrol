@@ -789,6 +789,21 @@
   <data name="Service_EnglishName_MaxLength" xml:space="preserve">
     <value>يجب ألا يتجاوز اسم الخدمة باللغة الإنجليزية 100 حرف.</value>
   </data>
+  <data name="Service_Code_Required" xml:space="preserve">
+    <value>رمز الخدمة مطلوب عند تحديد أن رمز الخدمة إلزامي.</value>
+  </data>
+  <data name="Service_Code_MustBeNull" xml:space="preserve">
+    <value>يجب أن يكون رمز الخدمة فارغًا عندما لا يكون رمز الخدمة مطلوبًا.</value>
+  </data>
+  <data name="Service_Code_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز رمز الخدمة 100 حرف.</value>
+  </data>
+  <data name="Service_Code_AlreadyExists" xml:space="preserve">
+    <value>رمز الخدمة المحدد مستخدم بالفعل بواسطة خدمة أخرى.</value>
+  </data>
+  <data name="Service_Tree_DuplicateServiceCode" xml:space="preserve">
+    <value>يحتوي طلب شجرة الخدمات على رموز خدمات مكررة.</value>
+  </data>
   <data name="Service_ArabicUserMessage_MaxLength" xml:space="preserve">
     <value>يجب ألا تتجاوز رسالة المستخدم العربية 500 حرف.</value>
   </data>

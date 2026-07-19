@@ -22,6 +22,8 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
 
     public int FirstOrDefaultProjectionSpecCallCount { get; private set; }
 
+    public int ListProjectionSpecCallCount { get; private set; }
+
     public int ListWithCountCallCount { get; private set; }
 
     public Task<TEntity?> GetByIdAsync(
@@ -114,9 +116,13 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
     public Task<List<TOut>> ListAsync<TOut>(
         Specification<TEntity, TOut> spec,
         CancellationToken ct = default)
-        => Task.FromResult(ApplyDataSpec(spec)
+    {
+        ListProjectionSpecCallCount++;
+
+        return Task.FromResult(ApplyDataSpec(spec)
             .Select(spec.Selector.Compile())
             .ToList());
+    }
 
     public Task<TOut?> FirstOrDefaultAsync<TOut>(
         Specification<TEntity, TOut> spec,

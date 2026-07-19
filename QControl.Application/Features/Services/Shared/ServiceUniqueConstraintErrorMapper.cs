@@ -13,6 +13,7 @@ internal static class ServiceUniqueConstraintErrorMapper
             exception,
             "Services.Create.DuplicateArabicName",
             "Services.Create.DuplicateEnglishName",
+            "Services.Create.ServiceCodeAlreadyExists",
             out error);
 
     public static bool TryMapUpdate(
@@ -22,12 +23,24 @@ internal static class ServiceUniqueConstraintErrorMapper
             exception,
             "Services.Update.DuplicateArabicName",
             "Services.Update.DuplicateEnglishName",
+            "Services.Update.ServiceCodeAlreadyExists",
+            out error);
+
+    public static bool TryMapBranchServiceTreeCreate(
+        DbUpdateException exception,
+        out Error error)
+        => TryMap(
+            exception,
+            "BranchServiceTrees.Create.DuplicateArabicName",
+            "BranchServiceTrees.Create.DuplicateEnglishName",
+            "BranchServiceTrees.Create.ServiceCodeAlreadyExists",
             out error);
 
     private static bool TryMap(
         DbUpdateException exception,
         string arabicNameCode,
         string englishNameCode,
+        string serviceCodeCode,
         out Error error)
     {
         error = default!;
@@ -61,6 +74,18 @@ internal static class ServiceUniqueConstraintErrorMapper
             error = new Error(
                 englishNameCode,
                 ServiceFeatureMessages.DuplicateEnglishName,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (message.Contains(
+                "UX_Service_ServiceCode",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                serviceCodeCode,
+                ServiceFeatureMessages.ServiceCodeAlreadyExists,
                 ErrorType.Conflict);
 
             return true;

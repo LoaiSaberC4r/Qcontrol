@@ -22,6 +22,8 @@ internal static class ServiceProjection
                 : x.OwnerBranch.EnglishName,
             ArabicName = x.ArabicName,
             EnglishName = x.EnglishName,
+            ServiceCode = x.ServiceCode,
+            IsServiceCodeRequired = x.IsServiceCodeRequired,
             ArabicUserMessage = x.ArabicUserMessage,
             EnglishUserMessage = x.EnglishUserMessage,
             IsActive = x.IsActive,
@@ -174,6 +176,43 @@ internal sealed class ServiceDuplicateEnglishNameSpec
 
         UseNoTracking();
         Select(x => x.Id);
+    }
+}
+
+internal sealed class ServiceDuplicateCodeSpec
+    : Specification<Service, int>
+{
+    public ServiceDuplicateCodeSpec(
+        string serviceCode,
+        int? excludedServiceId = null)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+        AddCriteria(x => x.ServiceCode == serviceCode);
+
+        if (excludedServiceId.HasValue)
+        {
+            var serviceId = excludedServiceId.Value;
+            AddCriteria(x => x.Id != serviceId);
+        }
+
+        Select(x => x.Id);
+    }
+}
+
+internal sealed class ServiceCodesInUseSpec
+    : Specification<Service, string>
+{
+    public ServiceCodesInUseSpec(IReadOnlyCollection<string> serviceCodes)
+    {
+        var codes = serviceCodes.ToArray();
+
+        IgnoreGlobalFilters();
+        UseNoTracking();
+        AddCriteria(x =>
+            x.ServiceCode != null &&
+            codes.Contains(x.ServiceCode));
+        Select(x => x.ServiceCode!);
     }
 }
 

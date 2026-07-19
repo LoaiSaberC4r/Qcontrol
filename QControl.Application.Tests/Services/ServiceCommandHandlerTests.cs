@@ -99,6 +99,61 @@ public sealed class ServiceCommandHandlerTests
     }
 
     [Fact]
+    public async Task Create_with_unique_service_code_trims_and_returns_code()
+    {
+        var services = new List<ServiceEntity>();
+        var handler = CreateHandler(
+            services,
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            ValidCreate() with
+            {
+                ServiceCode = " MED-001 ",
+                IsServiceCodeRequired = true
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("MED-001", services[0].ServiceCode);
+        Assert.True(services[0].IsServiceCodeRequired);
+        Assert.Equal("MED-001", result.Value.ServiceCode);
+        Assert.True(result.Value.IsServiceCodeRequired);
+    }
+
+    [Fact]
+    public async Task Create_rejects_service_code_reserved_by_soft_deleted_service()
+    {
+        var existing = Service(
+            1,
+            serviceCode: "MED-001",
+            isServiceCodeRequired: true);
+        existing.SoftDelete(
+            DateTime.UtcNow,
+            EntityTestFactory.CurrentUserId);
+        var services = new List<ServiceEntity> { existing };
+        var handler = CreateHandler(
+            services,
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            ValidCreate() with
+            {
+                ServiceCode = "MED-001",
+                IsServiceCodeRequired = true
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code ==
+                "Services.Create.ServiceCodeAlreadyExists");
+    }
+
+    [Fact]
     public async Task Update_rejects_moving_service_under_its_descendant()
     {
         var root = Service(1);
@@ -154,6 +209,58 @@ public sealed class ServiceCommandHandlerTests
         Assert.Contains(
             result.Errors,
             error => error.Code == "Services.Update.HasChildrenCannotBeTicketIssuable");
+    }
+
+    [Fact]
+    public async Task Update_allows_service_to_keep_its_current_code()
+    {
+        var service = Service(
+            1,
+            serviceCode: "MED-001",
+            isServiceCodeRequired: true);
+        var services = new List<ServiceEntity> { service };
+        var handler = UpdateHandler(
+            services,
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            ValidUpdate(service.Id) with
+            {
+                ServiceCode = " MED-001 ",
+                IsServiceCodeRequired = true
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("MED-001", service.ServiceCode);
+        Assert.True(service.IsServiceCodeRequired);
+    }
+
+    [Fact]
+    public async Task Update_removes_service_code_atomically()
+    {
+        var service = Service(
+            1,
+            serviceCode: "MED-001",
+            isServiceCodeRequired: true);
+        var services = new List<ServiceEntity> { service };
+        var handler = UpdateHandler(
+            services,
+            new InMemoryWriteRepository<ServiceEntity>(services),
+            new TestUnitOfWork());
+
+        var result = await handler.Handle(
+            ValidUpdate(service.Id) with
+            {
+                ServiceCode = " ",
+                IsServiceCodeRequired = false
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(service.ServiceCode);
+        Assert.False(service.IsServiceCodeRequired);
     }
 
     [Fact]
@@ -274,11 +381,15 @@ public sealed class ServiceCommandHandlerTests
     private static ServiceEntity Service(
         int id,
         int? parentServiceId = null,
-        bool isTicketIssuable = false)
+        bool isTicketIssuable = false,
+        string? serviceCode = null,
+        bool isServiceCodeRequired = false)
         => EntityTestFactory.Service(
             id,
             parentServiceId,
-            isTicketIssuable: isTicketIssuable);
+            isTicketIssuable: isTicketIssuable,
+            serviceCode: serviceCode,
+            isServiceCodeRequired: isServiceCodeRequired);
 
     private static CreateServiceCommandHandler CreateHandler(
         List<ServiceEntity> services,

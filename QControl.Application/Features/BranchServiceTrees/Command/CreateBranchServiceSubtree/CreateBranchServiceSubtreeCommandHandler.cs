@@ -126,6 +126,7 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
                 ErrorType.Validation);
         }
 
+        var requestedServiceCodes = new List<string>();
         var payloadValidation = BranchServiceTreePayloadValidator.Validate(
             request.Root,
             new BranchServiceTreePayloadValidationOptions
@@ -147,12 +148,26 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
                     ServiceFeatureMessages
                         .BranchServiceSubtreeDuplicateEnglishName,
                 UseCodePrefixForTicketSettings = true
-            });
+            },
+            requestedServiceCodes);
 
         if (payloadValidation is not null)
         {
             return Result<CreateBranchServiceSubtreeResponse>.Fail(
                 payloadValidation);
+        }
+
+        var duplicateServiceCode =
+            await ServiceRuleChecks.ValidateServiceCodesAreUniqueAsync(
+                _serviceReadRepository,
+                requestedServiceCodes,
+                $"{CodePrefix}.ServiceCodeAlreadyExists",
+                cancellationToken);
+
+        if (duplicateServiceCode is not null)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                duplicateServiceCode);
         }
 
         var parentService = await _serviceReadRepository.Query()

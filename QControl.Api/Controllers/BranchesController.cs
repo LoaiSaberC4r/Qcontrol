@@ -552,6 +552,8 @@ public sealed class BranchesController : ControllerBase
         {
             ArabicName = request.ArabicName,
             EnglishName = request.EnglishName,
+            ServiceCode = request.ServiceCode,
+            IsServiceCodeRequired = request.IsServiceCodeRequired,
             ArabicUserMessage = request.ArabicUserMessage,
             EnglishUserMessage = request.EnglishUserMessage,
             IsTicketIssuable = request.IsTicketIssuable,
