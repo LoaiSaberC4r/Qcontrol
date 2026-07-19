@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\QControl.Application\QControl.Application.csproj" />
     <ProjectReference Include="..\QControl.Domain\QControl.Domain.csproj" />
+    <ProjectReference Include="..\QControl.infrastructure\QControl.infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

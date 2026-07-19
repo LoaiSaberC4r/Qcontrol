@@ -177,6 +177,58 @@ public sealed class BranchPermanentDeleteHandlerTests
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);
     }
 
+    [Fact]
+    public async Task Permanent_delete_is_blocked_by_service_schedules()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        branch.Deactivate(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var branches = new List<Branch> { branch };
+        var schedules = new List<ServiceSchedule>
+        {
+            EntityTestFactory.ServiceSchedule(
+                id: 50,
+                branchId: branch.Id,
+                serviceId: 20)
+        };
+        var unitOfWork = new TestUnitOfWork();
+        var branchWriteRepository =
+            new InMemoryWriteRepository<Branch>(branches);
+        var handler = new PermanentDeleteBranchCommandHandler(
+            new InMemoryWriteReadRepository<Branch>(branches),
+            branchWriteRepository,
+            new InMemoryWriteRepository<Location>(
+                branches
+                    .Where(item => item.Location is not null)
+                    .Select(item => item.Location!)
+                    .ToList()),
+            new InMemoryWriteReadRepository<WaitingArea>(
+                new List<WaitingArea>()),
+            new InMemoryWriteReadRepository<Display>(
+                new List<Display>()),
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            unitOfWork,
+            serviceScheduleReadRepository:
+            new InMemoryWriteReadRepository<ServiceSchedule>(schedules));
+
+        var result = await handler.Handle(
+            new PermanentDeleteBranchCommand
+            {
+                BranchId = branch.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code ==
+                "Branches.DeletePermanent.ServiceSchedulesExist");
+        Assert.Contains(branch, branches);
+        Assert.Equal(0, branchWriteRepository.DeleteCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
     private static PermanentDeleteBranchCommandHandler CreateHandler(
         List<Branch> branches,
         List<WaitingArea> waitingAreas,

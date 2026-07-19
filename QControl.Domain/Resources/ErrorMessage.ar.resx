@@ -1302,4 +1302,82 @@
   <data name="ServiceWorkflow_Default_FirstWorkflowConflict" xml:space="preserve">
     <value>تم تعيين مسار آخر كافتراضي لهذه الخدمة في الفرع. حدث البيانات ثم حاول مرة أخرى.</value>
   </data>
+  <data name="ServiceSchedule_Authentication_Required" xml:space="preserve">
+    <value>المصادقة مطلوبة.</value>
+  </data>
+  <data name="ServiceSchedule_BranchId_Required" xml:space="preserve">
+    <value>معرف فرع صحيح مطلوب.</value>
+  </data>
+  <data name="ServiceSchedule_LeafServiceId_Required" xml:space="preserve">
+    <value>معرف خدمة نهائية صحيح مطلوب.</value>
+  </data>
+  <data name="ServiceSchedule_Branch_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الفرع المحدد.</value>
+  </data>
+  <data name="ServiceSchedule_Branch_Inactive" xml:space="preserve">
+    <value>الفرع المحدد غير نشط.</value>
+  </data>
+  <data name="ServiceSchedule_Service_NotFound" xml:space="preserve">
+    <value>تعذر العثور على الخدمة المحددة.</value>
+  </data>
+  <data name="ServiceSchedule_Service_NotAssignedToBranch" xml:space="preserve">
+    <value>الخدمة المحددة غير مسندة إلى هذا الفرع.</value>
+  </data>
+  <data name="ServiceSchedule_Service_IsNotLeaf" xml:space="preserve">
+    <value>لا يمكن إنشاء جدول خدمة إلا للخدمات النهائية التي تصدر تذاكر.</value>
+  </data>
+  <data name="ServiceSchedule_Service_NotTicketIssuable" xml:space="preserve">
+    <value>لا يمكن إنشاء جدول خدمة إلا للخدمات النهائية التي تصدر تذاكر.</value>
+  </data>
+  <data name="ServiceSchedule_Service_Deleted" xml:space="preserve">
+    <value>الخدمة المحددة محذوفة.</value>
+  </data>
+  <data name="ServiceSchedule_Service_Inactive" xml:space="preserve">
+    <value>الخدمة المحددة غير نشطة.</value>
+  </data>
+  <data name="ServiceSchedule_Service_NotEffectivelyActive" xml:space="preserve">
+    <value>الخدمة المحددة غير نشطة فعليا.</value>
+  </data>
+  <data name="ServiceSchedule_NotFound" xml:space="preserve">
+    <value>تعذر العثور على جدول الخدمة.</value>
+  </data>
+  <data name="ServiceSchedule_AlreadyExists" xml:space="preserve">
+    <value>يوجد جدول خدمة بالفعل لهذه الخدمة في الفرع المحدد.</value>
+  </data>
+  <data name="ServiceSchedule_TimeRange_Invalid" xml:space="preserve">
+    <value>يجب أن يكون وقت البداية قبل وقت النهاية.</value>
+  </data>
+  <data name="ServiceSchedule_WorkDays_Required" xml:space="preserve">
+    <value>يجب اختيار يوم عمل واحد على الأقل.</value>
+  </data>
+  <data name="ServiceSchedule_WorkDay_Duplicate" xml:space="preserve">
+    <value>لا يمكن اختيار يوم العمل نفسه أكثر من مرة.</value>
+  </data>
+  <data name="ServiceSchedule_WorkDay_Invalid" xml:space="preserve">
+    <value>يوم العمل المرسل غير صحيح.</value>
+  </data>
+  <data name="ServiceSchedule_SlotCode_Required" xml:space="preserve">
+    <value>كود الدور مطلوب لهذا الجدول.</value>
+  </data>
+  <data name="ServiceSchedule_SlotCode_Invalid" xml:space="preserve">
+    <value>يجب ألا يكون كود الدور فارغا.</value>
+  </data>
+  <data name="ServiceSchedule_SlotCode_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز كود الدور 100 حرف.</value>
+  </data>
+  <data name="ServiceSchedule_SlotCode_AlreadyExists" xml:space="preserve">
+    <value>كود الدور مستخدم بالفعل في جدول خدمة آخر داخل هذا الفرع.</value>
+  </data>
+  <data name="ServiceSchedule_Create_Success" xml:space="preserve">
+    <value>تم إنشاء جدول الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceSchedule_Update_Success" xml:space="preserve">
+    <value>تم تحديث جدول الخدمة بنجاح.</value>
+  </data>
+  <data name="ServiceSchedule_Concurrency_Conflict" xml:space="preserve">
+    <value>تم تغيير جدول الخدمة بواسطة عملية أخرى.</value>
+  </data>
+  <data name="Branch_PermanentDelete_ServiceSchedulesExist" xml:space="preserve">
+    <value>لا يمكن حذف الفرع نهائيا لأن جداول خدمات موجودة له.</value>
+  </data>
 </root>

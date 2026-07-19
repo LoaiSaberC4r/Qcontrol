@@ -4,6 +4,7 @@ using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Qcontrol.Application.Features.ServiceSchedules.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Shared.Operational;
@@ -21,6 +22,8 @@ internal sealed class PermanentDeleteBranchCommandHandler
     private readonly IWriteReadRepository<Display> _displayReadRepository;
     private readonly IWriteReadRepository<ServiceWorkflow>?
         _serviceWorkflowReadRepository;
+    private readonly IWriteReadRepository<ServiceSchedule>?
+        _serviceScheduleReadRepository;
     private readonly IWriteReadRepository<QControl.Domain.Entities.BranchBranding>? _brandingReadRepository;
     private readonly IWriteRepository<QControl.Domain.Entities.BranchBranding>? _brandingWriteRepository;
     private readonly IWriteReadRepository<BranchAdvertisement>? _advertisementReadRepository;
@@ -46,7 +49,8 @@ internal sealed class PermanentDeleteBranchCommandHandler
         IWriteRepository<BranchAdvertisement>? advertisementWriteRepository = null,
         IMediaService? mediaService = null,
         ILogger<PermanentDeleteBranchCommandHandler>? logger = null,
-        IWriteReadRepository<ServiceWorkflow>? serviceWorkflowReadRepository = null)
+        IWriteReadRepository<ServiceWorkflow>? serviceWorkflowReadRepository = null,
+        IWriteReadRepository<ServiceSchedule>? serviceScheduleReadRepository = null)
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
@@ -59,6 +63,7 @@ internal sealed class PermanentDeleteBranchCommandHandler
         _displayReadRepository = displayReadRepository
             ?? throw new ArgumentNullException(nameof(displayReadRepository));
         _serviceWorkflowReadRepository = serviceWorkflowReadRepository;
+        _serviceScheduleReadRepository = serviceScheduleReadRepository;
         _brandingReadRepository = brandingReadRepository;
         _brandingWriteRepository = brandingWriteRepository;
         _advertisementReadRepository = advertisementReadRepository;
@@ -126,6 +131,20 @@ internal sealed class PermanentDeleteBranchCommandHandler
             await _serviceWorkflowReadRepository.AnyAsync(
                 x => x.BranchId == branch.Id,
                 cancellationToken);
+
+        var hasServiceSchedules =
+            _serviceScheduleReadRepository is not null &&
+            await _serviceScheduleReadRepository.AnyAsync(
+                x => x.BranchId == branch.Id,
+                cancellationToken);
+
+        if (hasServiceSchedules)
+        {
+            return Result<PermanentDeleteBranchResponse>.Fail(new Error(
+                "Branches.DeletePermanent.ServiceSchedulesExist",
+                ServiceScheduleMessages.BranchPermanentDeleteServiceSchedulesExist,
+                ErrorType.Conflict));
+        }
 
         if (hasWaitingAreas || hasDisplays || hasServiceWorkflows)
         {

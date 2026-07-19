@@ -13,6 +13,7 @@ internal static class OperationalCacheTags
     public const string ServiceGlobalizationRequests =
         "service-globalization-requests";
     public const string ServiceWorkflows = "service-workflows";
+    public const string ServiceSchedules = "service-schedules";
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
     public const string BranchAdvertisements = "branch-advertisements";
@@ -55,6 +56,14 @@ internal static class OperationalCacheTags
 
     public static string BranchWorkflowCandidates(int branchId) =>
         $"service-workflow-candidates:branch:{branchId}";
+
+    public static string ServiceSchedulesForBranch(int branchId) =>
+        $"service-schedules:branch:{branchId}";
+
+    public static string ServiceSchedule(
+        int branchId,
+        int serviceId)
+        => $"service-schedule:branch:{branchId}:service:{serviceId}";
 
     public static string DisplayLinkedWindows(int displayId) =>
         $"display:{displayId}:windows";

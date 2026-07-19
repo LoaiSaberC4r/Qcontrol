@@ -18,6 +18,10 @@ public sealed record AssignBranchServicesCommand
             OperationalCacheTags.Services,
             OperationalCacheTags.ServiceCentral,
             OperationalCacheTags.BranchServices,
-            OperationalCacheTags.BranchServicesForBranch(BranchId)
-        };
+            OperationalCacheTags.BranchServicesForBranch(BranchId),
+            OperationalCacheTags.ServiceSchedules,
+            OperationalCacheTags.ServiceSchedulesForBranch(BranchId)
+        }
+        .Concat(ServiceIds.Select(serviceId =>
+            OperationalCacheTags.ServiceSchedule(BranchId, serviceId)));
 }
