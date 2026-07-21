@@ -86,13 +86,15 @@ public sealed class BranchesController : ControllerBase
         int branchId,
         [FromQuery] bool includeInactive,
         [FromQuery] bool includeDeleted,
+        [FromQuery] string? searchText,
         CancellationToken cancellationToken)
     {
         var query = new GetBranchServiceTreeQuery
         {
             BranchId = branchId,
             IncludeInactive = includeInactive,
-            IncludeDeleted = includeDeleted
+            IncludeDeleted = includeDeleted,
+            SearchText = searchText
         };
 
         var result = await sender.Send(

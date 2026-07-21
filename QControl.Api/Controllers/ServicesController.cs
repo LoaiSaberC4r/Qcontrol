@@ -60,6 +60,7 @@ public sealed class ServicesController : ControllerBase
         [FromQuery] bool includeDeleted,
         [FromQuery] ServiceScope? scope,
         [FromQuery] int? ownerBranchId,
+        [FromQuery] string? searchText,
         CancellationToken cancellationToken)
     {
         var query = new GetServicesTreeQuery
@@ -67,7 +68,8 @@ public sealed class ServicesController : ControllerBase
             IncludeInactive = includeInactive,
             IncludeDeleted = includeDeleted,
             Scope = scope,
-            OwnerBranchId = ownerBranchId
+            OwnerBranchId = ownerBranchId,
+            SearchText = searchText
         };
 
         var result = await sender.Send(

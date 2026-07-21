@@ -123,9 +123,7 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
         {
             var searchText = request.SearchText.Trim();
             eligibleItems = eligibleItems
-                .Where(x =>
-                    x.ArabicName.Contains(searchText) ||
-                    x.EnglishName.Contains(searchText))
+                .Where(x => ServiceHierarchySearch.Matches(x, searchText))
                 .ToList();
         }
 
@@ -160,6 +158,7 @@ internal sealed class GetWorkflowCandidateServicesQueryHandler
                     ParentEnglishName = parent?.EnglishName,
                     ArabicName = item.ArabicName,
                     EnglishName = item.EnglishName,
+                    ServiceCode = item.ServiceCode,
                     IsActive = item.IsActive,
                     IsDeleted = item.IsDeleted,
                     EffectiveIsActive = state.EffectiveIsActive,

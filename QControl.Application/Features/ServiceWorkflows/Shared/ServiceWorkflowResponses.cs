@@ -177,6 +177,8 @@ public sealed class ServiceWorkflowCandidateServiceResponse
 
     public string EnglishName { get; init; } = string.Empty;
 
+    public string? ServiceCode { get; init; }
+
     public bool IsActive { get; init; }
 
     public bool IsDeleted { get; init; }

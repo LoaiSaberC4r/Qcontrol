@@ -102,7 +102,7 @@ internal sealed class GetBranchServiceTreeQueryHandler
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var accessContext = await BuildAccessContextAsync(cancellationToken);
 
-        var includedItems = allItems
+        IReadOnlyDictionary<int, ServiceHierarchyItem> includedItems = allItems
             .Where(x => assignedSet.Contains(x.Id))
             .Where(x =>
                 x.Scope == QControl.Domain.Enums.ServiceScope.Global ||
@@ -111,6 +111,10 @@ internal sealed class GetBranchServiceTreeQueryHandler
             .Where(x => request.IncludeDeleted || !x.IsDeleted)
             .Where(x => request.IncludeInactive || states[x.Id].EffectiveIsActive)
             .ToDictionary(x => x.Id);
+
+        includedItems = ServiceHierarchySearch.Apply(
+            includedItems,
+            request.SearchText);
 
         var roots = includedItems.Values
             .Where(x =>

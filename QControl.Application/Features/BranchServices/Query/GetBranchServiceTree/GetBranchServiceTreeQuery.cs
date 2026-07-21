@@ -11,4 +11,6 @@ public sealed record GetBranchServiceTreeQuery
     public bool IncludeInactive { get; init; }
 
     public bool IncludeDeleted { get; init; }
+
+    public string? SearchText { get; init; }
 }
