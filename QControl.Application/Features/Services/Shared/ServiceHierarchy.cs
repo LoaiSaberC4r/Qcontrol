@@ -192,3 +192,86 @@ internal static class ServiceHierarchyCalculator
         return effective;
     }
 }
+
+internal static class ServiceHierarchySearch
+{
+    public static IReadOnlyDictionary<int, ServiceHierarchyItem> Apply(
+        IReadOnlyDictionary<int, ServiceHierarchyItem> includedItems,
+        string? searchText)
+    {
+        var normalizedSearchText = searchText?.Trim();
+        if (string.IsNullOrEmpty(normalizedSearchText))
+        {
+            return includedItems;
+        }
+
+        var childrenByParentId = includedItems.Values
+            .Where(x => x.ParentServiceId.HasValue)
+            .GroupBy(x => x.ParentServiceId!.Value)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Select(child => child.Id).ToArray());
+        var directMatches = includedItems.Values
+            .Where(x => Matches(x, normalizedSearchText))
+            .Select(x => x.Id)
+            .ToArray();
+
+        if (directMatches.Length == 0)
+        {
+            return new Dictionary<int, ServiceHierarchyItem>();
+        }
+
+        var retainedIds = new HashSet<int>(directMatches);
+
+        foreach (var matchId in directMatches)
+        {
+            var currentId = matchId;
+            var visitedAncestorIds = new HashSet<int>();
+
+            while (includedItems.TryGetValue(currentId, out var current) &&
+                   current.ParentServiceId.HasValue &&
+                   visitedAncestorIds.Add(currentId) &&
+                   includedItems.TryGetValue(
+                       current.ParentServiceId.Value,
+                       out var parent))
+            {
+                retainedIds.Add(parent.Id);
+                currentId = parent.Id;
+            }
+        }
+
+        var descendantQueue = new Queue<int>(directMatches);
+        var expandedIds = new HashSet<int>();
+
+        while (descendantQueue.Count > 0)
+        {
+            var currentId = descendantQueue.Dequeue();
+            if (!expandedIds.Add(currentId) ||
+                !childrenByParentId.TryGetValue(currentId, out var childIds))
+            {
+                continue;
+            }
+
+            foreach (var childId in childIds)
+            {
+                retainedIds.Add(childId);
+                descendantQueue.Enqueue(childId);
+            }
+        }
+
+        return includedItems
+            .Where(x => retainedIds.Contains(x.Key))
+            .ToDictionary(x => x.Key, x => x.Value);
+    }
+
+    public static bool Matches(
+        ServiceHierarchyItem item,
+        string searchText)
+        => item.ArabicName.Contains(searchText, StringComparison.Ordinal) ||
+           item.EnglishName.Contains(
+               searchText,
+               StringComparison.OrdinalIgnoreCase) ||
+           (item.ServiceCode?.Contains(
+               searchText,
+               StringComparison.OrdinalIgnoreCase) ?? false);
+}

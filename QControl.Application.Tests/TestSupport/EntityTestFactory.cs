@@ -222,15 +222,19 @@ internal static class EntityTestFactory
         int id,
         int ownerBranchId,
         int? parentServiceId = null,
-        bool isTicketIssuable = false)
+        bool isTicketIssuable = false,
+        string? arabicName = null,
+        string? englishName = null,
+        string? serviceCode = null,
+        bool isServiceCodeRequired = false)
     {
         var service = QControl.Domain.Entities.Service.CreateBranchScoped(
             parentServiceId,
             ownerBranchId,
-            $"Arabic Branch Service {id}",
-            $"English Branch Service {id}",
-            serviceCode: null,
-            isServiceCodeRequired: false,
+            arabicName ?? $"Arabic Branch Service {id}",
+            englishName ?? $"English Branch Service {id}",
+            serviceCode,
+            isServiceCodeRequired,
             arabicUserMessage: null,
             englishUserMessage: null,
             isTicketIssuable,

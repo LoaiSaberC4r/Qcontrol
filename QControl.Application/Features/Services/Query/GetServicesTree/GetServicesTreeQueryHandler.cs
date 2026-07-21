@@ -75,7 +75,7 @@ internal sealed class GetServicesTreeQueryHandler
         var states = ServiceHierarchyCalculator.ComputeStates(allItems);
         var accessContext = await BuildAccessContextAsync(cancellationToken);
 
-        var includedItems = allItems
+        IReadOnlyDictionary<int, ServiceHierarchyItem> includedItems = allItems
             .Where(x => request.IncludeDeleted || !x.IsDeleted)
             .Where(x => request.IncludeInactive || states[x.Id].EffectiveIsActive)
             .Where(x => !request.Scope.HasValue || x.Scope == request.Scope.Value)
@@ -83,6 +83,10 @@ internal sealed class GetServicesTreeQueryHandler
                 !request.OwnerBranchId.HasValue ||
                 x.OwnerBranchId == request.OwnerBranchId.Value)
             .ToDictionary(x => x.Id);
+
+        includedItems = ServiceHierarchySearch.Apply(
+            includedItems,
+            request.SearchText);
 
         var roots = includedItems.Values
             .Where(x =>

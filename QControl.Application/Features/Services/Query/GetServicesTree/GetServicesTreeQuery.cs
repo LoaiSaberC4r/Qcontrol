@@ -14,4 +14,6 @@ public sealed record GetServicesTreeQuery
     public ServiceScope? Scope { get; init; }
 
     public int? OwnerBranchId { get; init; }
+
+    public string? SearchText { get; init; }
 }
