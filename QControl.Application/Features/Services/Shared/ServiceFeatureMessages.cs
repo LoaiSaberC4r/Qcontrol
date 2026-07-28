@@ -318,6 +318,11 @@ internal static class ServiceFeatureMessages
     public static string RangeEndGreaterOrEqualStart =>
         Get("Service_RangeEnd_GreaterOrEqualStart", "Range end number must be greater than or equal to range start number.");
 
+    public static string RangeSmallerThanAllocatedSegmentQuotas =>
+        Get(
+            "Services_Update_RangeSmallerThanAllocatedSegmentQuotas",
+            "The service range cannot be reduced below allocated segment quotas.");
+
     public static string OrderNoNonNegative =>
         Get("Service_OrderNo_NonNegative", "Order number must be greater than or equal to zero.");
 

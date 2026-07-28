@@ -2,6 +2,7 @@ using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceSegments.Shared;
 using Qcontrol.Application.Features.BranchServices.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
@@ -18,6 +19,9 @@ internal sealed class AssignBranchServicesCommandHandler
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteReadRepository<BranchService> _branchServiceReadRepository;
     private readonly IWriteRepository<BranchService> _branchServiceWriteRepository;
+    private readonly IWriteReadRepository<Segment>? _segmentReadRepository;
+    private readonly IWriteRepository<BranchServiceSegment>?
+        _branchServiceSegmentWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +34,30 @@ internal sealed class AssignBranchServicesCommandHandler
         ICurrentUser currentUser,
         IServiceDefinitionAccessValidator accessValidator,
         IUnitOfWork unitOfWork)
+        : this(
+            branchReadRepository,
+            serviceReadRepository,
+            branchServiceReadRepository,
+            branchServiceWriteRepository,
+            segmentReadRepository: null,
+            branchServiceSegmentWriteRepository: null,
+            currentUser,
+            accessValidator,
+            unitOfWork)
+    {
+    }
+
+    public AssignBranchServicesCommandHandler(
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
+        IWriteRepository<BranchService> branchServiceWriteRepository,
+        IWriteReadRepository<Segment>? segmentReadRepository,
+        IWriteRepository<BranchServiceSegment>?
+            branchServiceSegmentWriteRepository,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
+        IUnitOfWork unitOfWork)
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
@@ -39,6 +67,9 @@ internal sealed class AssignBranchServicesCommandHandler
             ?? throw new ArgumentNullException(nameof(branchServiceReadRepository));
         _branchServiceWriteRepository = branchServiceWriteRepository
             ?? throw new ArgumentNullException(nameof(branchServiceWriteRepository));
+        _segmentReadRepository = segmentReadRepository;
+        _branchServiceSegmentWriteRepository =
+            branchServiceSegmentWriteRepository;
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _accessValidator = accessValidator
@@ -133,9 +164,57 @@ internal sealed class AssignBranchServicesCommandHandler
 
         if (newAssignments.Count > 0)
         {
+            var defaultAssignments = new List<BranchServiceSegment>();
+            if (_segmentReadRepository is not null &&
+                _branchServiceSegmentWriteRepository is not null)
+            {
+                var defaultSegment = await _segmentReadRepository.Query()
+                    .AsTracking()
+                    .SingleOrDefaultAsync(
+                        x => x.IsSystemDefault,
+                        cancellationToken);
+                if (defaultSegment is null)
+                {
+                    return Failure(
+                        "BranchServices.Assign.DefaultSegmentNotFound",
+                        BranchServiceSegmentMessages.SegmentNotFound,
+                        ErrorType.Infrastructure);
+                }
+
+                defaultAssignments = newAssignments
+                    .Where(x =>
+                        itemsById.TryGetValue(
+                            x.ServiceId,
+                            out var service) &&
+                        service.IsTicketIssuable &&
+                        !states[service.Id].HasChildren &&
+                        service.RangeStartNumber.HasValue &&
+                        service.RangeEndNumber.HasValue &&
+                        service.RangeEndNumber.Value >=
+                            service.RangeStartNumber.Value)
+                    .Select(x =>
+                    {
+                        var service = itemsById[x.ServiceId];
+                        var capacity = service.RangeEndNumber!.Value -
+                            service.RangeStartNumber!.Value + 1;
+                        return BranchServiceSegment.Create(
+                            x,
+                            defaultSegment,
+                            capacity,
+                            _currentUser.UserId.Value);
+                    })
+                    .ToList();
+            }
+
             await _branchServiceWriteRepository.AddRangeAsync(
                 newAssignments,
                 cancellationToken);
+            if (defaultAssignments.Count > 0)
+            {
+                await _branchServiceSegmentWriteRepository!.AddRangeAsync(
+                    defaultAssignments,
+                    cancellationToken);
+            }
 
             try
             {

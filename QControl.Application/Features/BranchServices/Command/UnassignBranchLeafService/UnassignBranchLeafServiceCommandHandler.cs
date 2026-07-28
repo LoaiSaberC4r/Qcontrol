@@ -25,6 +25,10 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
 
     private readonly IWriteRepository<BranchService>
         _branchServiceWriteRepository;
+    private readonly IWriteReadRepository<BranchServiceSegment>?
+        _branchServiceSegmentReadRepository;
+    private readonly IWriteRepository<BranchServiceSegment>?
+        _branchServiceSegmentWriteRepository;
 
     private readonly ICurrentUser _currentUser;
     private readonly IServiceDefinitionAccessValidator _accessValidator;
@@ -35,6 +39,31 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteRepository<BranchService> branchServiceWriteRepository,
+        ICurrentUser currentUser,
+        IServiceDefinitionAccessValidator accessValidator,
+        IUnitOfWork unitOfWork)
+        : this(
+            branchReadRepository,
+            serviceReadRepository,
+            branchServiceReadRepository,
+            branchServiceWriteRepository,
+            branchServiceSegmentReadRepository: null,
+            branchServiceSegmentWriteRepository: null,
+            currentUser,
+            accessValidator,
+            unitOfWork)
+    {
+    }
+
+    public UnassignBranchLeafServiceCommandHandler(
+        IWriteReadRepository<Branch> branchReadRepository,
+        IWriteReadRepository<Service> serviceReadRepository,
+        IWriteReadRepository<BranchService> branchServiceReadRepository,
+        IWriteRepository<BranchService> branchServiceWriteRepository,
+        IWriteReadRepository<BranchServiceSegment>?
+            branchServiceSegmentReadRepository,
+        IWriteRepository<BranchServiceSegment>?
+            branchServiceSegmentWriteRepository,
         ICurrentUser currentUser,
         IServiceDefinitionAccessValidator accessValidator,
         IUnitOfWork unitOfWork)
@@ -54,6 +83,10 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
         _branchServiceWriteRepository = branchServiceWriteRepository
             ?? throw new ArgumentNullException(
                 nameof(branchServiceWriteRepository));
+        _branchServiceSegmentReadRepository =
+            branchServiceSegmentReadRepository;
+        _branchServiceSegmentWriteRepository =
+            branchServiceSegmentWriteRepository;
 
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
@@ -142,6 +175,22 @@ internal sealed class UnassignBranchLeafServiceCommandHandler
             .Select(serviceId => assignmentsByServiceId[serviceId])
             .ToArray();
 
+        if (_branchServiceSegmentReadRepository is not null &&
+            _branchServiceSegmentWriteRepository is not null)
+        {
+            var branchServiceIds = assignmentsToDelete
+                .Select(x => x.Id)
+                .ToArray();
+            var segmentAssignments =
+                await _branchServiceSegmentReadRepository
+                    .Query()
+                    .AsTracking()
+                    .Where(x =>
+                        branchServiceIds.Contains(x.BranchServiceId))
+                    .ToListAsync(cancellationToken);
+            _branchServiceSegmentWriteRepository.DeleteRange(
+                segmentAssignments);
+        }
         _branchServiceWriteRepository.DeleteRange(
             assignmentsToDelete);
 

@@ -17,6 +17,7 @@ public sealed record CreateBranchServiceTreeCommand
             OperationalCacheTags.Services,
             OperationalCacheTags.ServiceCentral,
             OperationalCacheTags.BranchServices,
+            OperationalCacheTags.BranchServiceSegments,
             OperationalCacheTags.BranchServicesForBranch(BranchId),
             OperationalCacheTags.ServiceGlobalizationRequests,
             OperationalCacheTags.ServiceGlobalizationRequestsForBranch(BranchId)

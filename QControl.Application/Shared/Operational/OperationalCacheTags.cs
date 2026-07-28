@@ -17,6 +17,10 @@ internal static class OperationalCacheTags
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
     public const string BranchAdvertisements = "branch-advertisements";
+    public const string Segments = "segments";
+    public const string BranchServiceSegments = "branch-service-segments";
+    public const string SegmentGlobalizationRequests =
+        "segment-globalization-requests";
 
     public static string Branch(int branchId) => $"branch:{branchId}";
 
@@ -36,6 +40,23 @@ internal static class OperationalCacheTags
     public static string Display(int displayId) => $"display:{displayId}";
 
     public static string Service(int serviceId) => $"service:{serviceId}";
+
+    public static string Segment(int segmentId) => $"segment:{segmentId}";
+
+    public static string BranchServiceSegmentsForBranchService(
+        int branchServiceId) =>
+        $"branch-service:{branchServiceId}:segments";
+
+    public static string BranchServiceSegmentsForBranchAndService(
+        int branchId,
+        int serviceId) =>
+        $"branch:{branchId}:service:{serviceId}:segments";
+
+    public static string SegmentGlobalizationRequest(int requestId) =>
+        $"segment-globalization-request:{requestId}";
+
+    public static string SegmentGlobalizationRequestsForBranch(int branchId) =>
+        $"branch:{branchId}:segment-globalization-requests";
 
     public static string BranchServicesForBranch(int branchId) =>
         $"branch:{branchId}:services";

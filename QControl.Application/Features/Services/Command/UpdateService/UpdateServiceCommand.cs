@@ -53,6 +53,7 @@ public sealed record UpdateServiceCommand
                 OperationalCacheTags.Services,
                 OperationalCacheTags.ServiceCentral,
                 OperationalCacheTags.BranchServices,
+                OperationalCacheTags.BranchServiceSegments,
                 OperationalCacheTags.Service(Id),
                 OperationalCacheTags.Service(ParentServiceId.Value)
             }
@@ -61,6 +62,7 @@ public sealed record UpdateServiceCommand
                 OperationalCacheTags.Services,
                 OperationalCacheTags.ServiceCentral,
                 OperationalCacheTags.BranchServices,
+                OperationalCacheTags.BranchServiceSegments,
                 OperationalCacheTags.Service(Id)
             };
 }

@@ -162,6 +162,10 @@ namespace QControl.infrastructure.Bootstrap
 
             services.AddScoped<ISeeder, TechnicalAdminRoleSeeder>();
 
+            services.AddScoped<ISeeder, DefaultSegmentSeeder>();
+
+            services.AddScoped<ISeeder, DefaultBranchServiceSegmentSeeder>();
+
             services.AddScoped<IEnsureSeeding, EnsureSeeding>();
 
             return services;

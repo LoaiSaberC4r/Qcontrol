@@ -1449,4 +1449,70 @@
   <data name="Service_PermanentDelete_HasDependencies" xml:space="preserve">
     <value>لا يمكن حذف الخدمة نهائيًا لوجود بيانات مرتبطة بها.</value>
   </data>
+  <data name="Segments_AuthenticationRequired" xml:space="preserve"><value>يجب تسجيل الدخول.</value></data>
+  <data name="Segments_TechnicalAdminRequired" xml:space="preserve"><value>هذه العملية متاحة فقط للمسؤول التقني.</value></data>
+  <data name="Segments_BranchAdminRequired" xml:space="preserve"><value>هذه العملية متاحة فقط لمسؤول الفرع.</value></data>
+  <data name="Segments_BranchAccessForbidden" xml:space="preserve"><value>لا يملك المستخدم الحالي صلاحية الوصول إلى هذا الفرع.</value></data>
+  <data name="Segments_GlobalSegmentForbiddenForBranchAdmin" xml:space="preserve"><value>لا يمكن لمسؤول الفرع تعديل الشرائح العامة.</value></data>
+  <data name="Segments_ForeignBranchSegmentForbidden" xml:space="preserve"><value>الشريحة تابعة لفرع آخر.</value></data>
+  <data name="Segments_NotFound" xml:space="preserve"><value>تعذر العثور على الشريحة.</value></data>
+  <data name="Segments_BranchNotFound" xml:space="preserve"><value>تعذر العثور على الفرع.</value></data>
+  <data name="Segments_ArabicNameRequired" xml:space="preserve"><value>اسم الشريحة بالعربية مطلوب.</value></data>
+  <data name="Segments_EnglishNameRequired" xml:space="preserve"><value>اسم الشريحة بالإنجليزية مطلوب.</value></data>
+  <data name="Segments_NameMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز اسم الشريحة 100 حرف.</value></data>
+  <data name="Segments_InvalidPriority" xml:space="preserve"><value>يجب أن تكون الأولوية صفراً أو أكبر.</value></data>
+  <data name="Segments_PriorityExceedsSegmentCount" xml:space="preserve"><value>لا يمكن أن تتجاوز الأولوية العدد الحالي للشرائح.</value></data>
+  <data name="Segments_DefaultPriorityCannotChange" xml:space="preserve"><value>يجب أن تظل أولوية الشريحة الافتراضية صفراً.</value></data>
+  <data name="Segments_DefaultCanOnlyBeUpdatedByTechnicalAdmin" xml:space="preserve"><value>يمكن للمسؤول التقني فقط تعديل أسماء الشريحة الافتراضية.</value></data>
+  <data name="Segments_RowVersionInvalid" xml:space="preserve"><value>إصدار صف الشريحة غير صالح.</value></data>
+  <data name="Segments_ConcurrencyConflict" xml:space="preserve"><value>تم تعديل الشريحة بواسطة عملية أخرى.</value></data>
+  <data name="Segments_CreatedSuccessfully" xml:space="preserve"><value>تم إنشاء الشريحة بنجاح.</value></data>
+  <data name="Segments_UpdatedSuccessfully" xml:space="preserve"><value>تم تحديث الشريحة بنجاح.</value></data>
+  <data name="Segments_PageNumberInvalid" xml:space="preserve"><value>يجب أن يكون رقم الصفحة 1 على الأقل.</value></data>
+  <data name="Segments_PageSizeInvalid" xml:space="preserve"><value>يجب أن يكون حجم الصفحة بين 1 و100.</value></data>
+  <data name="BranchServiceSegments_AuthenticationRequired" xml:space="preserve"><value>يجب تسجيل الدخول.</value></data>
+  <data name="BranchServiceSegments_BranchNotFound" xml:space="preserve"><value>تعذر العثور على الفرع.</value></data>
+  <data name="BranchServiceSegments_BranchAccessForbidden" xml:space="preserve"><value>لا يملك المستخدم الحالي صلاحية الوصول إلى هذا الفرع.</value></data>
+  <data name="BranchServiceSegments_ServiceNotFound" xml:space="preserve"><value>تعذر العثور على الخدمة.</value></data>
+  <data name="BranchServiceSegments_ServiceNotAssigned" xml:space="preserve"><value>الخدمة غير مسندة إلى هذا الفرع.</value></data>
+  <data name="BranchServiceSegments_ServiceNotLeaf" xml:space="preserve"><value>يجب أن تكون الخدمة خدمة نهائية.</value></data>
+  <data name="BranchServiceSegments_ServiceNotTicketIssuable" xml:space="preserve"><value>الخدمة لا تصدر تذاكر.</value></data>
+  <data name="BranchServiceSegments_ServiceUnavailable" xml:space="preserve"><value>الخدمة غير متاحة فعلياً.</value></data>
+  <data name="BranchServiceSegments_InvalidServiceRange" xml:space="preserve"><value>نطاق تذاكر الخدمة غير صالح.</value></data>
+  <data name="BranchServiceSegments_SegmentNotFound" xml:space="preserve"><value>تعذر العثور على شريحة واحدة أو أكثر.</value></data>
+  <data name="BranchServiceSegments_SegmentNotVisible" xml:space="preserve"><value>شريحة واحدة أو أكثر غير متاحة لهذا الفرع.</value></data>
+  <data name="BranchServiceSegments_SegmentAlreadyAssigned" xml:space="preserve"><value>شريحة واحدة أو أكثر مسندة بالفعل.</value></data>
+  <data name="BranchServiceSegments_DuplicateSegmentIds" xml:space="preserve"><value>يحتوي الطلب على معرفات شرائح مكررة.</value></data>
+  <data name="BranchServiceSegments_ItemsRequired" xml:space="preserve"><value>يجب إضافة إسناد شريحة واحد على الأقل.</value></data>
+  <data name="BranchServiceSegments_DefaultCannotBeAssigned" xml:space="preserve"><value>يتم إسناد الشريحة الافتراضية تلقائياً.</value></data>
+  <data name="BranchServiceSegments_DefaultCannotBeUnassigned" xml:space="preserve"><value>لا يمكن إلغاء إسناد الشريحة الافتراضية.</value></data>
+  <data name="BranchServiceSegments_DefaultQuotaIsSystemCalculated" xml:space="preserve"><value>يتم احتساب حصة الشريحة الافتراضية بواسطة النظام.</value></data>
+  <data name="BranchServiceSegments_QuotaNonNegative" xml:space="preserve"><value>يجب أن تكون الحصة صفراً أو أكبر.</value></data>
+  <data name="BranchServiceSegments_QuotaExceedsServiceCapacity" xml:space="preserve"><value>إجمالي حصص الشرائح يتجاوز سعة الخدمة.</value></data>
+  <data name="BranchServiceSegments_RelationshipNotFound" xml:space="preserve"><value>تعذر العثور على إسناد الشريحة.</value></data>
+  <data name="BranchServiceSegments_RowVersionInvalid" xml:space="preserve"><value>إصدار صف الإسناد غير صالح.</value></data>
+  <data name="BranchServiceSegments_ConcurrencyConflict" xml:space="preserve"><value>تم تغيير إسنادات الشرائح بشكل متزامن.</value></data>
+  <data name="BranchServiceSegments_AssignedSuccessfully" xml:space="preserve"><value>تم إسناد الشرائح بنجاح.</value></data>
+  <data name="BranchServiceSegments_QuotaUpdatedSuccessfully" xml:space="preserve"><value>تم تحديث حصة الشريحة بنجاح.</value></data>
+  <data name="BranchServiceSegments_UnassignedSuccessfully" xml:space="preserve"><value>تم إلغاء إسناد الشريحة بنجاح.</value></data>
+  <data name="BranchServiceSegments_PageNumberInvalid" xml:space="preserve"><value>يجب أن يكون رقم الصفحة 1 على الأقل.</value></data>
+  <data name="BranchServiceSegments_PageSizeInvalid" xml:space="preserve"><value>يجب أن يكون حجم الصفحة بين 1 و100.</value></data>
+  <data name="SegmentGlobalizationRequests_AuthenticationRequired" xml:space="preserve"><value>يجب تسجيل الدخول.</value></data>
+  <data name="SegmentGlobalizationRequests_TechnicalAdminRequired" xml:space="preserve"><value>هذه العملية متاحة فقط للمسؤول التقني.</value></data>
+  <data name="SegmentGlobalizationRequests_BranchAccessForbidden" xml:space="preserve"><value>لا يملك المستخدم الحالي صلاحية الوصول إلى طلبات هذا الفرع.</value></data>
+  <data name="SegmentGlobalizationRequests_NotFound" xml:space="preserve"><value>تعذر العثور على طلب تعميم الشريحة.</value></data>
+  <data name="SegmentGlobalizationRequests_NotPending" xml:space="preserve"><value>يمكن مراجعة الطلبات المعلقة فقط.</value></data>
+  <data name="SegmentGlobalizationRequests_SegmentNotFound" xml:space="preserve"><value>تعذر العثور على الشريحة المرتبطة.</value></data>
+  <data name="SegmentGlobalizationRequests_ScopeChanged" xml:space="preserve"><value>لم تعد الشريحة خاصة بالفرع.</value></data>
+  <data name="SegmentGlobalizationRequests_OwnerChanged" xml:space="preserve"><value>لم يعد مالك الشريحة مطابقاً لفرع الطلب.</value></data>
+  <data name="SegmentGlobalizationRequests_DefaultCannotPromote" xml:space="preserve"><value>لا يمكن تعميم الشريحة الافتراضية.</value></data>
+  <data name="SegmentGlobalizationRequests_RowVersionInvalid" xml:space="preserve"><value>إصدار صف الطلب غير صالح.</value></data>
+  <data name="SegmentGlobalizationRequests_ConcurrencyConflict" xml:space="preserve"><value>تم تغيير الطلب بشكل متزامن.</value></data>
+  <data name="SegmentGlobalizationRequests_ApprovedSuccessfully" xml:space="preserve"><value>تمت الموافقة على طلب تعميم الشريحة.</value></data>
+  <data name="SegmentGlobalizationRequests_RejectedSuccessfully" xml:space="preserve"><value>تم رفض طلب تعميم الشريحة.</value></data>
+  <data name="SegmentGlobalizationRequests_AlreadyPending" xml:space="preserve"><value>يوجد بالفعل طلب تعميم معلق لهذه الشريحة.</value></data>
+  <data name="SegmentGlobalizationRequests_PageNumberInvalid" xml:space="preserve"><value>يجب أن يكون رقم الصفحة 1 على الأقل.</value></data>
+  <data name="SegmentGlobalizationRequests_PageSizeInvalid" xml:space="preserve"><value>يجب أن يكون حجم الصفحة بين 1 و100.</value></data>
+  <data name="SegmentGlobalizationRequests_RejectionReasonMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز سبب الرفض 500 حرف.</value></data>
+  <data name="Services_Update_RangeSmallerThanAllocatedSegmentQuotas" xml:space="preserve"><value>لا يمكن تقليل نطاق الخدمة عن حصص الشرائح المخصصة.</value></data>
 </root>

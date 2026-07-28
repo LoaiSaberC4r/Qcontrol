@@ -304,6 +304,63 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.ToTable("BranchService", (string)null);
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchServiceSegment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Quota")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SegmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchServiceId")
+                        .HasDatabaseName("IX_BranchServiceSegment_BranchServiceId");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("SegmentId")
+                        .HasDatabaseName("IX_BranchServiceSegment_SegmentId");
+
+                    b.HasIndex("BranchServiceId", "SegmentId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BranchServiceSegment_BranchServiceId_SegmentId");
+
+                    b.ToTable("BranchServiceSegment", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BranchServiceSegment_Quota_NonNegative", "[Quota] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.Property<int>("Id")
@@ -514,6 +571,162 @@ namespace Qcontrol.Infrastructure.Migrations
                             t.HasCheckConstraint("CK_Location_Latitude_Range", "[Latitude] >= -90 AND [Latitude] <= 90");
 
                             t.HasCheckConstraint("CK_Location_Longitude_Range", "[Longitude] >= -180 AND [Longitude] <= 180");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Segment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ArabicName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EnglishName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsSystemDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OwnerBranchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArabicName")
+                        .HasDatabaseName("IX_Segment_ArabicName");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("EnglishName")
+                        .HasDatabaseName("IX_Segment_EnglishName");
+
+                    b.HasIndex("IsSystemDefault")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Segment_SystemDefault")
+                        .HasFilter("[IsSystemDefault] = 1");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("OwnerBranchId");
+
+                    b.HasIndex("Priority")
+                        .HasDatabaseName("IX_Segment_Priority");
+
+                    b.HasIndex("Scope", "OwnerBranchId")
+                        .HasDatabaseName("IX_Segment_Scope_OwnerBranchId");
+
+                    b.ToTable("Segment", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Segment_Priority_NonNegative", "[Priority] >= 0");
+
+                            t.HasCheckConstraint("CK_Segment_Scope_Owner", "([Scope] = 1 AND [OwnerBranchId] IS NULL) OR ([Scope] = 2 AND [OwnerBranchId] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Segment_SystemDefault", "[IsSystemDefault] = 0 OR ([Scope] = 1 AND [OwnerBranchId] IS NULL AND [Priority] = 0)");
+                        });
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.SegmentGlobalizationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("RequestedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RequestedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReviewedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SegmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestedByApplicationUserId");
+
+                    b.HasIndex("ReviewedByApplicationUserId");
+
+                    b.HasIndex("BranchId", "Status")
+                        .HasDatabaseName("IX_SegmentGlobalizationRequest_BranchId_Status");
+
+                    b.HasIndex("Status", "RequestedOnUtc")
+                        .HasDatabaseName("IX_SegmentGlobalizationRequest_Status_RequestedOnUtc");
+
+                    b.HasIndex(new[] { "SegmentId" }, "IX_SegmentGlobalizationRequest_SegmentId");
+
+                    b.HasIndex(new[] { "SegmentId" }, "UX_SegmentGlobalizationRequest_SegmentId_Pending")
+                        .IsUnique()
+                        .HasFilter("[Status] = 1");
+
+                    b.ToTable("SegmentGlobalizationRequest", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SegmentGlobalizationRequest_ReviewAudit", "(([Status] = 1 AND [ReviewedByApplicationUserId] IS NULL AND [ReviewedOnUtc] IS NULL) OR ([Status] IN (2, 3) AND [ReviewedByApplicationUserId] IS NOT NULL AND [ReviewedOnUtc] IS NOT NULL))");
+
+                            t.HasCheckConstraint("CK_SegmentGlobalizationRequest_Status", "[Status] IN (1, 2, 3)");
                         });
                 });
 
@@ -1867,6 +2080,40 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchServiceSegment", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.BranchService", "BranchService")
+                        .WithMany()
+                        .HasForeignKey("BranchServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Segment", "Segment")
+                        .WithMany()
+                        .HasForeignKey("SegmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BranchService");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("Segment");
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.HasOne("QControl.Domain.Entities.Branch", "Branch")
@@ -1943,6 +2190,65 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.Segment", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Branch", "OwnerBranch")
+                        .WithMany()
+                        .HasForeignKey("OwnerBranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("OwnerBranch");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.SegmentGlobalizationRequest", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "RequestedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReviewedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QControl.Domain.Entities.Segment", "Segment")
+                        .WithMany()
+                        .HasForeignKey("SegmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("RequestedByApplicationUser");
+
+                    b.Navigation("ReviewedByApplicationUser");
+
+                    b.Navigation("Segment");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Service", b =>

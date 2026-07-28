@@ -2,6 +2,7 @@ using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceSegments.Shared;
 using Qcontrol.Application.Features.Services.Shared;
 using Qcontrol.Domain.Resources;
 using QControl.Application.Abstraction.Presistence;
@@ -18,6 +19,11 @@ internal sealed class UpdateServiceCommandHandler
 {
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
     private readonly IWriteReadRepository<BranchService>? _branchServiceReadRepository;
+    private readonly IWriteReadRepository<BranchServiceSegment>?
+        _branchServiceSegmentReadRepository;
+    private readonly IWriteReadRepository<Segment>? _segmentReadRepository;
+    private readonly IWriteRepository<BranchServiceSegment>?
+        _branchServiceSegmentWriteRepository;
     private readonly IWriteRepository<Service> _serviceWriteRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly IServiceTicketUsageChecker _ticketUsageChecker;
@@ -36,6 +42,9 @@ internal sealed class UpdateServiceCommandHandler
         : this(
             serviceReadRepository,
             branchServiceReadRepository: null,
+            branchServiceSegmentReadRepository: null,
+            segmentReadRepository: null,
+            branchServiceSegmentWriteRepository: null,
             serviceWriteRepository,
             concurrencyTokenManager,
             ticketUsageChecker,
@@ -49,6 +58,11 @@ internal sealed class UpdateServiceCommandHandler
     public UpdateServiceCommandHandler(
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<BranchService>? branchServiceReadRepository,
+        IWriteReadRepository<BranchServiceSegment>?
+            branchServiceSegmentReadRepository,
+        IWriteReadRepository<Segment>? segmentReadRepository,
+        IWriteRepository<BranchServiceSegment>?
+            branchServiceSegmentWriteRepository,
         IWriteRepository<Service> serviceWriteRepository,
         IConcurrencyTokenManager concurrencyTokenManager,
         IServiceTicketUsageChecker ticketUsageChecker,
@@ -60,6 +74,11 @@ internal sealed class UpdateServiceCommandHandler
         _serviceReadRepository = serviceReadRepository
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _branchServiceReadRepository = branchServiceReadRepository;
+        _branchServiceSegmentReadRepository =
+            branchServiceSegmentReadRepository;
+        _segmentReadRepository = segmentReadRepository;
+        _branchServiceSegmentWriteRepository =
+            branchServiceSegmentWriteRepository;
         _serviceWriteRepository = serviceWriteRepository
             ?? throw new ArgumentNullException(nameof(serviceWriteRepository));
         _concurrencyTokenManager = concurrencyTokenManager
@@ -227,6 +246,18 @@ internal sealed class UpdateServiceCommandHandler
             return Result<ServiceResponse>.Fail(duplicateError);
         }
 
+        var quotaError = await ValidateAndRecalculateDefaultQuotasAsync(
+            service,
+            requestedTicketIssuable,
+            hasChildren,
+            request.RangeStartNumber,
+            request.RangeEndNumber,
+            cancellationToken);
+        if (quotaError is not null)
+        {
+            return Result<ServiceResponse>.Fail(quotaError);
+        }
+
         _concurrencyTokenManager.SetOriginalRowVersion(
             service,
             rowVersion);
@@ -314,5 +345,138 @@ internal sealed class UpdateServiceCommandHandler
             _currentBranchContext.IsBranchActor,
             _currentBranchContext.ActiveBranchId,
             assignedServiceIds);
+    }
+
+    private async Task<Error?> ValidateAndRecalculateDefaultQuotasAsync(
+        Service service,
+        bool requestedTicketIssuable,
+        bool hasChildren,
+        int? rangeStartNumber,
+        int? rangeEndNumber,
+        CancellationToken cancellationToken)
+    {
+        var rangeChanged =
+            service.RangeStartNumber != rangeStartNumber ||
+            service.RangeEndNumber != rangeEndNumber;
+        if (!rangeChanged ||
+            !requestedTicketIssuable ||
+            hasChildren ||
+            !rangeStartNumber.HasValue ||
+            !rangeEndNumber.HasValue ||
+            _branchServiceReadRepository is null ||
+            _branchServiceSegmentReadRepository is null)
+        {
+            return null;
+        }
+
+        var capacity =
+            BranchServiceSegmentQuotaCalculator.CalculateCapacity(
+                rangeStartNumber,
+                rangeEndNumber);
+        if (capacity.IsFailure)
+        {
+            return capacity.Errors[0];
+        }
+
+        var branchServiceIds = await _branchServiceReadRepository.Query()
+            .AsNoTracking()
+            .Where(x => x.ServiceId == service.Id)
+            .Select(x => x.Id)
+            .ToArrayAsync(cancellationToken);
+        if (branchServiceIds.Length == 0)
+        {
+            return null;
+        }
+
+        var totals = await _branchServiceSegmentReadRepository.Query()
+            .AsNoTracking()
+            .Where(x =>
+                branchServiceIds.Contains(x.BranchServiceId) &&
+                !x.Segment.IsSystemDefault)
+            .GroupBy(x => x.BranchServiceId)
+            .Select(x => new
+            {
+                BranchServiceId = x.Key,
+                Total = x.Sum(item => item.Quota)
+            })
+            .ToListAsync(cancellationToken);
+        if (totals.Any(x => x.Total > capacity.Value))
+        {
+            return new Error(
+                "Services.Update.RangeSmallerThanAllocatedSegmentQuotas",
+                ServiceFeatureMessages
+                    .RangeSmallerThanAllocatedSegmentQuotas,
+                ErrorType.Validation);
+        }
+
+        var totalByBranchService = totals.ToDictionary(
+            x => x.BranchServiceId,
+            x => x.Total);
+        var defaults = await _branchServiceSegmentReadRepository.Query()
+            .AsTracking()
+            .Where(x =>
+                branchServiceIds.Contains(x.BranchServiceId) &&
+                x.Segment.IsSystemDefault)
+            .ToListAsync(cancellationToken);
+        var defaultBranchServiceIds = defaults
+            .Select(x => x.BranchServiceId)
+            .ToHashSet();
+        var missingDefaultBranchServiceIds = branchServiceIds
+            .Where(x => !defaultBranchServiceIds.Contains(x))
+            .ToArray();
+        if (missingDefaultBranchServiceIds.Length > 0 &&
+            (_segmentReadRepository is null ||
+             _branchServiceSegmentWriteRepository is null))
+        {
+            return new Error(
+                "BranchServiceSegments.DefaultAssignmentNotFound",
+                BranchServiceSegmentMessages.RelationshipNotFound,
+                ErrorType.Conflict);
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var defaultAssignment in defaults)
+        {
+            var allocated = totalByBranchService.GetValueOrDefault(
+                defaultAssignment.BranchServiceId);
+            defaultAssignment.UpdateQuota(
+                capacity.Value - allocated,
+                _currentUser.UserId!.Value,
+                now);
+        }
+
+        if (missingDefaultBranchServiceIds.Length > 0)
+        {
+            var defaultSegmentId = await _segmentReadRepository!.Query()
+                .AsNoTracking()
+                .Where(x => x.IsSystemDefault)
+                .Select(x => x.Id)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (defaultSegmentId <= 0)
+            {
+                return new Error(
+                    "BranchServiceSegments.DefaultSegmentNotFound",
+                    BranchServiceSegmentMessages.SegmentNotFound,
+                    ErrorType.Infrastructure);
+            }
+
+            var additions = missingDefaultBranchServiceIds
+                .Select(branchServiceId =>
+                {
+                    var allocated = totalByBranchService.GetValueOrDefault(
+                        branchServiceId);
+                    return BranchServiceSegment.Create(
+                        branchServiceId,
+                        defaultSegmentId,
+                        capacity.Value - allocated,
+                        _currentUser.UserId!.Value);
+                })
+                .ToList();
+            await _branchServiceSegmentWriteRepository!.AddRangeAsync(
+                additions,
+                cancellationToken);
+        }
+
+        return null;
     }
 }
