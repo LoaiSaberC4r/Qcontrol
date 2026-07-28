@@ -1449,4 +1449,70 @@
   <data name="Service_PermanentDelete_HasDependencies" xml:space="preserve">
     <value>The service cannot be permanently deleted because related records still exist.</value>
   </data>
+  <data name="Segments_AuthenticationRequired" xml:space="preserve"><value>Authentication is required.</value></data>
+  <data name="Segments_TechnicalAdminRequired" xml:space="preserve"><value>Only a technical administrator can perform this operation.</value></data>
+  <data name="Segments_BranchAdminRequired" xml:space="preserve"><value>Only a branch administrator can perform this operation.</value></data>
+  <data name="Segments_BranchAccessForbidden" xml:space="preserve"><value>The current user cannot access this branch.</value></data>
+  <data name="Segments_GlobalSegmentForbiddenForBranchAdmin" xml:space="preserve"><value>Branch administrators cannot update global segments.</value></data>
+  <data name="Segments_ForeignBranchSegmentForbidden" xml:space="preserve"><value>The segment belongs to another branch.</value></data>
+  <data name="Segments_NotFound" xml:space="preserve"><value>The segment could not be found.</value></data>
+  <data name="Segments_BranchNotFound" xml:space="preserve"><value>The branch could not be found.</value></data>
+  <data name="Segments_ArabicNameRequired" xml:space="preserve"><value>The Arabic segment name is required.</value></data>
+  <data name="Segments_EnglishNameRequired" xml:space="preserve"><value>The English segment name is required.</value></data>
+  <data name="Segments_NameMaxLength" xml:space="preserve"><value>A segment name must not exceed 100 characters.</value></data>
+  <data name="Segments_InvalidPriority" xml:space="preserve"><value>Priority must be greater than or equal to zero.</value></data>
+  <data name="Segments_PriorityExceedsSegmentCount" xml:space="preserve"><value>Priority cannot exceed the current segment count.</value></data>
+  <data name="Segments_DefaultPriorityCannotChange" xml:space="preserve"><value>The default segment priority must remain zero.</value></data>
+  <data name="Segments_DefaultCanOnlyBeUpdatedByTechnicalAdmin" xml:space="preserve"><value>Only a technical administrator can update the default segment names.</value></data>
+  <data name="Segments_RowVersionInvalid" xml:space="preserve"><value>The segment row version is invalid.</value></data>
+  <data name="Segments_ConcurrencyConflict" xml:space="preserve"><value>The segment was changed by another operation.</value></data>
+  <data name="Segments_CreatedSuccessfully" xml:space="preserve"><value>The segment was created successfully.</value></data>
+  <data name="Segments_UpdatedSuccessfully" xml:space="preserve"><value>The segment was updated successfully.</value></data>
+  <data name="Segments_PageNumberInvalid" xml:space="preserve"><value>Page number must be at least 1.</value></data>
+  <data name="Segments_PageSizeInvalid" xml:space="preserve"><value>Page size must be between 1 and 100.</value></data>
+  <data name="BranchServiceSegments_AuthenticationRequired" xml:space="preserve"><value>Authentication is required.</value></data>
+  <data name="BranchServiceSegments_BranchNotFound" xml:space="preserve"><value>The branch could not be found.</value></data>
+  <data name="BranchServiceSegments_BranchAccessForbidden" xml:space="preserve"><value>The current user cannot access this branch.</value></data>
+  <data name="BranchServiceSegments_ServiceNotFound" xml:space="preserve"><value>The service could not be found.</value></data>
+  <data name="BranchServiceSegments_ServiceNotAssigned" xml:space="preserve"><value>The service is not assigned to this branch.</value></data>
+  <data name="BranchServiceSegments_ServiceNotLeaf" xml:space="preserve"><value>The service must be a leaf service.</value></data>
+  <data name="BranchServiceSegments_ServiceNotTicketIssuable" xml:space="preserve"><value>The service cannot issue tickets.</value></data>
+  <data name="BranchServiceSegments_ServiceUnavailable" xml:space="preserve"><value>The service is not effectively available.</value></data>
+  <data name="BranchServiceSegments_InvalidServiceRange" xml:space="preserve"><value>The service ticket range is invalid.</value></data>
+  <data name="BranchServiceSegments_SegmentNotFound" xml:space="preserve"><value>One or more segments could not be found.</value></data>
+  <data name="BranchServiceSegments_SegmentNotVisible" xml:space="preserve"><value>One or more segments are not available to this branch.</value></data>
+  <data name="BranchServiceSegments_SegmentAlreadyAssigned" xml:space="preserve"><value>One or more segments are already assigned.</value></data>
+  <data name="BranchServiceSegments_DuplicateSegmentIds" xml:space="preserve"><value>The request contains duplicate segment ids.</value></data>
+  <data name="BranchServiceSegments_ItemsRequired" xml:space="preserve"><value>At least one segment assignment is required.</value></data>
+  <data name="BranchServiceSegments_DefaultCannotBeAssigned" xml:space="preserve"><value>The default segment is assigned automatically.</value></data>
+  <data name="BranchServiceSegments_DefaultCannotBeUnassigned" xml:space="preserve"><value>The default segment cannot be unassigned.</value></data>
+  <data name="BranchServiceSegments_DefaultQuotaIsSystemCalculated" xml:space="preserve"><value>The default segment quota is calculated by the system.</value></data>
+  <data name="BranchServiceSegments_QuotaNonNegative" xml:space="preserve"><value>Quota must be greater than or equal to zero.</value></data>
+  <data name="BranchServiceSegments_QuotaExceedsServiceCapacity" xml:space="preserve"><value>The total segment quota exceeds the service capacity.</value></data>
+  <data name="BranchServiceSegments_RelationshipNotFound" xml:space="preserve"><value>The segment assignment could not be found.</value></data>
+  <data name="BranchServiceSegments_RowVersionInvalid" xml:space="preserve"><value>The assignment row version is invalid.</value></data>
+  <data name="BranchServiceSegments_ConcurrencyConflict" xml:space="preserve"><value>The segment assignments changed concurrently.</value></data>
+  <data name="BranchServiceSegments_AssignedSuccessfully" xml:space="preserve"><value>Segments were assigned successfully.</value></data>
+  <data name="BranchServiceSegments_QuotaUpdatedSuccessfully" xml:space="preserve"><value>The segment quota was updated successfully.</value></data>
+  <data name="BranchServiceSegments_UnassignedSuccessfully" xml:space="preserve"><value>The segment was unassigned successfully.</value></data>
+  <data name="BranchServiceSegments_PageNumberInvalid" xml:space="preserve"><value>Page number must be at least 1.</value></data>
+  <data name="BranchServiceSegments_PageSizeInvalid" xml:space="preserve"><value>Page size must be between 1 and 100.</value></data>
+  <data name="SegmentGlobalizationRequests_AuthenticationRequired" xml:space="preserve"><value>Authentication is required.</value></data>
+  <data name="SegmentGlobalizationRequests_TechnicalAdminRequired" xml:space="preserve"><value>Only a technical administrator can perform this operation.</value></data>
+  <data name="SegmentGlobalizationRequests_BranchAccessForbidden" xml:space="preserve"><value>The current user cannot access requests for this branch.</value></data>
+  <data name="SegmentGlobalizationRequests_NotFound" xml:space="preserve"><value>The segment globalization request could not be found.</value></data>
+  <data name="SegmentGlobalizationRequests_NotPending" xml:space="preserve"><value>Only a pending request can be reviewed.</value></data>
+  <data name="SegmentGlobalizationRequests_SegmentNotFound" xml:space="preserve"><value>The related segment could not be found.</value></data>
+  <data name="SegmentGlobalizationRequests_ScopeChanged" xml:space="preserve"><value>The segment is no longer branch scoped.</value></data>
+  <data name="SegmentGlobalizationRequests_OwnerChanged" xml:space="preserve"><value>The segment owner no longer matches the request branch.</value></data>
+  <data name="SegmentGlobalizationRequests_DefaultCannotPromote" xml:space="preserve"><value>The default segment cannot be promoted.</value></data>
+  <data name="SegmentGlobalizationRequests_RowVersionInvalid" xml:space="preserve"><value>The request row version is invalid.</value></data>
+  <data name="SegmentGlobalizationRequests_ConcurrencyConflict" xml:space="preserve"><value>The request changed concurrently.</value></data>
+  <data name="SegmentGlobalizationRequests_ApprovedSuccessfully" xml:space="preserve"><value>The segment globalization request was approved.</value></data>
+  <data name="SegmentGlobalizationRequests_RejectedSuccessfully" xml:space="preserve"><value>The segment globalization request was rejected.</value></data>
+  <data name="SegmentGlobalizationRequests_AlreadyPending" xml:space="preserve"><value>A pending globalization request already exists for this segment.</value></data>
+  <data name="SegmentGlobalizationRequests_PageNumberInvalid" xml:space="preserve"><value>Page number must be at least 1.</value></data>
+  <data name="SegmentGlobalizationRequests_PageSizeInvalid" xml:space="preserve"><value>Page size must be between 1 and 100.</value></data>
+  <data name="SegmentGlobalizationRequests_RejectionReasonMaxLength" xml:space="preserve"><value>The rejection reason must not exceed 500 characters.</value></data>
+  <data name="Services_Update_RangeSmallerThanAllocatedSegmentQuotas" xml:space="preserve"><value>The service range cannot be reduced below allocated segment quotas.</value></data>
 </root>

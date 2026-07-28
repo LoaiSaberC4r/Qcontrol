@@ -3,6 +3,7 @@ using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Application.Time;
 using BuildingBlock.Domain.Results;
 using Microsoft.EntityFrameworkCore;
+using Qcontrol.Application.Features.BranchServiceSegments.Shared;
 using Qcontrol.Application.Features.BranchServiceTrees.Shared;
 using Qcontrol.Application.Features.ServiceGlobalizationRequests.Shared;
 using Qcontrol.Application.Features.Services.Shared;
@@ -22,6 +23,9 @@ internal sealed class CreateBranchServiceTreeCommandHandler
     private readonly IWriteRepository<BranchService> _branchServiceWriteRepository;
     private readonly IWriteRepository<ServiceGlobalizationRequest>
         _requestWriteRepository;
+    private readonly IWriteReadRepository<Segment> _segmentReadRepository;
+    private readonly IWriteRepository<BranchServiceSegment>
+        _branchServiceSegmentWriteRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IServiceDefinitionAccessValidator _accessValidator;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -33,6 +37,9 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         IWriteRepository<Service> serviceWriteRepository,
         IWriteRepository<BranchService> branchServiceWriteRepository,
         IWriteRepository<ServiceGlobalizationRequest> requestWriteRepository,
+        IWriteReadRepository<Segment> segmentReadRepository,
+        IWriteRepository<BranchServiceSegment>
+            branchServiceSegmentWriteRepository,
         ICurrentUser currentUser,
         IServiceDefinitionAccessValidator accessValidator,
         IDateTimeProvider dateTimeProvider,
@@ -48,6 +55,12 @@ internal sealed class CreateBranchServiceTreeCommandHandler
             ?? throw new ArgumentNullException(nameof(branchServiceWriteRepository));
         _requestWriteRepository = requestWriteRepository
             ?? throw new ArgumentNullException(nameof(requestWriteRepository));
+        _segmentReadRepository = segmentReadRepository
+            ?? throw new ArgumentNullException(nameof(segmentReadRepository));
+        _branchServiceSegmentWriteRepository =
+            branchServiceSegmentWriteRepository
+            ?? throw new ArgumentNullException(
+                nameof(branchServiceSegmentWriteRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _accessValidator = accessValidator
@@ -186,6 +199,20 @@ internal sealed class CreateBranchServiceTreeCommandHandler
             globalizationRequest.AddService(service);
         }
 
+        var defaultAssignments =
+            await DefaultBranchServiceSegmentFactory
+                .CreateForNewServicesAsync(
+                    services,
+                    assignments,
+                    _segmentReadRepository,
+                    _currentUser.UserId.Value,
+                    cancellationToken);
+        if (defaultAssignments.IsFailure)
+        {
+            return Result<CreateBranchServiceTreeResponse>.Fail(
+                defaultAssignments.Errors);
+        }
+
         await _serviceWriteRepository.AddRangeAsync(
             services,
             cancellationToken);
@@ -195,6 +222,12 @@ internal sealed class CreateBranchServiceTreeCommandHandler
         await _requestWriteRepository.AddAsync(
             globalizationRequest,
             cancellationToken);
+        if (defaultAssignments.Value.Count > 0)
+        {
+            await _branchServiceSegmentWriteRepository.AddRangeAsync(
+                defaultAssignments.Value,
+                cancellationToken);
+        }
 
         try
         {

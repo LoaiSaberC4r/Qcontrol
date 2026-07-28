@@ -126,6 +126,20 @@ namespace QControl.infrastructure.Persistence
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
 
+            modelBuilder.Entity<BranchServiceSegment>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchService.BranchId == CurrentBranchId &&
+                     x.BranchService.Branch.IsActive));
+
+            modelBuilder.Entity<SegmentGlobalizationRequest>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId &&
+                     x.Branch.IsActive));
+
             modelBuilder.Entity<ServiceWorkflow>()
                 .HasQueryFilter(x =>
                     !IsBranchScopeEnabled ||

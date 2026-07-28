@@ -193,6 +193,35 @@ internal static class SeedConstants
         public const string ServiceGlobalizationRequestsReject =
             "ServiceGlobalizationRequests.Reject";
 
+        public const string SegmentsViewAll = "Segments.ViewAll";
+        public const string SegmentsViewDetails = "Segments.ViewDetails";
+        public const string SegmentsCreateGlobal = "Segments.CreateGlobal";
+        public const string SegmentsCreateBranchScoped =
+            "Segments.CreateBranchScoped";
+        public const string SegmentsUpdate = "Segments.Update";
+
+        public const string BranchServiceSegmentsView =
+            "BranchServiceSegments.View";
+        public const string BranchServiceSegmentsViewAvailable =
+            "BranchServiceSegments.ViewAvailable";
+        public const string BranchServiceSegmentsAssign =
+            "BranchServiceSegments.Assign";
+        public const string BranchServiceSegmentsUpdateQuota =
+            "BranchServiceSegments.UpdateQuota";
+        public const string BranchServiceSegmentsUnassign =
+            "BranchServiceSegments.Unassign";
+
+        public const string SegmentGlobalizationRequestsViewAll =
+            "SegmentGlobalizationRequests.ViewAll";
+        public const string SegmentGlobalizationRequestsViewOwn =
+            "SegmentGlobalizationRequests.ViewOwn";
+        public const string SegmentGlobalizationRequestsViewDetails =
+            "SegmentGlobalizationRequests.ViewDetails";
+        public const string SegmentGlobalizationRequestsApprove =
+            "SegmentGlobalizationRequests.Approve";
+        public const string SegmentGlobalizationRequestsReject =
+            "SegmentGlobalizationRequests.Reject";
+
         public const string ServicesViewCentralTree =
             "Services.ViewCentralTree";
 
@@ -570,6 +599,37 @@ internal static class SeedConstants
             public static readonly Guid ServicesDeletePermanent =
                 Guid.Parse(
                     "30000000-0000-0000-0000-000000000077");
+
+            public static readonly Guid SegmentsViewAll =
+                Guid.Parse("30000000-0000-0000-0000-000000000078");
+            public static readonly Guid SegmentsViewDetails =
+                Guid.Parse("30000000-0000-0000-0000-000000000079");
+            public static readonly Guid SegmentsCreateGlobal =
+                Guid.Parse("30000000-0000-0000-0000-000000000080");
+            public static readonly Guid SegmentsCreateBranchScoped =
+                Guid.Parse("30000000-0000-0000-0000-000000000081");
+            public static readonly Guid SegmentsUpdate =
+                Guid.Parse("30000000-0000-0000-0000-000000000082");
+            public static readonly Guid BranchServiceSegmentsView =
+                Guid.Parse("30000000-0000-0000-0000-000000000083");
+            public static readonly Guid BranchServiceSegmentsViewAvailable =
+                Guid.Parse("30000000-0000-0000-0000-000000000084");
+            public static readonly Guid BranchServiceSegmentsAssign =
+                Guid.Parse("30000000-0000-0000-0000-000000000085");
+            public static readonly Guid BranchServiceSegmentsUpdateQuota =
+                Guid.Parse("30000000-0000-0000-0000-000000000086");
+            public static readonly Guid BranchServiceSegmentsUnassign =
+                Guid.Parse("30000000-0000-0000-0000-000000000087");
+            public static readonly Guid SegmentGlobalizationRequestsViewAll =
+                Guid.Parse("30000000-0000-0000-0000-000000000088");
+            public static readonly Guid SegmentGlobalizationRequestsViewOwn =
+                Guid.Parse("30000000-0000-0000-0000-000000000089");
+            public static readonly Guid SegmentGlobalizationRequestsViewDetails =
+                Guid.Parse("30000000-0000-0000-0000-000000000090");
+            public static readonly Guid SegmentGlobalizationRequestsApprove =
+                Guid.Parse("30000000-0000-0000-0000-000000000091");
+            public static readonly Guid SegmentGlobalizationRequestsReject =
+                Guid.Parse("30000000-0000-0000-0000-000000000092");
         }
     }
 
@@ -797,6 +857,52 @@ internal static class SeedConstants
                     PermissionNames.ServiceGlobalizationRequestsReject),
 
                 new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentsViewAll,
+                    PermissionNames.SegmentsViewAll),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentsViewDetails,
+                    PermissionNames.SegmentsViewDetails),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentsCreateGlobal,
+                    PermissionNames.SegmentsCreateGlobal),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentsCreateBranchScoped,
+                    PermissionNames.SegmentsCreateBranchScoped),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentsUpdate,
+                    PermissionNames.SegmentsUpdate),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceSegmentsView,
+                    PermissionNames.BranchServiceSegmentsView),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceSegmentsViewAvailable,
+                    PermissionNames.BranchServiceSegmentsViewAvailable),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceSegmentsAssign,
+                    PermissionNames.BranchServiceSegmentsAssign),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceSegmentsUpdateQuota,
+                    PermissionNames.BranchServiceSegmentsUpdateQuota),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServiceSegmentsUnassign,
+                    PermissionNames.BranchServiceSegmentsUnassign),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentGlobalizationRequestsViewAll,
+                    PermissionNames.SegmentGlobalizationRequestsViewAll),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentGlobalizationRequestsViewOwn,
+                    PermissionNames.SegmentGlobalizationRequestsViewOwn),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentGlobalizationRequestsViewDetails,
+                    PermissionNames.SegmentGlobalizationRequestsViewDetails),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentGlobalizationRequestsApprove,
+                    PermissionNames.SegmentGlobalizationRequestsApprove),
+                new PermissionSeedItem(
+                    SeedIds.Permissions.SegmentGlobalizationRequestsReject,
+                    PermissionNames.SegmentGlobalizationRequestsReject),
+
+                new PermissionSeedItem(
                     SeedIds.Permissions.ServicesViewCentralTree,
                     PermissionNames.ServicesViewCentralTree),
 
@@ -927,6 +1033,17 @@ internal static class SeedConstants
         SeedIds.Permissions.BranchServicesAssign,
         SeedIds.Permissions.BranchServiceTreesCreate,
         SeedIds.Permissions.ServiceGlobalizationRequestsViewOwn,
+        SeedIds.Permissions.SegmentsViewAll,
+        SeedIds.Permissions.SegmentsViewDetails,
+        SeedIds.Permissions.SegmentsCreateBranchScoped,
+        SeedIds.Permissions.SegmentsUpdate,
+        SeedIds.Permissions.BranchServiceSegmentsView,
+        SeedIds.Permissions.BranchServiceSegmentsViewAvailable,
+        SeedIds.Permissions.BranchServiceSegmentsAssign,
+        SeedIds.Permissions.BranchServiceSegmentsUpdateQuota,
+        SeedIds.Permissions.BranchServiceSegmentsUnassign,
+        SeedIds.Permissions.SegmentGlobalizationRequestsViewOwn,
+        SeedIds.Permissions.SegmentGlobalizationRequestsViewDetails,
         SeedIds.Permissions.ServiceWorkflowsViewAll,
         SeedIds.Permissions.ServiceWorkflowsViewDetails,
         SeedIds.Permissions.ServiceWorkflowsCreate,
