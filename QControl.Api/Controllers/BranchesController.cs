@@ -106,7 +106,7 @@ public sealed class BranchesController : ControllerBase
     }
 
     [HttpGet("{branchId:int}/ticket-issuable-services")]
-    [Permission("BranchServices.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetTicketIssuableServices(
         int branchId,
         CancellationToken cancellationToken)

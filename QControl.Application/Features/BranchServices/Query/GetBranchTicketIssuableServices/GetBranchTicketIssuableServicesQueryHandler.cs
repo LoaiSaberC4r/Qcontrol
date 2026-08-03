@@ -21,11 +21,15 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         "BranchTicketIssuableServices.View";
 
     private readonly IWriteReadRepository<Branch> _branchReadRepository;
+
     private readonly IWriteReadRepository<BranchService>
         _branchServiceReadRepository;
+
     private readonly IWriteReadRepository<Service> _serviceReadRepository;
+
     private readonly IWriteReadRepository<ServiceSchedule>
         _scheduleReadRepository;
+
     private readonly ICurrentUser _currentUser;
     private readonly IBranchAccessValidator _branchAccessValidator;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -60,24 +64,24 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         GetBranchTicketIssuableServicesQuery request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
-        {
-            return Result<GetBranchTicketIssuableServicesResponse>.Fail(
-                new Error(
-                    $"{ErrorCodePrefix}.Unauthenticated",
-                    BranchTicketIssuableServicesMessages.AuthenticationRequired,
-                    ErrorType.Unauthorized));
-        }
+        //if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        //{
+        //    return Result<GetBranchTicketIssuableServicesResponse>.Fail(
+        //        new Error(
+        //            $"{ErrorCodePrefix}.Unauthenticated",
+        //            BranchTicketIssuableServicesMessages.AuthenticationRequired,
+        //            ErrorType.Unauthorized));
+        //}
 
-        var accessResult = _branchAccessValidator.EnsureCanAccessBranch(
-            request.BranchId,
-            ErrorCodePrefix);
+        //var accessResult = _branchAccessValidator.EnsureCanAccessBranch(
+        //    request.BranchId,
+        //    ErrorCodePrefix);
 
-        if (accessResult.IsFailure)
-        {
-            return Result<GetBranchTicketIssuableServicesResponse>.Fail(
-                accessResult.Errors);
-        }
+        //if (accessResult.IsFailure)
+        //{
+        //    return Result<GetBranchTicketIssuableServicesResponse>.Fail(
+        //        accessResult.Errors);
+        //}
 
         var branchState = await _branchReadRepository.FirstOrDefaultAsync(
             new GetBranchTicketIssuanceStateSpec(request.BranchId),
