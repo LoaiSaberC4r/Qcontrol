@@ -1515,4 +1515,8 @@
   <data name="SegmentGlobalizationRequests_PageSizeInvalid" xml:space="preserve"><value>Page size must be between 1 and 100.</value></data>
   <data name="SegmentGlobalizationRequests_RejectionReasonMaxLength" xml:space="preserve"><value>The rejection reason must not exceed 500 characters.</value></data>
   <data name="Services_Update_RangeSmallerThanAllocatedSegmentQuotas" xml:space="preserve"><value>The service range cannot be reduced below allocated segment quotas.</value></data>
+  <data name="BranchTicketIssuableServices_AuthenticationRequired" xml:space="preserve"><value>Authentication is required.</value></data>
+  <data name="BranchTicketIssuableServices_BranchIdRequired" xml:space="preserve"><value>A valid branch id is required.</value></data>
+  <data name="BranchTicketIssuableServices_BranchNotFound" xml:space="preserve"><value>The selected branch could not be found.</value></data>
+  <data name="BranchTicketIssuableServices_BranchInactive" xml:space="preserve"><value>The selected branch is inactive and cannot currently issue tickets.</value></data>
 </root>

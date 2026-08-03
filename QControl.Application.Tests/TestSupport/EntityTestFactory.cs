@@ -31,6 +31,53 @@ internal static class EntityTestFactory
         return branch;
     }
 
+    public static BranchBranding BranchBranding(
+        int id,
+        int branchId,
+        string? logoPath = null,
+        string? mainColor = null,
+        string? secondaryColor = null,
+        string? backgroundColor = null)
+    {
+        var branding = QControl.Domain.Entities.BranchBranding.Create(
+            branchId,
+            CurrentUserId);
+
+        SetId(branding, id);
+
+        if (mainColor is not null &&
+            secondaryColor is not null &&
+            backgroundColor is not null)
+        {
+            branding.UpdateTheme(
+                mainColor,
+                secondaryColor,
+                backgroundColor,
+                CurrentUserId);
+        }
+
+        if (logoPath is not null)
+        {
+            branding.ReplaceLogo(logoPath, CurrentUserId);
+        }
+
+        return branding;
+    }
+
+    public static void AttachBranding(
+        Branch branch,
+        BranchBranding branding)
+    {
+        SetPrivateProperty(
+            branch,
+            nameof(QControl.Domain.Entities.Branch.Branding),
+            branding);
+        SetPrivateProperty(
+            branding,
+            nameof(QControl.Domain.Entities.BranchBranding.Branch),
+            branch);
+    }
+
     public static WaitingArea WaitingArea(
         int id,
         int branchId,
