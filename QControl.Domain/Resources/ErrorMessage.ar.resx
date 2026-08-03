@@ -1515,4 +1515,8 @@
   <data name="SegmentGlobalizationRequests_PageSizeInvalid" xml:space="preserve"><value>يجب أن يكون حجم الصفحة بين 1 و100.</value></data>
   <data name="SegmentGlobalizationRequests_RejectionReasonMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز سبب الرفض 500 حرف.</value></data>
   <data name="Services_Update_RangeSmallerThanAllocatedSegmentQuotas" xml:space="preserve"><value>لا يمكن تقليل نطاق الخدمة عن حصص الشرائح المخصصة.</value></data>
+  <data name="BranchTicketIssuableServices_AuthenticationRequired" xml:space="preserve"><value>يجب تسجيل الدخول.</value></data>
+  <data name="BranchTicketIssuableServices_BranchIdRequired" xml:space="preserve"><value>يجب إدخال معرّف فرع صالح.</value></data>
+  <data name="BranchTicketIssuableServices_BranchNotFound" xml:space="preserve"><value>تعذر العثور على الفرع المحدد.</value></data>
+  <data name="BranchTicketIssuableServices_BranchInactive" xml:space="preserve"><value>الفرع المحدد غير نشط ولا يمكنه إصدار التذاكر حالياً.</value></data>
 </root>

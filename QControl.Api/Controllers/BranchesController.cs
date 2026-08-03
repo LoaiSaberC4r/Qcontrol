@@ -17,6 +17,7 @@ using Qcontrol.Application.Features.BranchBranding.Command.UpdateBranchTheme;
 using Qcontrol.Application.Features.BranchBranding.Command.UploadBranchLogo;
 using Qcontrol.Application.Features.BranchBranding.Query.GetBranchBranding;
 using Qcontrol.Application.Features.BranchServices.Command.AssignBranchServices;
+using Qcontrol.Application.Features.BranchServices.Query.GetBranchTicketIssuableServices;
 using Qcontrol.Application.Features.BranchServices.Query.GetBranchServiceTree;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceSubtree;
 using Qcontrol.Application.Features.BranchServiceTrees.Command.CreateBranchServiceTree;
@@ -95,6 +96,24 @@ public sealed class BranchesController : ControllerBase
             IncludeInactive = includeInactive,
             IncludeDeleted = includeDeleted,
             SearchText = searchText
+        };
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        return result.ToIActionResult();
+    }
+
+    [HttpGet("{branchId:int}/ticket-issuable-services")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTicketIssuableServices(
+        int branchId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetBranchTicketIssuableServicesQuery
+        {
+            BranchId = branchId
         };
 
         var result = await sender.Send(
