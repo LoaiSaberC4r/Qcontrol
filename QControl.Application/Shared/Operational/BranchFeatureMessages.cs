@@ -16,6 +16,15 @@ internal static class BranchFeatureMessages
     public static string InvalidColor =>
         Get(nameof(InvalidColor), "BranchBranding_InvalidColor");
 
+    public static string InvalidDimension =>
+        Get(nameof(InvalidDimension), "BranchBranding_InvalidDimension");
+
+    public static string InvalidSpacing =>
+        Get(nameof(InvalidSpacing), "BranchBranding_InvalidSpacing");
+
+    public static string ButtonTextTooLong =>
+        Get(nameof(ButtonTextTooLong), "BranchBranding_ButtonText_MaxLength");
+
     public static string LogoRequired =>
         Get(nameof(LogoRequired), "BranchBranding_Logo_Required");
 

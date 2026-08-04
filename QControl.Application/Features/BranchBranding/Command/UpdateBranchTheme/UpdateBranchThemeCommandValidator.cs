@@ -14,23 +14,7 @@ internal sealed class UpdateBranchThemeCommandValidator
             .GreaterThan(0)
             .WithMessage(ErrorMessage.Branch_Id_Required);
 
-        RuleFor(x => x.MainColor)
-            .NotEmpty()
-            .WithMessage(BranchFeatureMessages.InvalidColor)
-            .Must(value => BranchBrandingColorNormalizer.TryNormalize(value, out _))
-            .WithMessage(BranchFeatureMessages.InvalidColor);
-
-        RuleFor(x => x.SecondaryColor)
-            .NotEmpty()
-            .WithMessage(BranchFeatureMessages.InvalidColor)
-            .Must(value => BranchBrandingColorNormalizer.TryNormalize(value, out _))
-            .WithMessage(BranchFeatureMessages.InvalidColor);
-
-        RuleFor(x => x.BackgroundColor)
-            .NotEmpty()
-            .WithMessage(BranchFeatureMessages.InvalidColor)
-            .Must(value => BranchBrandingColorNormalizer.TryNormalize(value, out _))
-            .WithMessage(BranchFeatureMessages.InvalidColor);
+        this.AddBrandingLayoutRules();
 
         When(x => !string.IsNullOrWhiteSpace(x.RowVersion), () =>
         {

@@ -1519,4 +1519,46 @@
   <data name="BranchTicketIssuableServices_BranchIdRequired" xml:space="preserve"><value>A valid branch id is required.</value></data>
   <data name="BranchTicketIssuableServices_BranchNotFound" xml:space="preserve"><value>The selected branch could not be found.</value></data>
   <data name="BranchTicketIssuableServices_BranchInactive" xml:space="preserve"><value>The selected branch is inactive and cannot currently issue tickets.</value></data>
+  <data name="BranchBranding_InvalidDimension" xml:space="preserve">
+    <value>Branding widths, heights, and font sizes must be greater than 0 and no more than 100.</value>
+  </data>
+  <data name="BranchBranding_InvalidSpacing" xml:space="preserve">
+    <value>Branding spacing must be between 0 and 100.</value>
+  </data>
+  <data name="BranchBranding_ButtonText_MaxLength" xml:space="preserve">
+    <value>Branding button text must not exceed 200 characters.</value>
+  </data>
+  <data name="GeneralBrand_Created" xml:space="preserve">
+    <value>The general brand was created successfully.</value>
+  </data>
+  <data name="GeneralBrand_Updated" xml:space="preserve">
+    <value>The general brand was updated successfully.</value>
+  </data>
+  <data name="GeneralBrand_AlreadyConfigured" xml:space="preserve">
+    <value>The general brand is already configured.</value>
+  </data>
+  <data name="GeneralBrand_NotConfigured" xml:space="preserve">
+    <value>The general brand has not been configured.</value>
+  </data>
+  <data name="GeneralBrand_InvalidColor" xml:space="preserve">
+    <value>Colors must use the #RRGGBB hexadecimal format.</value>
+  </data>
+  <data name="GeneralBrand_InvalidDimension" xml:space="preserve">
+    <value>General brand widths, heights, and font sizes must be greater than 0 and no more than 100.</value>
+  </data>
+  <data name="GeneralBrand_InvalidSpacing" xml:space="preserve">
+    <value>General brand spacing must be between 0 and 100.</value>
+  </data>
+  <data name="GeneralBrand_ButtonText_MaxLength" xml:space="preserve">
+    <value>General brand button text must not exceed 200 characters.</value>
+  </data>
+  <data name="GeneralBrand_InvalidRowVersion" xml:space="preserve">
+    <value>The general brand row version is invalid.</value>
+  </data>
+  <data name="GeneralBrand_ConcurrencyConflict" xml:space="preserve">
+    <value>The general brand was changed by another operation.</value>
+  </data>
+  <data name="GeneralBrand_AuthenticationRequired" xml:space="preserve">
+    <value>Authentication is required to manage the general brand.</value>
+  </data>
 </root>

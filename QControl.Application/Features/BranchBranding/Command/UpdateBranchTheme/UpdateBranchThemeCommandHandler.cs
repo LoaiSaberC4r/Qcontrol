@@ -68,7 +68,8 @@ internal sealed class UpdateBranchThemeCommandHandler
 
         if (!BranchBrandingColorNormalizer.TryNormalize(request.MainColor, out var mainColor) ||
             !BranchBrandingColorNormalizer.TryNormalize(request.SecondaryColor, out var secondaryColor) ||
-            !BranchBrandingColorNormalizer.TryNormalize(request.BackgroundColor, out var backgroundColor))
+            !BranchBrandingColorNormalizer.TryNormalize(request.BackgroundColor, out var backgroundColor) ||
+            !OptionalColorsAreValid(request))
         {
             return Result<BranchBrandingResponse>.Fail(new Error(
                 "BranchBranding.InvalidColor",
@@ -79,6 +80,7 @@ internal sealed class UpdateBranchThemeCommandHandler
         var branding = await _brandingReadRepository.FirstOrDefaultAsync(
             new GetBranchBrandingForUpdateSpec(request.BranchId),
             cancellationToken);
+        var layout = BrandingLayoutSettingsFactory.FromInput(request);
 
         if (branding is null)
         {
@@ -91,10 +93,8 @@ internal sealed class UpdateBranchThemeCommandHandler
                 request.BranchId,
                 _currentUser.UserId.Value);
 
-            branding.UpdateTheme(
-                mainColor,
-                secondaryColor,
-                backgroundColor,
+            branding.UpdateLayout(
+                layout,
                 _currentUser.UserId.Value);
 
             await _brandingWriteRepository.AddAsync(
@@ -114,10 +114,8 @@ internal sealed class UpdateBranchThemeCommandHandler
                 branding,
                 rowVersion);
 
-            branding.UpdateTheme(
-                mainColor,
-                secondaryColor,
-                backgroundColor,
+            branding.UpdateLayout(
+                layout,
                 _currentUser.UserId.Value);
 
             _brandingWriteRepository.Update(branding);
@@ -156,4 +154,27 @@ internal sealed class UpdateBranchThemeCommandHandler
             "BranchBranding.ConcurrencyConflict",
             ErrorMessage.Concurrency_Conflict,
             ErrorType.Conflict));
+
+    private static bool OptionalColorsAreValid(
+        UpdateBranchThemeCommand request)
+    {
+        var colors = new[]
+        {
+            request.HeaderColor,
+            request.FooterColor,
+            request.MainTextColor,
+            request.LanguageButtonBackgroundColor,
+            request.LanguageButtonTextColor,
+            request.ServiceButtonBackgroundColor,
+            request.ServiceButtonTextColor,
+            request.KeypadButtonBackgroundColor,
+            request.KeypadButtonTextColor,
+            request.FooterButtonBackgroundColor,
+            request.FooterButtonTextColor
+        };
+
+        return colors.All(color => color is null ||
+            BranchBrandingColorNormalizer.TryNormalize(color, out _));
+    }
+
 }

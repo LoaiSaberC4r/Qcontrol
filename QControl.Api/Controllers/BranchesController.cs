@@ -238,6 +238,41 @@ public sealed class BranchesController : ControllerBase
             MainColor = request.MainColor,
             SecondaryColor = request.SecondaryColor,
             BackgroundColor = request.BackgroundColor,
+            HeaderColor = request.HeaderColor,
+            FooterColor = request.FooterColor,
+            MainTextColor = request.MainTextColor,
+            ShowLanguagePage = request.ShowLanguagePage,
+            DefaultLanguageIsArabic = request.DefaultLanguageIsArabic,
+            AlwaysRequireUserInput = request.AlwaysRequireUserInput,
+            ShowServiceNavigationPath = request.ShowServiceNavigationPath,
+            AllowOperatorSelection = request.AllowOperatorSelection,
+            AllowRequestMoreServices = request.AllowRequestMoreServices,
+            LanguageButtonBackgroundColor =
+                request.LanguageButtonBackgroundColor,
+            LanguageButtonTextColor = request.LanguageButtonTextColor,
+            LanguageButtonWidth = request.LanguageButtonWidth,
+            LanguageButtonHeight = request.LanguageButtonHeight,
+            LanguageButtonText = request.LanguageButtonText,
+            ServiceButtonBackgroundColor =
+                request.ServiceButtonBackgroundColor,
+            ServiceButtonTextColor = request.ServiceButtonTextColor,
+            ServiceButtonWidth = request.ServiceButtonWidth,
+            ServiceButtonHeight = request.ServiceButtonHeight,
+            ServiceButtonSpace = request.ServiceButtonSpace,
+            ServiceButtonFontSize = request.ServiceButtonFontSize,
+            ServiceButtonText = request.ServiceButtonText,
+            KeypadButtonBackgroundColor =
+                request.KeypadButtonBackgroundColor,
+            KeypadButtonTextColor = request.KeypadButtonTextColor,
+            KeypadButtonWidth = request.KeypadButtonWidth,
+            KeypadButtonHeight = request.KeypadButtonHeight,
+            KeypadButtonText = request.KeypadButtonText,
+            FooterButtonBackgroundColor =
+                request.FooterButtonBackgroundColor,
+            FooterButtonTextColor = request.FooterButtonTextColor,
+            FooterButtonWidth = request.FooterButtonWidth,
+            FooterButtonHeight = request.FooterButtonHeight,
+            FooterButtonText = request.FooterButtonText,
             RowVersion = request.RowVersion
         };
 

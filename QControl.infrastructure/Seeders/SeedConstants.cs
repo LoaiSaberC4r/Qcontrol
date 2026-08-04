@@ -287,6 +287,15 @@ internal static class SeedConstants
 
         public const string GlobalConfigurationsDelete =
             "GlobalConfigurations.Delete";
+
+        public const string GeneralBrandView =
+            "GeneralBrand.View";
+
+        public const string GeneralBrandCreate =
+            "GeneralBrand.Create";
+
+        public const string GeneralBrandUpdate =
+            "GeneralBrand.Update";
     }
 
     public static class SeedIds
@@ -630,6 +639,15 @@ internal static class SeedConstants
                 Guid.Parse("30000000-0000-0000-0000-000000000091");
             public static readonly Guid SegmentGlobalizationRequestsReject =
                 Guid.Parse("30000000-0000-0000-0000-000000000092");
+
+            public static readonly Guid GeneralBrandView =
+                Guid.Parse("30000000-0000-0000-0000-000000000093");
+
+            public static readonly Guid GeneralBrandCreate =
+                Guid.Parse("30000000-0000-0000-0000-000000000094");
+
+            public static readonly Guid GeneralBrandUpdate =
+                Guid.Parse("30000000-0000-0000-0000-000000000095");
         }
     }
 
@@ -988,10 +1006,23 @@ internal static class SeedConstants
 
                 new PermissionSeedItem(
                     SeedIds.Permissions.GlobalConfigurationsDelete,
-                    PermissionNames.GlobalConfigurationsDelete) ,
+                    PermissionNames.GlobalConfigurationsDelete),
+
                 new PermissionSeedItem(
-    SeedIds.Permissions.BranchServicesUnassign,
-    PermissionNames.BranchServicesUnassign),
+                    SeedIds.Permissions.GeneralBrandView,
+                    PermissionNames.GeneralBrandView),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.GeneralBrandCreate,
+                    PermissionNames.GeneralBrandCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.GeneralBrandUpdate,
+                    PermissionNames.GeneralBrandUpdate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchServicesUnassign,
+                    PermissionNames.BranchServicesUnassign),
             };
 
         public static IReadOnlyCollection<RolePermissionSeedItem>
