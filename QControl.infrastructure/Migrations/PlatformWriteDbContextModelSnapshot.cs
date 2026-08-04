@@ -203,6 +203,15 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowOperatorSelection")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowRequestMoreServices")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AlwaysRequireUserInput")
+                        .HasColumnType("bit");
+
                     b.Property<string>("BackgroundColor")
                         .HasMaxLength(7)
                         .IsUnicode(false)
@@ -217,6 +226,88 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("datetime2(3)");
 
+                    b.Property<bool>("DefaultLanguageIsArabic")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FooterButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("FooterButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("FooterButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FooterButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("FooterButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("FooterColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("HeaderColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("KeypadButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("KeypadButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("KeypadButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("KeypadButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("KeypadButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("LanguageButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("LanguageButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("LanguageButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LanguageButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("LanguageButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<Guid?>("LastModifiedByApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -226,6 +317,11 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasColumnType("varchar(500)");
 
                     b.Property<string>("MainColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("MainTextColor")
                         .HasMaxLength(7)
                         .IsUnicode(false)
                         .HasColumnType("varchar(7)");
@@ -244,6 +340,43 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(7)");
 
+                    b.Property<string>("ServiceButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("ServiceButtonFontSize")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("ServiceButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("ServiceButtonSpace")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("ServiceButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ServiceButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("ServiceButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("ShowLanguagePage")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowServiceNavigationPath")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId")
@@ -257,9 +390,51 @@ namespace Qcontrol.Infrastructure.Migrations
                         {
                             t.HasCheckConstraint("CK_BranchBranding_BackgroundColor_Format", "[BackgroundColor] IS NULL OR ([BackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([BackgroundColor]) = 7)");
 
+                            t.HasCheckConstraint("CK_BranchBranding_FooterButtonBackgroundColor_Format", "[FooterButtonBackgroundColor] IS NULL OR ([FooterButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_FooterButtonHeight_Range", "[FooterButtonHeight] IS NULL OR ([FooterButtonHeight] > 0 AND [FooterButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_FooterButtonTextColor_Format", "[FooterButtonTextColor] IS NULL OR ([FooterButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_FooterButtonWidth_Range", "[FooterButtonWidth] IS NULL OR ([FooterButtonWidth] > 0 AND [FooterButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_FooterColor_Format", "[FooterColor] IS NULL OR ([FooterColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_HeaderColor_Format", "[HeaderColor] IS NULL OR ([HeaderColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([HeaderColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_KeypadButtonBackgroundColor_Format", "[KeypadButtonBackgroundColor] IS NULL OR ([KeypadButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([KeypadButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_KeypadButtonHeight_Range", "[KeypadButtonHeight] IS NULL OR ([KeypadButtonHeight] > 0 AND [KeypadButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_KeypadButtonTextColor_Format", "[KeypadButtonTextColor] IS NULL OR ([KeypadButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([KeypadButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_KeypadButtonWidth_Range", "[KeypadButtonWidth] IS NULL OR ([KeypadButtonWidth] > 0 AND [KeypadButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_LanguageButtonBackgroundColor_Format", "[LanguageButtonBackgroundColor] IS NULL OR ([LanguageButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([LanguageButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_LanguageButtonHeight_Range", "[LanguageButtonHeight] IS NULL OR ([LanguageButtonHeight] > 0 AND [LanguageButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_LanguageButtonTextColor_Format", "[LanguageButtonTextColor] IS NULL OR ([LanguageButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([LanguageButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_LanguageButtonWidth_Range", "[LanguageButtonWidth] IS NULL OR ([LanguageButtonWidth] > 0 AND [LanguageButtonWidth] <= 100)");
+
                             t.HasCheckConstraint("CK_BranchBranding_MainColor_Format", "[MainColor] IS NULL OR ([MainColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([MainColor]) = 7)");
 
+                            t.HasCheckConstraint("CK_BranchBranding_MainTextColor_Format", "[MainTextColor] IS NULL OR ([MainTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([MainTextColor]) = 7)");
+
                             t.HasCheckConstraint("CK_BranchBranding_SecondaryColor_Format", "[SecondaryColor] IS NULL OR ([SecondaryColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([SecondaryColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonBackgroundColor_Format", "[ServiceButtonBackgroundColor] IS NULL OR ([ServiceButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ServiceButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonFontSize_Range", "[ServiceButtonFontSize] IS NULL OR ([ServiceButtonFontSize] > 0 AND [ServiceButtonFontSize] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonHeight_Range", "[ServiceButtonHeight] IS NULL OR ([ServiceButtonHeight] > 0 AND [ServiceButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonSpace_Range", "[ServiceButtonSpace] IS NULL OR ([ServiceButtonSpace] >= 0 AND [ServiceButtonSpace] <= 100)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonTextColor_Format", "[ServiceButtonTextColor] IS NULL OR ([ServiceButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ServiceButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_BranchBranding_ServiceButtonWidth_Range", "[ServiceButtonWidth] IS NULL OR ([ServiceButtonWidth] > 0 AND [ServiceButtonWidth] <= 100)");
                         });
                 });
 
@@ -508,6 +683,249 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("DisplayWindow", (string)null);
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.GeneralBrand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowOperatorSelection")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowRequestMoreServices")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AlwaysRequireUserInput")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("BackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<bool>("DefaultLanguageIsArabic")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FooterButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("FooterButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("FooterButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FooterButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("FooterButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("FooterColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("HeaderColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("KeypadButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("KeypadButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("KeypadButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("KeypadButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("KeypadButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("LanguageButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("LanguageButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("LanguageButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LanguageButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("LanguageButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MainColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("MainTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("ServiceButtonBackgroundColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("ServiceButtonFontSize")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("ServiceButtonHeight")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("ServiceButtonSpace")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("ServiceButtonText")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ServiceButtonTextColor")
+                        .HasMaxLength(7)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<decimal?>("ServiceButtonWidth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("ShowLanguagePage")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowServiceNavigationPath")
+                        .HasColumnType("bit");
+
+                    b.Property<byte>("SingletonKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint")
+                        .HasDefaultValue((byte)1);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("SingletonKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GeneralBrand_SingletonKey");
+
+                    b.ToTable("GeneralBrand", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GeneralBrand_BackgroundColor_Format", "[BackgroundColor] IS NULL OR ([BackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([BackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_FooterButtonBackgroundColor_Format", "[FooterButtonBackgroundColor] IS NULL OR ([FooterButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_FooterButtonHeight_Range", "[FooterButtonHeight] IS NULL OR ([FooterButtonHeight] > 0 AND [FooterButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_FooterButtonTextColor_Format", "[FooterButtonTextColor] IS NULL OR ([FooterButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_FooterButtonWidth_Range", "[FooterButtonWidth] IS NULL OR ([FooterButtonWidth] > 0 AND [FooterButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_FooterColor_Format", "[FooterColor] IS NULL OR ([FooterColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([FooterColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_HeaderColor_Format", "[HeaderColor] IS NULL OR ([HeaderColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([HeaderColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_KeypadButtonBackgroundColor_Format", "[KeypadButtonBackgroundColor] IS NULL OR ([KeypadButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([KeypadButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_KeypadButtonHeight_Range", "[KeypadButtonHeight] IS NULL OR ([KeypadButtonHeight] > 0 AND [KeypadButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_KeypadButtonTextColor_Format", "[KeypadButtonTextColor] IS NULL OR ([KeypadButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([KeypadButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_KeypadButtonWidth_Range", "[KeypadButtonWidth] IS NULL OR ([KeypadButtonWidth] > 0 AND [KeypadButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_LanguageButtonBackgroundColor_Format", "[LanguageButtonBackgroundColor] IS NULL OR ([LanguageButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([LanguageButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_LanguageButtonHeight_Range", "[LanguageButtonHeight] IS NULL OR ([LanguageButtonHeight] > 0 AND [LanguageButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_LanguageButtonTextColor_Format", "[LanguageButtonTextColor] IS NULL OR ([LanguageButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([LanguageButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_LanguageButtonWidth_Range", "[LanguageButtonWidth] IS NULL OR ([LanguageButtonWidth] > 0 AND [LanguageButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_MainColor_Format", "[MainColor] IS NULL OR ([MainColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([MainColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_MainTextColor_Format", "[MainTextColor] IS NULL OR ([MainTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([MainTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_SecondaryColor_Format", "[SecondaryColor] IS NULL OR ([SecondaryColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([SecondaryColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonBackgroundColor_Format", "[ServiceButtonBackgroundColor] IS NULL OR ([ServiceButtonBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ServiceButtonBackgroundColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonFontSize_Range", "[ServiceButtonFontSize] IS NULL OR ([ServiceButtonFontSize] > 0 AND [ServiceButtonFontSize] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonHeight_Range", "[ServiceButtonHeight] IS NULL OR ([ServiceButtonHeight] > 0 AND [ServiceButtonHeight] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonSpace_Range", "[ServiceButtonSpace] IS NULL OR ([ServiceButtonSpace] >= 0 AND [ServiceButtonSpace] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonTextColor_Format", "[ServiceButtonTextColor] IS NULL OR ([ServiceButtonTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ServiceButtonTextColor]) = 7)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_ServiceButtonWidth_Range", "[ServiceButtonWidth] IS NULL OR ([ServiceButtonWidth] > 0 AND [ServiceButtonWidth] <= 100)");
+
+                            t.HasCheckConstraint("CK_GeneralBrand_SingletonKey", "[SingletonKey] = 1");
+                        });
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Location", b =>
@@ -2179,6 +2597,24 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("Display");
 
                     b.Navigation("Window");
+                });
+
+            modelBuilder.Entity("QControl.Domain.Entities.GeneralBrand", b =>
+                {
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Location", b =>

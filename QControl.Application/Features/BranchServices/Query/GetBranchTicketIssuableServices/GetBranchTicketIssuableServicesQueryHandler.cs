@@ -30,6 +30,9 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
     private readonly IWriteReadRepository<ServiceSchedule>
         _scheduleReadRepository;
 
+    private readonly IWriteReadRepository<QControl.Domain.Entities.GeneralBrand>
+        _generalBrandReadRepository;
+
     private readonly ICurrentUser _currentUser;
     private readonly IBranchAccessValidator _branchAccessValidator;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -39,6 +42,8 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         IWriteReadRepository<BranchService> branchServiceReadRepository,
         IWriteReadRepository<Service> serviceReadRepository,
         IWriteReadRepository<ServiceSchedule> scheduleReadRepository,
+        IWriteReadRepository<QControl.Domain.Entities.GeneralBrand>
+            generalBrandReadRepository,
         ICurrentUser currentUser,
         IBranchAccessValidator branchAccessValidator,
         IDateTimeProvider dateTimeProvider)
@@ -52,6 +57,9 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
             ?? throw new ArgumentNullException(nameof(serviceReadRepository));
         _scheduleReadRepository = scheduleReadRepository
             ?? throw new ArgumentNullException(nameof(scheduleReadRepository));
+        _generalBrandReadRepository = generalBrandReadRepository
+            ?? throw new ArgumentNullException(
+                nameof(generalBrandReadRepository));
         _currentUser = currentUser
             ?? throw new ArgumentNullException(nameof(currentUser));
         _branchAccessValidator = branchAccessValidator
@@ -105,7 +113,25 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
                     ErrorType.Conflict));
         }
 
-        var branding = MapBranding(branchState);
+        TicketIssuanceBranchBrandingResponse? branding;
+        if (branchState.BrandingId.HasValue)
+        {
+            branding = TicketIssuanceBrandingResponseFactory.FromLayout(
+                branchState,
+                BranchMediaUrlMapper.ToMediaUrl(branchState.LogoPath));
+        }
+        else
+        {
+            var generalBrand = await _generalBrandReadRepository
+                .FirstOrDefaultAsync(
+                    new GetGeneralBrandTicketIssuanceStateSpec(),
+                    cancellationToken);
+            branding = generalBrand is null
+                ? null
+                : TicketIssuanceBrandingResponseFactory.FromLayout(
+                    generalBrand,
+                    logoUrl: null);
+        }
         var currentDateTime = _dateTimeProvider.UtcNow;
         var currentDay = currentDateTime.DayOfWeek;
         var currentTime = TimeOnly.FromDateTime(currentDateTime);
@@ -157,22 +183,9 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         return Success(request.BranchId, branding, services);
     }
 
-    private static TicketIssuanceBranchBrandingResponse MapBranding(
-        BranchTicketIssuanceState state) =>
-        new()
-        {
-            LogoUrl = BranchMediaUrlMapper.ToMediaUrl(state.LogoPath),
-            Theme = new TicketIssuanceBranchThemeResponse
-            {
-                MainColor = state.MainColor,
-                SecondaryColor = state.SecondaryColor,
-                BackgroundColor = state.BackgroundColor
-            }
-        };
-
     private static Result<GetBranchTicketIssuableServicesResponse> Success(
         int branchId,
-        TicketIssuanceBranchBrandingResponse branding,
+        TicketIssuanceBranchBrandingResponse? branding,
         IReadOnlyList<TicketIssuableServiceTreeNodeResponse>? services = null) =>
         Result<GetBranchTicketIssuableServicesResponse>.Ok(new()
         {

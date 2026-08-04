@@ -1519,4 +1519,46 @@
   <data name="BranchTicketIssuableServices_BranchIdRequired" xml:space="preserve"><value>يجب إدخال معرّف فرع صالح.</value></data>
   <data name="BranchTicketIssuableServices_BranchNotFound" xml:space="preserve"><value>تعذر العثور على الفرع المحدد.</value></data>
   <data name="BranchTicketIssuableServices_BranchInactive" xml:space="preserve"><value>الفرع المحدد غير نشط ولا يمكنه إصدار التذاكر حالياً.</value></data>
+  <data name="BranchBranding_InvalidDimension" xml:space="preserve">
+    <value>يجب أن تكون أبعاد العلامة التجارية وحجم الخط أكبر من 0 وألا تتجاوز 100.</value>
+  </data>
+  <data name="BranchBranding_InvalidSpacing" xml:space="preserve">
+    <value>يجب أن تكون المسافة في العلامة التجارية بين 0 و100.</value>
+  </data>
+  <data name="BranchBranding_ButtonText_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز نص زر العلامة التجارية 200 حرف.</value>
+  </data>
+  <data name="GeneralBrand_Created" xml:space="preserve">
+    <value>تم إنشاء العلامة التجارية العامة بنجاح.</value>
+  </data>
+  <data name="GeneralBrand_Updated" xml:space="preserve">
+    <value>تم تحديث العلامة التجارية العامة بنجاح.</value>
+  </data>
+  <data name="GeneralBrand_AlreadyConfigured" xml:space="preserve">
+    <value>تم إعداد العلامة التجارية العامة بالفعل.</value>
+  </data>
+  <data name="GeneralBrand_NotConfigured" xml:space="preserve">
+    <value>لم يتم إعداد العلامة التجارية العامة.</value>
+  </data>
+  <data name="GeneralBrand_InvalidColor" xml:space="preserve">
+    <value>يجب أن تستخدم الألوان تنسيق الألوان السداسي ‎#RRGGBB.</value>
+  </data>
+  <data name="GeneralBrand_InvalidDimension" xml:space="preserve">
+    <value>يجب أن تكون أبعاد العلامة التجارية العامة وحجم الخط أكبر من 0 وألا تتجاوز 100.</value>
+  </data>
+  <data name="GeneralBrand_InvalidSpacing" xml:space="preserve">
+    <value>يجب أن تكون المسافة في العلامة التجارية العامة بين 0 و100.</value>
+  </data>
+  <data name="GeneralBrand_ButtonText_MaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز نص زر العلامة التجارية العامة 200 حرف.</value>
+  </data>
+  <data name="GeneralBrand_InvalidRowVersion" xml:space="preserve">
+    <value>إصدار صف العلامة التجارية العامة غير صالح.</value>
+  </data>
+  <data name="GeneralBrand_ConcurrencyConflict" xml:space="preserve">
+    <value>تم تغيير العلامة التجارية العامة بواسطة عملية أخرى.</value>
+  </data>
+  <data name="GeneralBrand_AuthenticationRequired" xml:space="preserve">
+    <value>يجب تسجيل الدخول لإدارة العلامة التجارية العامة.</value>
+  </data>
 </root>

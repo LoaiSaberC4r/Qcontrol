@@ -64,6 +64,28 @@ internal static class EntityTestFactory
         return branding;
     }
 
+    public static GeneralBrand GeneralBrand(
+        int id,
+        BrandingLayoutSettings layout,
+        byte[]? rowVersion = null)
+    {
+        var generalBrand = QControl.Domain.Entities.GeneralBrand.Create(
+            layout,
+            CurrentUserId);
+
+        SetId(generalBrand, id);
+
+        if (rowVersion is not null)
+        {
+            SetPrivateProperty(
+                generalBrand,
+                nameof(QControl.Domain.Entities.GeneralBrand.RowVersion),
+                rowVersion);
+        }
+
+        return generalBrand;
+    }
+
     public static void AttachBranding(
         Branch branch,
         BranchBranding branding)

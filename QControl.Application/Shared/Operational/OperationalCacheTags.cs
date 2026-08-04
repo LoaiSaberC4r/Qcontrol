@@ -17,6 +17,8 @@ internal static class OperationalCacheTags
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
     public const string BranchAdvertisements = "branch-advertisements";
+    public const string GeneralBrand = "general-brand";
+    public const string GeneralBrandSingleton = "general-brand:singleton";
     public const string Segments = "segments";
     public const string BranchServiceSegments = "branch-service-segments";
     public const string SegmentGlobalizationRequests =

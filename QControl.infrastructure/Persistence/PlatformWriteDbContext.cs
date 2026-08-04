@@ -31,6 +31,8 @@ namespace QControl.infrastructure.Persistence
         public DbSet<ServiceScheduleTimeSlot> ServiceScheduleTimeSlots =>
             Set<ServiceScheduleTimeSlot>();
 
+        public DbSet<GeneralBrand> GeneralBrands => Set<GeneralBrand>();
+
         public PlatformWriteDbContext(
             DbContextOptions<PlatformWriteDbContext> options,
             ICurrentTenantContext tenantContext,

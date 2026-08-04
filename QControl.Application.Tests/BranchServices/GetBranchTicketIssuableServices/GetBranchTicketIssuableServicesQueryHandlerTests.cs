@@ -14,7 +14,7 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         new(2026, 8, 2, 10, 0, 0, DateTimeKind.Utc);
 
     [Fact]
-    public async Task Returns_unauthorized_for_an_unauthenticated_user()
+    public async Task Allows_an_unauthenticated_user()
     {
         var fixture = Fixture.Default();
         var handler = CreateHandler(
@@ -27,15 +27,11 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
 
         var result = await Handle(handler);
 
-        var error = Assert.Single(result.Errors);
-        Assert.Equal(ErrorType.Unauthorized, error.Type);
-        Assert.Equal(
-            "BranchTicketIssuableServices.View.Unauthenticated",
-            error.Code);
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
-    public async Task Propagates_foreign_branch_access_failure()
+    public async Task Anonymous_request_does_not_apply_branch_access_policy()
     {
         var accessValidator = new TestBranchAccessValidator
         {
@@ -50,11 +46,8 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
 
         var result = await Handle(handler);
 
-        Assert.Equal("Access.ForeignBranch", Assert.Single(result.Errors).Code);
-        Assert.Equal(1, accessValidator.LastBranchId);
-        Assert.Equal(
-            "BranchTicketIssuableServices.View",
-            accessValidator.LastCodePrefix);
+        Assert.True(result.IsSuccess);
+        Assert.Null(accessValidator.LastBranchId);
     }
 
     [Fact]
@@ -92,7 +85,7 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
     }
 
     [Fact]
-    public async Task Missing_branding_returns_stable_null_branding_object()
+    public async Task Missing_branding_returns_null()
     {
         var fixture = Fixture.Default() with
         {
@@ -103,12 +96,120 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         var result = await Handle(CreateHandler(fixture));
 
         Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.BranchBranding);
+    }
+
+    [Fact]
+    public async Task General_brand_is_used_when_branch_has_no_branding()
+    {
+        var fixture = Fixture.Default() with
+        {
+            GeneralBrands = new List<GeneralBrand> { GeneralBrand() }
+        };
+        var generalBrandRepository =
+            new InMemoryWriteReadRepository<GeneralBrand>(
+                fixture.GeneralBrands);
+
+        var result = await Handle(CreateHandler(
+            fixture,
+            generalBrandRepository: generalBrandRepository));
+
+        Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.BranchBranding);
-        Assert.Null(result.Value.BranchBranding.LogoUrl);
-        Assert.NotNull(result.Value.BranchBranding.Theme);
+        Assert.Null(result.Value.BranchBranding!.LogoUrl);
+        Assert.Equal(
+            "#0070C4",
+            result.Value.BranchBranding.Theme.MainColor);
+        Assert.Equal(
+            "Default language",
+            result.Value.BranchBranding.LanguageButton.Text);
+        Assert.Equal(1, generalBrandRepository
+            .FirstOrDefaultProjectionSpecCallCount);
+    }
+
+    [Fact]
+    public async Task Branch_branding_wins_without_querying_general_brand()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var branding = EntityTestFactory.BranchBranding(
+            5,
+            branch.Id);
+        branding.UpdateLayout(
+            new BrandingLayoutSettings { MainColor = "#0057B8" },
+            EntityTestFactory.CurrentUserId);
+        EntityTestFactory.AttachBranding(branch, branding);
+        var fixture = Fixture.Default() with
+        {
+            Branches = new List<Branch> { branch },
+            GeneralBrands = new List<GeneralBrand> { GeneralBrand() }
+        };
+        var generalBrandRepository =
+            new InMemoryWriteReadRepository<GeneralBrand>(
+                fixture.GeneralBrands);
+
+        var result = await Handle(CreateHandler(
+            fixture,
+            generalBrandRepository: generalBrandRepository));
+
+        Assert.Equal(
+            "#0057B8",
+            result.Value.BranchBranding!.Theme.MainColor);
+        Assert.Null(result.Value.BranchBranding.Theme.HeaderColor);
+        Assert.Equal(0, generalBrandRepository
+            .FirstOrDefaultProjectionSpecCallCount);
+    }
+
+    [Fact]
+    public async Task Logo_only_branch_branding_prevents_general_fallback()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var branding = EntityTestFactory.BranchBranding(
+            5,
+            branch.Id,
+            logoPath: "Branches/1/Logo/branch.png");
+        EntityTestFactory.AttachBranding(branch, branding);
+        var fixture = Fixture.Default() with
+        {
+            Branches = new List<Branch> { branch },
+            GeneralBrands = new List<GeneralBrand> { GeneralBrand() }
+        };
+        var generalBrandRepository =
+            new InMemoryWriteReadRepository<GeneralBrand>(
+                fixture.GeneralBrands);
+
+        var result = await Handle(CreateHandler(
+            fixture,
+            generalBrandRepository: generalBrandRepository));
+
+        Assert.Equal(
+            "/Media/Branches/1/Logo/branch.png",
+            result.Value.BranchBranding!.LogoUrl);
         Assert.Null(result.Value.BranchBranding.Theme.MainColor);
-        Assert.Null(result.Value.BranchBranding.Theme.SecondaryColor);
-        Assert.Null(result.Value.BranchBranding.Theme.BackgroundColor);
+        Assert.Equal(0, generalBrandRepository
+            .FirstOrDefaultProjectionSpecCallCount);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task General_brand_is_returned_when_services_are_unavailable(
+        bool removeAssignments)
+    {
+        var fixture = Fixture.Default() with
+        {
+            GeneralBrands = new List<GeneralBrand> { GeneralBrand() },
+            Assignments = removeAssignments
+                ? new List<BranchService>()
+                : Fixture.Default().Assignments,
+            Schedules = removeAssignments
+                ? Fixture.Default().Schedules
+                : new List<ServiceSchedule>()
+        };
+
+        var result = await Handle(CreateHandler(fixture));
+
+        Assert.NotNull(result.Value.BranchBranding);
+        Assert.Empty(result.Value.Services);
     }
 
     [Fact]
@@ -122,6 +223,39 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
             mainColor: "#0057B8",
             secondaryColor: "#F4B400",
             backgroundColor: "#FFFFFF");
+        branding.UpdateLayout(
+            new BrandingLayoutSettings
+            {
+                MainColor = "#0057B8",
+                SecondaryColor = "#F4B400",
+                BackgroundColor = "#FFFFFF",
+                HeaderColor = "#111111",
+                FooterColor = "#222222",
+                MainTextColor = "#333333",
+                ShowLanguagePage = true,
+                DefaultLanguageIsArabic = true,
+                ShowServiceNavigationPath = true,
+                AllowRequestMoreServices = true,
+                LanguageButtonBackgroundColor = "#444444",
+                LanguageButtonTextColor = "#555555",
+                LanguageButtonWidth = 40m,
+                LanguageButtonHeight = 22m,
+                LanguageButtonText = "اختيار اللغة",
+                ServiceButtonBackgroundColor = "#666666",
+                ServiceButtonTextColor = "#777777",
+                ServiceButtonWidth = 40m,
+                ServiceButtonHeight = 20m,
+                ServiceButtonSpace = 2m,
+                ServiceButtonFontSize = 1.8m,
+                ServiceButtonText = "اختيار الخدمة",
+                KeypadButtonWidth = 45m,
+                KeypadButtonHeight = 10m,
+                KeypadButtonText = "تأكيد",
+                FooterButtonWidth = 10m,
+                FooterButtonHeight = 12m,
+                FooterButtonText = "رجوع"
+            },
+            EntityTestFactory.CurrentUserId);
         EntityTestFactory.AttachBranding(branch, branding);
         var fixture = Fixture.Default() with
         {
@@ -131,9 +265,10 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         var result = await Handle(CreateHandler(fixture));
 
         Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value.BranchBranding);
         Assert.Equal(
             "/Media/Branches/1/Logo/branch.png",
-            result.Value.BranchBranding.LogoUrl);
+            result.Value.BranchBranding!.LogoUrl);
         Assert.Equal("#0057B8", result.Value.BranchBranding.Theme.MainColor);
         Assert.Equal(
             "#F4B400",
@@ -141,6 +276,16 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         Assert.Equal(
             "#FFFFFF",
             result.Value.BranchBranding.Theme.BackgroundColor);
+        Assert.Equal("#111111", result.Value.BranchBranding.Theme.HeaderColor);
+        Assert.True(result.Value.BranchBranding.Behavior.ShowLanguagePage);
+        Assert.True(
+            result.Value.BranchBranding.Behavior.DefaultLanguageIsArabic);
+        Assert.Equal(
+            "اختيار اللغة",
+            result.Value.BranchBranding.LanguageButton.Text);
+        Assert.Equal(1.8m, result.Value.BranchBranding.ServiceButton.FontSize);
+        Assert.Equal("تأكيد", result.Value.BranchBranding.KeypadButton.Text);
+        Assert.Equal("رجوع", result.Value.BranchBranding.FooterButton.Text);
     }
 
     [Fact]
@@ -161,8 +306,59 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
 
         var result = await Handle(CreateHandler(fixture));
 
-        Assert.Null(result.Value.BranchBranding.LogoUrl);
+        Assert.NotNull(result.Value.BranchBranding);
+        Assert.Null(result.Value.BranchBranding!.LogoUrl);
         Assert.Equal("#0057B8", result.Value.BranchBranding.Theme.MainColor);
+    }
+
+    [Fact]
+    public async Task Logo_only_branding_is_returned_when_services_are_empty()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var branding = EntityTestFactory.BranchBranding(
+            5,
+            branch.Id,
+            logoPath: "Branches/1/Logo/branch.png");
+        EntityTestFactory.AttachBranding(branch, branding);
+        var fixture = Fixture.Default() with
+        {
+            Branches = new List<Branch> { branch },
+            Assignments = new List<BranchService>(),
+            Schedules = new List<ServiceSchedule>()
+        };
+
+        var result = await Handle(CreateHandler(fixture));
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value.BranchBranding);
+        Assert.Equal(
+            "/Media/Branches/1/Logo/branch.png",
+            result.Value.BranchBranding!.LogoUrl);
+        Assert.Null(result.Value.BranchBranding.Theme.MainColor);
+        Assert.Empty(result.Value.Services);
+    }
+
+    [Fact]
+    public async Task Branding_is_returned_when_no_schedule_is_available()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        var branding = EntityTestFactory.BranchBranding(
+            5,
+            branch.Id,
+            mainColor: "#0057B8",
+            secondaryColor: "#F4B400",
+            backgroundColor: "#FFFFFF");
+        EntityTestFactory.AttachBranding(branch, branding);
+        var fixture = Fixture.Default() with
+        {
+            Branches = new List<Branch> { branch },
+            Schedules = new List<ServiceSchedule>()
+        };
+
+        var result = await Handle(CreateHandler(fixture));
+
+        Assert.NotNull(result.Value.BranchBranding);
+        Assert.Empty(result.Value.Services);
     }
 
     [Theory]
@@ -293,6 +489,7 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         var result = await Handle(CreateHandler(Fixture.Default()));
 
         var leaf = Assert.Single(result.Value.Services);
+        Assert.Null(result.Value.BranchBranding);
         Assert.Equal(10, leaf.ServiceId);
         Assert.True(leaf.IsTicketIssuable);
         Assert.Empty(leaf.Children);
@@ -534,6 +731,8 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
             new InMemoryWriteReadRepository<BranchService>(fixture.Assignments),
             serviceRepository,
             scheduleRepository,
+            new InMemoryWriteReadRepository<GeneralBrand>(
+                fixture.GeneralBrands),
             new TestCurrentUser(),
             new TestBranchAccessValidator(),
             new CountingDateTimeProvider(SundayAtTen));
@@ -555,15 +754,33 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         Fixture fixture,
         TestCurrentUser? currentUser = null,
         TestBranchAccessValidator? accessValidator = null,
-        IDateTimeProvider? dateTimeProvider = null) =>
+        IDateTimeProvider? dateTimeProvider = null,
+        InMemoryWriteReadRepository<GeneralBrand>?
+            generalBrandRepository = null) =>
         new(
             new InMemoryWriteReadRepository<Branch>(fixture.Branches),
             new InMemoryWriteReadRepository<BranchService>(fixture.Assignments),
             new InMemoryWriteReadRepository<Service>(fixture.Services),
             new InMemoryWriteReadRepository<ServiceSchedule>(fixture.Schedules),
+            generalBrandRepository ??
+                new InMemoryWriteReadRepository<GeneralBrand>(
+                    fixture.GeneralBrands),
             currentUser ?? new TestCurrentUser(),
             accessValidator ?? new TestBranchAccessValidator(),
             dateTimeProvider ?? new CountingDateTimeProvider(SundayAtTen));
+
+    private static GeneralBrand GeneralBrand() =>
+        EntityTestFactory.GeneralBrand(
+            1,
+            new BrandingLayoutSettings
+            {
+                MainColor = "#0070c4",
+                SecondaryColor = "#ffffff",
+                BackgroundColor = "#f0f0f0",
+                HeaderColor = "#111111",
+                ShowLanguagePage = true,
+                LanguageButtonText = "Default language"
+            });
 
     private static ServiceSchedule Schedule(int id, int serviceId) =>
         EntityTestFactory.ServiceSchedule(
@@ -582,7 +799,8 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         List<Branch> Branches,
         List<Service> Services,
         List<BranchService> Assignments,
-        List<ServiceSchedule> Schedules)
+        List<ServiceSchedule> Schedules,
+        List<GeneralBrand> GeneralBrands)
     {
         public static Fixture Default(
             IReadOnlyCollection<ServiceScheduleTimeSlotDefinition>? timeSlots = null)
@@ -608,7 +826,8 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
                         {
                             Slot(DayOfWeek.Sunday, 9, 12)
                         })
-                });
+                },
+                new List<GeneralBrand>());
         }
     }
 
