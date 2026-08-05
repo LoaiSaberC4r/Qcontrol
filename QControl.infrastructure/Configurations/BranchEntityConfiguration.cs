@@ -5,7 +5,7 @@ using QControl.Domain.Entities;
 
 namespace Qcontrol.infrastructure.Configurations;
 
-internal sealed class BranchConfiguration
+internal sealed class BranchEntityConfiguration
     : IEntityTypeConfiguration<Branch>,
       IWriteEntityConfiguration
 {

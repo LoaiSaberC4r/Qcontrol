@@ -1561,4 +1561,34 @@
   <data name="GeneralBrand_AuthenticationRequired" xml:space="preserve">
     <value>Authentication is required to manage the general brand.</value>
   </data>
+  <data name="BranchConfiguration_Create_Success" xml:space="preserve">
+    <value>Branch configuration created successfully.</value>
+  </data>
+  <data name="BranchConfiguration_Update_Success" xml:space="preserve">
+    <value>Branch configuration updated successfully.</value>
+  </data>
+  <data name="BranchConfiguration_AlreadyExists" xml:space="preserve">
+    <value>Branch configuration already exists.</value>
+  </data>
+  <data name="BranchConfiguration_NotFound" xml:space="preserve">
+    <value>Branch configuration was not found.</value>
+  </data>
+  <data name="BranchConfiguration_AllowedTime_Required" xml:space="preserve">
+    <value>Allowed time is required.</value>
+  </data>
+  <data name="BranchConfiguration_AllowedTime_OutOfRange" xml:space="preserve">
+    <value>Allowed time must be zero or greater and less than 24 hours.</value>
+  </data>
+  <data name="BranchConfiguration_Branch_NotFound" xml:space="preserve">
+    <value>The branch was not found.</value>
+  </data>
+  <data name="BranchConfiguration_RowVersion_Required" xml:space="preserve">
+    <value>The row version is required.</value>
+  </data>
+  <data name="BranchConfiguration_RowVersion_Invalid" xml:space="preserve">
+    <value>The row version is invalid.</value>
+  </data>
+  <data name="BranchConfiguration_ConcurrencyConflict" xml:space="preserve">
+    <value>The branch configuration was modified by another request.</value>
+  </data>
 </root>

@@ -77,6 +77,13 @@ namespace QControl.infrastructure.Persistence
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
 
+            modelBuilder.Entity<BranchConfiguration>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId &&
+                     x.Branch.IsActive));
+
             modelBuilder.Entity<BranchAdvertisement>()
                 .HasQueryFilter(x =>
                     !IsBranchScopeEnabled ||
