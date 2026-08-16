@@ -7,7 +7,9 @@ internal static class TicketIssuableServiceTreeBuilder
 {
     public static IReadOnlyList<TicketIssuableServiceTreeNodeResponse> Build(
         IReadOnlyCollection<ServiceHierarchyItem> allItems,
-        IReadOnlySet<int> eligibleLeafIds)
+        IReadOnlySet<int> eligibleLeafIds,
+        IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
+            customInputsByServiceId = null)
     {
         if (allItems.Count == 0 || eligibleLeafIds.Count == 0)
         {
@@ -51,6 +53,7 @@ internal static class TicketIssuableServiceTreeBuilder
                 root,
                 childrenByParentId,
                 eligibleLeafIds,
+                customInputsByServiceId,
                 emittedServiceIds,
                 new HashSet<int>());
 
@@ -95,6 +98,8 @@ internal static class TicketIssuableServiceTreeBuilder
         ServiceHierarchyItem item,
         IReadOnlyDictionary<int, ServiceHierarchyItem[]> childrenByParentId,
         IReadOnlySet<int> eligibleLeafIds,
+        IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
+            customInputsByServiceId,
         ISet<int> emittedServiceIds,
         ISet<int> pathIds)
     {
@@ -113,6 +118,7 @@ internal static class TicketIssuableServiceTreeBuilder
                     childItem,
                     childrenByParentId,
                     eligibleLeafIds,
+                    customInputsByServiceId,
                     emittedServiceIds,
                     pathIds);
 
@@ -125,6 +131,16 @@ internal static class TicketIssuableServiceTreeBuilder
 
         pathIds.Remove(item.Id);
         var isEligibleLeaf = eligibleLeafIds.Contains(item.Id);
+        var isClientInputRequired =
+            isEligibleLeaf && item.IsClientInputRequired;
+        IReadOnlyList<ServiceCustomInputResponse>? customInputs = null;
+        if (isClientInputRequired &&
+            customInputsByServiceId is not null &&
+            customInputsByServiceId.TryGetValue(item.Id, out var configured) &&
+            configured.Count > 0)
+        {
+            customInputs = configured;
+        }
 
         return new TicketIssuableServiceTreeNodeResponse
         {
@@ -138,6 +154,8 @@ internal static class TicketIssuableServiceTreeBuilder
                 ? item.EnglishUserMessage
                 : null,
             IsTicketIssuable = isEligibleLeaf,
+            IsClientInputRequired = isClientInputRequired,
+            CustomInputs = customInputs,
             RangePrefix = isEligibleLeaf ? item.RangePrefix : null,
             RangeStartNumber = isEligibleLeaf
                 ? item.RangeStartNumber

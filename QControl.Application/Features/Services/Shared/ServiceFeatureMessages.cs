@@ -341,6 +341,75 @@ internal static class ServiceFeatureMessages
     public static string NoOfTicketCopiesPositive =>
         Get("Service_NoOfTicketCopies_Positive", "Number of ticket copies must be greater than zero.");
 
+    public static string ParentClientInputNotAllowed =>
+        Get("Service_Parent_ClientInputNotAllowed", "Client input configuration is allowed only for leaf services. Parent services cannot require client inputs.");
+
+    public static string ParentCustomInputsNotAllowed =>
+        Get("Service_Parent_CustomInputsNotAllowed", "Custom inputs are allowed only for leaf services. Parent services cannot contain custom inputs.");
+
+    public static string CustomInputsRequired =>
+        Get("Service_CustomInputs_Required", "At least one custom input is required when IsClientInputRequired is true.");
+
+    public static string CustomInputsNotAllowed =>
+        Get("Service_CustomInputs_NotAllowed", "Custom inputs are not allowed when IsClientInputRequired is false.");
+
+    public static string CustomInputNameRequired =>
+        Get("Service_CustomInput_Name_Required", "The custom input name is required.");
+
+    public static string CustomInputNameMaximumLength =>
+        Get("Service_CustomInput_Name_MaxLength", "The custom input name must not exceed 100 characters.");
+
+    public static string CustomInputLabelMaximumLength =>
+        Get("Service_CustomInput_Label_MaxLength", "Custom input labels must not exceed 200 characters.");
+
+    public static string InvalidCustomInputType =>
+        Get("Service_CustomInput_Type_Invalid", "The custom input type is invalid.");
+
+    public static string InvalidCustomInputOrder =>
+        Get("Service_CustomInput_Order_Invalid", "The custom input order must be greater than zero.");
+
+    public static string DuplicateCustomInputId =>
+        Get("Service_CustomInput_Id_Duplicate", "A custom input id cannot appear more than once.");
+
+    public static string DuplicateCustomInputName =>
+        Get("Service_CustomInput_Name_Duplicate", "Custom input names must be unique within the service.");
+
+    public static string DuplicateCustomInputOrder =>
+        Get("Service_CustomInput_Order_Duplicate", "Custom input orders must be unique within the service.");
+
+    public static string CustomInputNotFound =>
+        Get("Service_CustomInput_NotFound", "The custom input could not be found.");
+
+    public static string CustomInputOwnershipConflict =>
+        Get("Service_CustomInput_OwnershipConflict", "The custom input does not belong to this service.");
+
+    public static string InvalidStringRestrictions =>
+        Get("Service_CustomInput_StringRestrictions_Invalid", "The restrictions supplied for the string custom input are invalid.");
+
+    public static string InvalidIntegerRestrictions =>
+        Get("Service_CustomInput_IntegerRestrictions_Invalid", "The restrictions supplied for the integer custom input are invalid.");
+
+    public static string StartWithStringOnly =>
+        Get("Service_CustomInput_StartWith_StringOnly", "StartWith is allowed only for string custom inputs.");
+
+    public static string CustomInputStartWithEmpty =>
+        Get("Service_CustomInput_StartWith_Empty", "StartWith cannot be empty or whitespace.");
+
+    public static string CustomInputStartWithMaximumLength =>
+        Get("Service_CustomInput_StartWith_MaxLength", "StartWith must not exceed 100 characters.");
+
+    public static string InvalidLengthRange =>
+        Get("Service_CustomInput_LengthRange_Invalid", "The custom input maximum length must be greater than or equal to its minimum length.");
+
+    public static string InvalidValueRange =>
+        Get("Service_CustomInput_ValueRange_Invalid", "The custom input maximum value must be greater than or equal to its minimum value.");
+
+    public static string ProposedParentHasActiveCustomInputs =>
+        Get("Service_Parent_HasActiveCustomInputs", "The selected parent has active custom inputs. Disable its client input configuration first.");
+
+    public static string ProposedParentRequiresClientInput =>
+        Get("Service_Parent_RequiresClientInput", "The selected parent requires client input. Disable its client input configuration first.");
+
     public static string PageNumberInvalid =>
         Get("Service_Pagination_PageNumber_Invalid", "Page number must be at least 1.");
 

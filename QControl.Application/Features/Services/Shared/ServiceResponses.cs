@@ -108,6 +108,8 @@ public sealed class ServiceDetailsResponse
 
     public bool IsClientInputRequired { get; init; }
 
+    public IReadOnlyList<ServiceCustomInputResponse>? CustomInputs { get; init; }
+
     public bool HasReservation { get; init; }
 
     public bool HasChildren { get; init; }
@@ -318,9 +320,12 @@ internal static class ServiceResponseFactory
         ServiceHierarchyState state,
         ServiceHierarchyItem? parent,
         ServiceResponseAccessContext accessContext,
-        ServiceImagesForResponse? images = null)
+        ServiceImagesForResponse? images = null,
+        IReadOnlyList<ServiceCustomInputResponse>? customInputs = null)
     {
         var access = accessContext.ForService(item);
+        var clientInputApplies =
+            !state.HasChildren && item.IsClientInputRequired;
 
         return new ServiceDetailsResponse
         {
@@ -347,7 +352,10 @@ internal static class ServiceResponseFactory
             IsActive = item.IsActive,
             EffectiveIsActive = state.EffectiveIsActive,
             IsTicketIssuable = item.IsTicketIssuable,
-            IsClientInputRequired = item.IsClientInputRequired,
+            IsClientInputRequired = clientInputApplies,
+            CustomInputs = clientInputApplies && customInputs is { Count: > 0 }
+                ? customInputs
+                : null,
             HasReservation = item.HasReservation,
             HasChildren = state.HasChildren,
             CanIssueTicket = state.CanIssueTicket,

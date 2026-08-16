@@ -28,9 +28,7 @@ internal static class ServiceRuleChecks
         }
 
         var parent = await serviceReadRepository.FirstOrDefaultAsync(
-            new GetServiceHierarchyItemByIdSpec(
-                parentServiceId,
-                includeDeleted: true),
+            new GetParentServiceValidationItemSpec(parentServiceId),
             cancellationToken);
 
         if (parent is null)
@@ -55,6 +53,15 @@ internal static class ServiceRuleChecks
                 $"Services.{operation}.ParentInactive",
                 ServiceFeatureMessages.ParentInactive,
                 ErrorType.Conflict);
+        }
+
+        var parentClientInputError = ValidateParentClientInputState(
+            parent.IsClientInputRequired,
+            parent.HasActiveCustomInputs,
+            $"Services.{operation}");
+        if (parentClientInputError is not null)
+        {
+            return parentClientInputError;
         }
 
         if (parent.IsTicketIssuable)
@@ -110,6 +117,30 @@ internal static class ServiceRuleChecks
             return new Error(
                 $"Services.{operation}.ParentHasHistoricalTickets",
                 ServiceFeatureMessages.ParentHasHistoricalTickets,
+                ErrorType.Conflict);
+        }
+
+        return null;
+    }
+
+    public static Error? ValidateParentClientInputState(
+        bool isClientInputRequired,
+        bool hasActiveCustomInputs,
+        string codePrefix)
+    {
+        if (isClientInputRequired)
+        {
+            return new Error(
+                $"{codePrefix}.ProposedParentRequiresClientInput",
+                ServiceFeatureMessages.ProposedParentRequiresClientInput,
+                ErrorType.Conflict);
+        }
+
+        if (hasActiveCustomInputs)
+        {
+            return new Error(
+                $"{codePrefix}.ProposedParentHasActiveCustomInputs",
+                ServiceFeatureMessages.ProposedParentHasActiveCustomInputs,
                 ErrorType.Conflict);
         }
 

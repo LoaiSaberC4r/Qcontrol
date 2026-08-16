@@ -1,6 +1,8 @@
 namespace Qcontrol.Application.Features.BranchServices.Query
     .GetBranchTicketIssuableServices;
 
+using Qcontrol.Application.Features.Services.Shared;
+
 public sealed record GetBranchTicketIssuableServicesResponse
 {
     public int BranchId { get; init; }
@@ -95,6 +97,10 @@ public sealed record TicketIssuableServiceTreeNodeResponse
     public string? EnglishUserMessage { get; init; }
 
     public bool IsTicketIssuable { get; init; }
+
+    public bool IsClientInputRequired { get; init; }
+
+    public IReadOnlyList<ServiceCustomInputResponse>? CustomInputs { get; init; }
 
     public string? RangePrefix { get; init; }
 

@@ -121,5 +121,22 @@ internal sealed class CreateServiceCommandValidator
             .GreaterThan(0)
             .WithMessage(ServiceFeatureMessages.NoOfTicketCopiesPositive)
             .When(x => x.NoOfTicketCopies.HasValue);
+
+        RuleFor(x => x)
+            .Custom((command, context) =>
+            {
+                var error = ServiceCustomInputRuleChecks.Validate(
+                    command.CustomInputs?
+                        .Cast<ServiceCustomInputDefinitionCommand>()
+                        .ToArray(),
+                    command.IsClientInputRequired,
+                    "Create",
+                    validateIds: false);
+
+                if (error is not null)
+                {
+                    context.AddFailure(nameof(command.CustomInputs), error.Message);
+                }
+            });
     }
 }

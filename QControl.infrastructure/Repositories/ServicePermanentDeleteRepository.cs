@@ -26,6 +26,11 @@ internal sealed class ServicePermanentDeleteRepository
     {
         try
         {
+            await _dbContext.Set<ServiceCustomInput>()
+                .IgnoreQueryFilters()
+                .Where(customInput => customInput.ServiceId == serviceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
             var deletedRows = await _dbContext.Set<Service>()
                 .IgnoreQueryFilters()
                 .Where(service =>

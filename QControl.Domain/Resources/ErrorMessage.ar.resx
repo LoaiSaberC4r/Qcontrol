@@ -1561,4 +1561,27 @@
   <data name="GeneralBrand_AuthenticationRequired" xml:space="preserve">
     <value>يجب تسجيل الدخول لإدارة العلامة التجارية العامة.</value>
   </data>
+  <data name="Service_Parent_ClientInputNotAllowed" xml:space="preserve"><value>يُسمح بإعداد مدخلات العميل للخدمات الطرفية فقط. لا يمكن للخدمات الأب أن تطلب مدخلات العميل.</value></data>
+  <data name="Service_Parent_CustomInputsNotAllowed" xml:space="preserve"><value>يُسمح بالمدخلات المخصصة للخدمات الطرفية فقط. لا يمكن للخدمات الأب أن تحتوي على مدخلات مخصصة.</value></data>
+  <data name="Service_CustomInputs_Required" xml:space="preserve"><value>يلزم إدخال مخصص واحد على الأقل عندما تكون خاصية IsClientInputRequired مفعلة.</value></data>
+  <data name="Service_CustomInputs_NotAllowed" xml:space="preserve"><value>لا يُسمح بالمدخلات المخصصة عندما تكون خاصية IsClientInputRequired غير مفعلة.</value></data>
+  <data name="Service_CustomInput_Name_Required" xml:space="preserve"><value>اسم المدخل المخصص مطلوب.</value></data>
+  <data name="Service_CustomInput_Name_MaxLength" xml:space="preserve"><value>يجب ألا يتجاوز اسم المدخل المخصص 100 حرف.</value></data>
+  <data name="Service_CustomInput_Label_MaxLength" xml:space="preserve"><value>يجب ألا تتجاوز تسميات المدخل المخصص 200 حرف.</value></data>
+  <data name="Service_CustomInput_Type_Invalid" xml:space="preserve"><value>نوع المدخل المخصص غير صالح.</value></data>
+  <data name="Service_CustomInput_Order_Invalid" xml:space="preserve"><value>يجب أن يكون ترتيب المدخل المخصص أكبر من صفر.</value></data>
+  <data name="Service_CustomInput_Id_Duplicate" xml:space="preserve"><value>لا يمكن تكرار معرف المدخل المخصص في الطلب.</value></data>
+  <data name="Service_CustomInput_Name_Duplicate" xml:space="preserve"><value>يجب أن تكون أسماء المدخلات المخصصة فريدة داخل الخدمة.</value></data>
+  <data name="Service_CustomInput_Order_Duplicate" xml:space="preserve"><value>يجب أن تكون ترتيبات المدخلات المخصصة فريدة داخل الخدمة.</value></data>
+  <data name="Service_CustomInput_NotFound" xml:space="preserve"><value>تعذر العثور على المدخل المخصص.</value></data>
+  <data name="Service_CustomInput_OwnershipConflict" xml:space="preserve"><value>المدخل المخصص لا ينتمي إلى هذه الخدمة.</value></data>
+  <data name="Service_CustomInput_StringRestrictions_Invalid" xml:space="preserve"><value>قيود المدخل المخصص النصي غير صالحة.</value></data>
+  <data name="Service_CustomInput_IntegerRestrictions_Invalid" xml:space="preserve"><value>قيود المدخل المخصص الرقمي غير صالحة.</value></data>
+  <data name="Service_CustomInput_StartWith_StringOnly" xml:space="preserve"><value>يُسمح بخاصية StartWith للمدخلات النصية فقط.</value></data>
+  <data name="Service_CustomInput_StartWith_Empty" xml:space="preserve"><value>لا يمكن أن تكون قيمة StartWith فارغة أو مسافات فقط.</value></data>
+  <data name="Service_CustomInput_StartWith_MaxLength" xml:space="preserve"><value>يجب ألا تتجاوز قيمة StartWith 100 حرف.</value></data>
+  <data name="Service_CustomInput_LengthRange_Invalid" xml:space="preserve"><value>يجب أن يكون الحد الأقصى للطول أكبر من أو يساوي الحد الأدنى.</value></data>
+  <data name="Service_CustomInput_ValueRange_Invalid" xml:space="preserve"><value>يجب أن تكون القيمة القصوى أكبر من أو تساوي القيمة الدنيا.</value></data>
+  <data name="Service_Parent_HasActiveCustomInputs" xml:space="preserve"><value>تحتوي الخدمة الأب المحددة على مدخلات مخصصة نشطة. عطّل إعداد مدخلات العميل أولاً.</value></data>
+  <data name="Service_Parent_RequiresClientInput" xml:space="preserve"><value>تتطلب الخدمة الأب المحددة مدخلات العميل. عطّل إعداد مدخلات العميل أولاً.</value></data>
 </root>

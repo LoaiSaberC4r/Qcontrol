@@ -10,6 +10,7 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
     private readonly List<Service> _children = new();
     private readonly List<ServiceImage> _images = new();
     private readonly List<BranchService> _branchServices = new();
+    private readonly List<ServiceCustomInput> _customInputs = new();
 
     private Service()
     {
@@ -33,6 +34,9 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
 
     public IReadOnlyCollection<BranchService> BranchServices =>
         _branchServices.AsReadOnly();
+
+    public IReadOnlyCollection<ServiceCustomInput> CustomInputs =>
+        _customInputs.AsReadOnly();
 
     public string ArabicName { get; private set; } = string.Empty;
 
@@ -301,6 +305,86 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
         LastModifiedByApplicationUserId = lastModifiedByApplicationUserId;
     }
 
+    public ServiceCustomInput AddCustomInput(
+        string name,
+        string? labelEn,
+        string? labelAr,
+        ServiceCustomInputType type,
+        bool isRequired,
+        int? minLength,
+        int? maxLength,
+        int? minValue,
+        int? maxValue,
+        string? startWith,
+        int order,
+        Guid createdByApplicationUserId)
+    {
+        var customInput = ServiceCustomInput.Create(
+            this,
+            name,
+            labelEn,
+            labelAr,
+            type,
+            isRequired,
+            minLength,
+            maxLength,
+            minValue,
+            maxValue,
+            startWith,
+            order,
+            createdByApplicationUserId);
+
+        _customInputs.Add(customInput);
+        return customInput;
+    }
+
+    public void UpdateCustomInput(
+        ServiceCustomInput customInput,
+        string name,
+        string? labelEn,
+        string? labelAr,
+        ServiceCustomInputType type,
+        bool isRequired,
+        int? minLength,
+        int? maxLength,
+        int? minValue,
+        int? maxValue,
+        string? startWith,
+        int order,
+        Guid lastModifiedByApplicationUserId)
+    {
+        EnsureCustomInputOwnership(customInput);
+        customInput.Update(
+            name,
+            labelEn,
+            labelAr,
+            type,
+            isRequired,
+            minLength,
+            maxLength,
+            minValue,
+            maxValue,
+            startWith,
+            order,
+            lastModifiedByApplicationUserId);
+    }
+
+    public void DeactivateCustomInput(
+        ServiceCustomInput customInput,
+        Guid lastModifiedByApplicationUserId)
+    {
+        EnsureCustomInputOwnership(customInput);
+        customInput.Deactivate(lastModifiedByApplicationUserId);
+    }
+
+    public void RestoreCustomInput(
+        ServiceCustomInput customInput,
+        Guid lastModifiedByApplicationUserId)
+    {
+        EnsureCustomInputOwnership(customInput);
+        customInput.Restore(lastModifiedByApplicationUserId);
+    }
+
     public void PromoteToGlobal(
         DateTime modifiedOnUtc,
         Guid modifiedByApplicationUserId)
@@ -360,6 +444,18 @@ public sealed class Service : AggregateRoot<int>, ISoftDeleteEntity
     private static string NormalizeRequired(string value)
     {
         return value.Trim();
+    }
+
+    private void EnsureCustomInputOwnership(ServiceCustomInput customInput)
+    {
+        ArgumentNullException.ThrowIfNull(customInput);
+
+        if (!_customInputs.Contains(customInput) ||
+            (Id > 0 && customInput.ServiceId != Id))
+        {
+            throw new InvalidOperationException(
+                "The custom input does not belong to this service.");
+        }
     }
 
     private static string? NormalizeOptional(string? value)

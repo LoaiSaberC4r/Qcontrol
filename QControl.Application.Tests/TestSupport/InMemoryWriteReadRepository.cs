@@ -27,6 +27,8 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
 
     public int ListWithCountCallCount { get; private set; }
 
+    public int QueryCallCount { get; private set; }
+
     public Task<TEntity?> GetByIdAsync(
         Guid id,
         CancellationToken ct = default)
@@ -139,7 +141,10 @@ internal sealed class InMemoryWriteReadRepository<TEntity>
     }
 
     public IQueryable<TEntity> Query()
-        => new TestAsyncEnumerable<TEntity>(_items);
+    {
+        QueryCallCount++;
+        return new TestAsyncEnumerable<TEntity>(_items);
+    }
 
     public Task<(List<TEntity> Data, int Count)> ListWithCountAsync(
         Specification<TEntity> spec,

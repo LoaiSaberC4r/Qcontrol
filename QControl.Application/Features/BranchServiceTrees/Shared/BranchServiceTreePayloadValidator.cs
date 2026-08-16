@@ -87,6 +87,14 @@ internal static class BranchServiceTreePayloadValidator
                     ErrorType.Conflict);
             }
 
+            if (children.Count > 0 && node.IsClientInputRequired)
+            {
+                return new Error(
+                    $"{options.CodePrefix}.ParentClientInputNotAllowed",
+                    ServiceFeatureMessages.ParentClientInputNotAllowed,
+                    ErrorType.Conflict);
+            }
+
             var duplicateSibling = ValidateSiblingNames(children, options);
             if (duplicateSibling is not null)
             {

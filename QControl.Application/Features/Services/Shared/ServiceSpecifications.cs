@@ -63,11 +63,59 @@ internal sealed class GetAllServiceHierarchyItemsSpec
 internal sealed class GetServiceForMutationSpec
     : Specification<Service>
 {
-    public GetServiceForMutationSpec(int serviceId)
+    public GetServiceForMutationSpec(
+        int serviceId,
+        bool includeCustomInputs = false)
     {
         IgnoreGlobalFilters();
         UseTracking();
         AddCriteria(x => x.Id == serviceId);
+
+        if (includeCustomInputs)
+        {
+            Include(x => x.CustomInputs);
+        }
+    }
+}
+
+internal sealed class ParentServiceValidationItem
+{
+    public int Id { get; init; }
+
+    public ServiceScope Scope { get; init; }
+
+    public int? OwnerBranchId { get; init; }
+
+    public bool IsActive { get; init; }
+
+    public bool IsTicketIssuable { get; init; }
+
+    public bool IsClientInputRequired { get; init; }
+
+    public bool HasActiveCustomInputs { get; init; }
+
+    public bool IsDeleted { get; init; }
+}
+
+internal sealed class GetParentServiceValidationItemSpec
+    : Specification<Service, ParentServiceValidationItem>
+{
+    public GetParentServiceValidationItemSpec(int serviceId)
+    {
+        IgnoreGlobalFilters();
+        UseNoTracking();
+        AddCriteria(x => x.Id == serviceId);
+        Select(x => new ParentServiceValidationItem
+        {
+            Id = x.Id,
+            Scope = x.Scope,
+            OwnerBranchId = x.OwnerBranchId,
+            IsActive = x.IsActive,
+            IsTicketIssuable = x.IsTicketIssuable,
+            IsClientInputRequired = x.IsClientInputRequired,
+            HasActiveCustomInputs = x.CustomInputs.Any(input => input.IsActive),
+            IsDeleted = x.IsDeleted
+        });
     }
 }
 

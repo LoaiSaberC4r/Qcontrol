@@ -260,7 +260,8 @@ internal static class EntityTestFactory
         string? englishName = null,
         bool isTicketIssuable = false,
         string? serviceCode = null,
-        bool isServiceCodeRequired = false)
+        bool isServiceCodeRequired = false,
+        bool isClientInputRequired = false)
     {
         var service = QControl.Domain.Entities.Service.Create(
             parentServiceId,
@@ -271,7 +272,7 @@ internal static class EntityTestFactory
             arabicUserMessage: null,
             englishUserMessage: null,
             isTicketIssuable,
-            isClientInputRequired: false,
+            isClientInputRequired,
             hasReservation: false,
             orderNo: id,
             priority: 0,
@@ -295,7 +296,8 @@ internal static class EntityTestFactory
         string? arabicName = null,
         string? englishName = null,
         string? serviceCode = null,
-        bool isServiceCodeRequired = false)
+        bool isServiceCodeRequired = false,
+        bool isClientInputRequired = false)
     {
         var service = QControl.Domain.Entities.Service.CreateBranchScoped(
             parentServiceId,
@@ -307,7 +309,7 @@ internal static class EntityTestFactory
             arabicUserMessage: null,
             englishUserMessage: null,
             isTicketIssuable,
-            isClientInputRequired: false,
+            isClientInputRequired,
             hasReservation: false,
             orderNo: id,
             priority: 0,
@@ -321,6 +323,46 @@ internal static class EntityTestFactory
         SetId(service, id);
 
         return service;
+    }
+
+    public static ServiceCustomInput ServiceCustomInput(
+        Service service,
+        int id,
+        string name,
+        QControl.Domain.Enums.ServiceCustomInputType type =
+            QControl.Domain.Enums.ServiceCustomInputType.String,
+        int order = 1,
+        bool isActive = true,
+        bool isRequired = false,
+        int? minLength = null,
+        int? maxLength = null,
+        int? minValue = null,
+        int? maxValue = null,
+        string? startWith = null,
+        string? labelEn = null,
+        string? labelAr = null)
+    {
+        var customInput = service.AddCustomInput(
+            name,
+            labelEn,
+            labelAr,
+            type,
+            isRequired,
+            minLength,
+            maxLength,
+            minValue,
+            maxValue,
+            startWith,
+            order,
+            CurrentUserId);
+        SetId(customInput, id);
+
+        if (!isActive)
+        {
+            service.DeactivateCustomInput(customInput, CurrentUserId);
+        }
+
+        return customInput;
     }
 
     public static ServiceImage ServiceImage(

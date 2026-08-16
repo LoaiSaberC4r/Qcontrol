@@ -26,6 +26,9 @@ public sealed record CreateServiceCommand
 
     public bool IsClientInputRequired { get; init; }
 
+    public IReadOnlyCollection<CreateServiceCustomInputCommand>? CustomInputs
+        { get; init; }
+
     public bool HasReservation { get; init; }
 
     public int OrderNo { get; init; }

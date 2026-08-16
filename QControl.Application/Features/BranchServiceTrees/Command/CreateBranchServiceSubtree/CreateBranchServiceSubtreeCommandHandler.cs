@@ -186,6 +186,7 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
         var parentService = await _serviceReadRepository.Query()
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Include(x => x.CustomInputs)
             .FirstOrDefaultAsync(
                 x => x.Id == request.ParentServiceId,
                 cancellationToken);
@@ -212,6 +213,17 @@ internal sealed class CreateBranchServiceSubtreeCommandHandler
                 $"{CodePrefix}.ParentInactive",
                 ServiceFeatureMessages.BranchServiceSubtreeParentInactive,
                 ErrorType.Conflict);
+        }
+
+        var parentClientInputError =
+            ServiceRuleChecks.ValidateParentClientInputState(
+                parentService.IsClientInputRequired,
+                parentService.CustomInputs.Any(x => x.IsActive),
+                CodePrefix);
+        if (parentClientInputError is not null)
+        {
+            return Result<CreateBranchServiceSubtreeResponse>.Fail(
+                parentClientInputError);
         }
 
         if (parentService.Scope == ServiceScope.Global)

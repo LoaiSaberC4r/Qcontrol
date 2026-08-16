@@ -2,6 +2,7 @@ using BuildingBlock.Application.Abstraction;
 using BuildingBlock.Application.Abstraction.Security;
 using BuildingBlock.Application.Time;
 using BuildingBlock.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Qcontrol.Application.Features.Services.Shared;
 using QControl.Application.Abstraction.Presistence;
 using QControl.Application.Abstraction.Security;
@@ -176,11 +177,64 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
                 state.CanIssueTicket)
             .Select(item => item.Id)
             .ToHashSet();
+        var customInputsByServiceId =
+            await LoadCustomInputsAsync(
+                eligibleLeafIds,
+                cancellationToken);
         var services = TicketIssuableServiceTreeBuilder.Build(
             allItems,
-            eligibleLeafIds);
+            eligibleLeafIds,
+            customInputsByServiceId);
 
         return Success(request.BranchId, branding, services);
+    }
+
+    private async Task<IReadOnlyDictionary<
+        int,
+        IReadOnlyList<ServiceCustomInputResponse>>> LoadCustomInputsAsync(
+        IReadOnlySet<int> eligibleLeafIds,
+        CancellationToken cancellationToken)
+    {
+        if (eligibleLeafIds.Count == 0)
+        {
+            return new Dictionary<int, IReadOnlyList<ServiceCustomInputResponse>>();
+        }
+
+        var ids = eligibleLeafIds.ToArray();
+        var items = await _serviceReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.Id) && x.IsClientInputRequired)
+            .SelectMany(x => x.CustomInputs)
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.ServiceId)
+            .ThenBy(x => x.Order)
+            .ThenBy(x => x.Id)
+            .Select(x => new ServiceCustomInputReadModel
+            {
+                ServiceId = x.ServiceId,
+                CustomInputId = x.Id,
+                Name = x.Name,
+                LabelEn = x.LabelEn,
+                LabelAr = x.LabelAr,
+                Type = x.Type,
+                IsRequired = x.IsRequired,
+                MinLength = x.MinLength,
+                MaxLength = x.MaxLength,
+                MinValue = x.MinValue,
+                MaxValue = x.MaxValue,
+                StartWith = x.StartWith,
+                Order = x.Order
+            })
+            .ToListAsync(cancellationToken);
+
+        return items
+            .GroupBy(x => x.ServiceId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ServiceCustomInputResponse>)group
+                    .Select(ServiceCustomInputResponseFactory.FromReadModel)
+                    .ToList());
     }
 
     private static Result<GetBranchTicketIssuableServicesResponse> Success(

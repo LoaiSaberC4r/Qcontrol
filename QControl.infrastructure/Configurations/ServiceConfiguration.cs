@@ -173,6 +173,9 @@ internal sealed class ServiceConfiguration
             .HasForeignKey(x => x.ParentServiceId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Navigation(x => x.CustomInputs)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne(x => x.OwnerBranch)
             .WithMany(x => x.OwnedServices)
             .HasForeignKey(x => x.OwnerBranchId)

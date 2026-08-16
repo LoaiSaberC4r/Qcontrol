@@ -20,6 +20,9 @@ public sealed class CreateServiceRequest
 
     public bool IsClientInputRequired { get; init; }
 
+    public IReadOnlyCollection<CreateServiceCustomInputRequest>? CustomInputs
+        { get; init; }
+
     public bool HasReservation { get; init; }
 
     public int OrderNo { get; init; }

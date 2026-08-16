@@ -94,6 +94,18 @@ internal sealed class CreateServiceCommandHandler
             : request.RangePrefix.Trim();
         var requestedTicketIssuable = request.IsTicketIssuable.GetValueOrDefault();
 
+        var customInputError = ServiceCustomInputRuleChecks.Validate(
+            request.CustomInputs?
+                .Cast<ServiceCustomInputDefinitionCommand>()
+                .ToArray(),
+            request.IsClientInputRequired,
+            "Create",
+            validateIds: false);
+        if (customInputError is not null)
+        {
+            return Result<ServiceResponse>.Fail(customInputError);
+        }
+
         var duplicateServiceCodeError =
             await ServiceRuleChecks.ValidateServiceCodeIsUniqueAsync(
                 _serviceReadRepository,
@@ -175,6 +187,24 @@ internal sealed class CreateServiceCommandHandler
             waitingDuration: request.WaitingDuration,
             noOfTicketCopies: request.NoOfTicketCopies,
             createdByApplicationUserId: _currentUser.UserId.Value);
+
+        foreach (var customInput in request.CustomInputs ??
+                 Array.Empty<CreateServiceCustomInputCommand>())
+        {
+            service.AddCustomInput(
+                customInput.Name,
+                customInput.LabelEn,
+                customInput.LabelAr,
+                customInput.Type,
+                customInput.IsRequired,
+                customInput.MinLength,
+                customInput.MaxLength,
+                customInput.MinValue,
+                customInput.MaxValue,
+                customInput.StartWith,
+                customInput.Order,
+                _currentUser.UserId.Value);
+        }
 
         await _serviceWriteRepository.AddAsync(
             service,

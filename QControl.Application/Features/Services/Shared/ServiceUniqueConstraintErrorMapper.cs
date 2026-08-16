@@ -14,6 +14,7 @@ internal static class ServiceUniqueConstraintErrorMapper
             "Services.Create.DuplicateArabicName",
             "Services.Create.DuplicateEnglishName",
             "Services.Create.ServiceCodeAlreadyExists",
+            "Services.Create.DuplicateCustomInputName",
             out error);
 
     public static bool TryMapUpdate(
@@ -24,6 +25,7 @@ internal static class ServiceUniqueConstraintErrorMapper
             "Services.Update.DuplicateArabicName",
             "Services.Update.DuplicateEnglishName",
             "Services.Update.ServiceCodeAlreadyExists",
+            "Services.Update.DuplicateCustomInputName",
             out error);
 
     public static bool TryMapBranchServiceTreeCreate(
@@ -34,6 +36,7 @@ internal static class ServiceUniqueConstraintErrorMapper
             "BranchServiceTrees.Create.DuplicateArabicName",
             "BranchServiceTrees.Create.DuplicateEnglishName",
             "BranchServiceTrees.Create.ServiceCodeAlreadyExists",
+            customInputNameCode: null,
             out error);
 
     private static bool TryMap(
@@ -41,6 +44,7 @@ internal static class ServiceUniqueConstraintErrorMapper
         string arabicNameCode,
         string englishNameCode,
         string serviceCodeCode,
+        string? customInputNameCode,
         out Error error)
     {
         error = default!;
@@ -86,6 +90,19 @@ internal static class ServiceUniqueConstraintErrorMapper
             error = new Error(
                 serviceCodeCode,
                 ServiceFeatureMessages.ServiceCodeAlreadyExists,
+                ErrorType.Conflict);
+
+            return true;
+        }
+
+        if (customInputNameCode is not null &&
+            message.Contains(
+                "UX_ServiceCustomInput_ServiceId_Name_Active",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            error = new Error(
+                customInputNameCode,
+                ServiceFeatureMessages.DuplicateCustomInputName,
                 ErrorType.Conflict);
 
             return true;

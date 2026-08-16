@@ -19,6 +19,7 @@ using Qcontrol.Application.Features.Services.Query.GetServiceSelectionOptions;
 using Qcontrol.Application.Features.Services.Query.GetServiceById;
 using Qcontrol.Application.Features.Services.Query.GetServices;
 using Qcontrol.Application.Features.Services.Query.GetServicesTree;
+using Qcontrol.Application.Features.Services.Shared;
 using QControl.Api.Attribute;
 using QControl.Domain.Enums;
 
@@ -172,6 +173,22 @@ public sealed class ServicesController : ControllerBase
             EnglishUserMessage = request.EnglishUserMessage,
             IsTicketIssuable = request.IsTicketIssuable,
             IsClientInputRequired = request.IsClientInputRequired,
+            CustomInputs = request.CustomInputs?
+                .Select(x => new CreateServiceCustomInputCommand
+                {
+                    Name = x.Name,
+                    LabelEn = x.LabelEn,
+                    LabelAr = x.LabelAr,
+                    Type = x.Type,
+                    IsRequired = x.IsRequired,
+                    MinLength = x.MinLength,
+                    MaxLength = x.MaxLength,
+                    MinValue = x.MinValue,
+                    MaxValue = x.MaxValue,
+                    StartWith = x.StartWith,
+                    Order = x.Order
+                })
+                .ToArray(),
             HasReservation = request.HasReservation,
             OrderNo = request.OrderNo,
             Priority = request.Priority,
@@ -208,6 +225,23 @@ public sealed class ServicesController : ControllerBase
             EnglishUserMessage = request.EnglishUserMessage,
             IsTicketIssuable = request.IsTicketIssuable,
             IsClientInputRequired = request.IsClientInputRequired,
+            CustomInputs = request.CustomInputs?
+                .Select(x => new UpdateServiceCustomInputCommand
+                {
+                    CustomInputId = x.CustomInputId,
+                    Name = x.Name,
+                    LabelEn = x.LabelEn,
+                    LabelAr = x.LabelAr,
+                    Type = x.Type,
+                    IsRequired = x.IsRequired,
+                    MinLength = x.MinLength,
+                    MaxLength = x.MaxLength,
+                    MinValue = x.MinValue,
+                    MaxValue = x.MaxValue,
+                    StartWith = x.StartWith,
+                    Order = x.Order
+                })
+                .ToArray(),
             HasReservation = request.HasReservation,
             OrderNo = request.OrderNo,
             Priority = request.Priority,

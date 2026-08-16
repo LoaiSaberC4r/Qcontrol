@@ -28,6 +28,9 @@ public sealed record UpdateServiceCommand
 
     public bool IsClientInputRequired { get; init; }
 
+    public IReadOnlyCollection<UpdateServiceCustomInputCommand>? CustomInputs
+        { get; init; }
+
     public bool HasReservation { get; init; }
 
     public int OrderNo { get; init; }

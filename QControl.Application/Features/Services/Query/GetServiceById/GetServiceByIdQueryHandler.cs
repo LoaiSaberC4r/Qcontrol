@@ -92,15 +92,55 @@ internal sealed class GetServiceByIdQueryHandler
         var imagesForResponse = ServiceImageResponseFactory.ToImagesForResponse(
             images,
             includeAds: true);
+        var state = states[item.Id];
+        var customInputs = !state.HasChildren && item.IsClientInputRequired
+            ? await LoadCustomInputsAsync(item.Id, cancellationToken)
+            : null;
 
         var response = ServiceResponseFactory.ToDetails(
             item,
-            states[item.Id],
+            state,
             parent,
             await BuildAccessContextAsync(item.Id, cancellationToken),
-            imagesForResponse);
+            imagesForResponse,
+            customInputs);
 
         return Result<ServiceDetailsResponse>.Ok(response);
+    }
+
+    private async Task<IReadOnlyList<ServiceCustomInputResponse>>
+        LoadCustomInputsAsync(
+            int serviceId,
+            CancellationToken cancellationToken)
+    {
+        var items = await _serviceReadRepository.Query()
+            .AsNoTracking()
+            .Where(x => x.Id == serviceId)
+            .SelectMany(x => x.CustomInputs)
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Id)
+            .Select(x => new ServiceCustomInputReadModel
+            {
+                ServiceId = x.ServiceId,
+                CustomInputId = x.Id,
+                Name = x.Name,
+                LabelEn = x.LabelEn,
+                LabelAr = x.LabelAr,
+                Type = x.Type,
+                IsRequired = x.IsRequired,
+                MinLength = x.MinLength,
+                MaxLength = x.MaxLength,
+                MinValue = x.MinValue,
+                MaxValue = x.MaxValue,
+                StartWith = x.StartWith,
+                Order = x.Order
+            })
+            .ToListAsync(cancellationToken);
+
+        return items
+            .Select(ServiceCustomInputResponseFactory.FromReadModel)
+            .ToList();
     }
 
     private async Task<ServiceResponseAccessContext> BuildAccessContextAsync(

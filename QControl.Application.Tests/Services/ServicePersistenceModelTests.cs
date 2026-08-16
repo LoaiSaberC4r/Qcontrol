@@ -37,6 +37,61 @@ public sealed class ServicePersistenceModelTests
         Assert.Contains("[ServiceCode] IS NULL", constraint.Sql);
     }
 
+    [Fact]
+    public void Model_configures_restricted_service_custom_inputs()
+    {
+        using var context = CreateContext();
+        var model = context.GetService<IDesignTimeModel>().Model;
+        var customInput = model.FindEntityType(typeof(ServiceCustomInput))!;
+
+        Assert.Equal("ServiceCustomInput", customInput.GetTableName());
+        Assert.Equal(
+            100,
+            customInput.FindProperty(nameof(ServiceCustomInput.Name))!
+                .GetMaxLength());
+        Assert.Equal(
+            200,
+            customInput.FindProperty(nameof(ServiceCustomInput.LabelEn))!
+                .GetMaxLength());
+        Assert.Equal(
+            100,
+            customInput.FindProperty(nameof(ServiceCustomInput.StartWith))!
+                .GetMaxLength());
+
+        var serviceForeignKey = customInput.GetForeignKeys().Single(x =>
+            x.PrincipalEntityType.ClrType == typeof(Service));
+        Assert.Equal(DeleteBehavior.Restrict, serviceForeignKey.DeleteBehavior);
+
+        var indexes = customInput.GetIndexes().ToDictionary(
+            x => x.GetDatabaseName()!);
+        Assert.Contains("IX_ServiceCustomInput_ServiceId", indexes.Keys);
+        Assert.Contains(
+            "IX_ServiceCustomInput_ServiceId_IsActive_Order",
+            indexes.Keys);
+        var activeNameIndex = indexes[
+            "UX_ServiceCustomInput_ServiceId_Name_Active"];
+        Assert.True(activeNameIndex.IsUnique);
+        Assert.Equal("[IsActive] = 1", activeNameIndex.GetFilter());
+
+        var constraintNames = customInput.GetCheckConstraints()
+            .Select(x => x.Name)
+            .ToHashSet();
+        Assert.Contains("CK_ServiceCustomInput_Order_Positive", constraintNames);
+        Assert.Contains("CK_ServiceCustomInput_Type_Valid", constraintNames);
+        Assert.Contains(
+            "CK_ServiceCustomInput_String_Restrictions",
+            constraintNames);
+        Assert.Contains(
+            "CK_ServiceCustomInput_Integer_Restrictions",
+            constraintNames);
+        Assert.Contains(
+            "CK_ServiceCustomInput_Length_Range",
+            constraintNames);
+        Assert.Contains(
+            "CK_ServiceCustomInput_Value_Range",
+            constraintNames);
+    }
+
     private static PlatformWriteDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PlatformWriteDbContext>()

@@ -118,7 +118,9 @@ internal sealed class UpdateServiceCommandHandler
         }
 
         var service = await _serviceReadRepository.FirstOrDefaultAsync(
-            new GetServiceForMutationSpec(request.Id),
+            new GetServiceForMutationSpec(
+                request.Id,
+                includeCustomInputs: true),
             cancellationToken);
 
         if (service is null)
@@ -213,6 +215,46 @@ internal sealed class UpdateServiceCommandHandler
                 ErrorType.Conflict));
         }
 
+        if (hasChildren && request.IsClientInputRequired)
+        {
+            return Result<ServiceResponse>.Fail(new Error(
+                "Services.Update.ParentClientInputNotAllowed",
+                ServiceFeatureMessages.ParentClientInputNotAllowed,
+                ErrorType.Conflict));
+        }
+
+        if (hasChildren && request.CustomInputs is { Count: > 0 })
+        {
+            return Result<ServiceResponse>.Fail(new Error(
+                "Services.Update.ParentCustomInputsNotAllowed",
+                ServiceFeatureMessages.ParentCustomInputsNotAllowed,
+                ErrorType.Conflict));
+        }
+
+        if (!hasChildren)
+        {
+            var customInputError = ServiceCustomInputRuleChecks.Validate(
+                request.CustomInputs?
+                    .Cast<ServiceCustomInputDefinitionCommand>()
+                    .ToArray(),
+                request.IsClientInputRequired,
+                "Update",
+                validateIds: true);
+            if (customInputError is not null)
+            {
+                return Result<ServiceResponse>.Fail(customInputError);
+            }
+
+            var customInputIdError = await ValidateCustomInputIdsAsync(
+                service,
+                request.CustomInputs,
+                cancellationToken);
+            if (customInputIdError is not null)
+            {
+                return Result<ServiceResponse>.Fail(customInputIdError);
+            }
+        }
+
         if (service.IsTicketIssuable && !requestedTicketIssuable)
         {
             var hasHistoricalTickets =
@@ -264,6 +306,12 @@ internal sealed class UpdateServiceCommandHandler
 
         service.ChangeParent(
             request.ParentServiceId,
+            _currentUser.UserId.Value);
+
+        ReconcileCustomInputs(
+            service,
+            request.IsClientInputRequired,
+            hasChildren ? null : request.CustomInputs,
             _currentUser.UserId.Value);
 
         service.Update(
@@ -345,6 +393,124 @@ internal sealed class UpdateServiceCommandHandler
             _currentBranchContext.IsBranchActor,
             _currentBranchContext.ActiveBranchId,
             assignedServiceIds);
+    }
+
+    private async Task<Error?> ValidateCustomInputIdsAsync(
+        Service service,
+        IReadOnlyCollection<UpdateServiceCustomInputCommand>? requestedInputs,
+        CancellationToken cancellationToken)
+    {
+        var requestedIds = requestedInputs?
+            .Where(x => x.CustomInputId.HasValue)
+            .Select(x => x.CustomInputId!.Value)
+            .ToHashSet() ?? new HashSet<int>();
+        if (requestedIds.Count == 0)
+        {
+            return null;
+        }
+
+        var ownedIds = service.CustomInputs
+            .Where(x => requestedIds.Contains(x.Id))
+            .Select(x => x.Id)
+            .ToHashSet();
+        var missingIds = requestedIds
+            .Where(id => !ownedIds.Contains(id))
+            .ToArray();
+        if (missingIds.Length == 0)
+        {
+            return null;
+        }
+
+        var belongsToAnotherService = await _serviceReadRepository.Query()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.Id != service.Id)
+            .SelectMany(x => x.CustomInputs)
+            .AnyAsync(x => missingIds.Contains(x.Id), cancellationToken);
+
+        return belongsToAnotherService
+            ? new Error(
+                "Services.Update.CustomInputOwnershipConflict",
+                ServiceFeatureMessages.CustomInputOwnershipConflict,
+                ErrorType.Conflict)
+            : new Error(
+                "Services.Update.CustomInputNotFound",
+                ServiceFeatureMessages.CustomInputNotFound,
+                ErrorType.NotFound);
+    }
+
+    private static void ReconcileCustomInputs(
+        Service service,
+        bool isClientInputRequired,
+        IReadOnlyCollection<UpdateServiceCustomInputCommand>? requestedInputs,
+        Guid modifiedByApplicationUserId)
+    {
+        if (!isClientInputRequired)
+        {
+            foreach (var customInput in service.CustomInputs.Where(x => x.IsActive))
+            {
+                service.DeactivateCustomInput(
+                    customInput,
+                    modifiedByApplicationUserId);
+            }
+
+            return;
+        }
+
+        var inputs = requestedInputs ??
+            Array.Empty<UpdateServiceCustomInputCommand>();
+        var requestedIds = inputs
+            .Where(x => x.CustomInputId.HasValue)
+            .Select(x => x.CustomInputId!.Value)
+            .ToHashSet();
+
+        foreach (var omittedInput in service.CustomInputs
+                     .Where(x => x.IsActive && !requestedIds.Contains(x.Id))
+                     .ToArray())
+        {
+            service.DeactivateCustomInput(
+                omittedInput,
+                modifiedByApplicationUserId);
+        }
+
+        var existingById = service.CustomInputs.ToDictionary(x => x.Id);
+        foreach (var requestedInput in inputs)
+        {
+            if (!requestedInput.CustomInputId.HasValue)
+            {
+                service.AddCustomInput(
+                    requestedInput.Name,
+                    requestedInput.LabelEn,
+                    requestedInput.LabelAr,
+                    requestedInput.Type,
+                    requestedInput.IsRequired,
+                    requestedInput.MinLength,
+                    requestedInput.MaxLength,
+                    requestedInput.MinValue,
+                    requestedInput.MaxValue,
+                    requestedInput.StartWith,
+                    requestedInput.Order,
+                    modifiedByApplicationUserId);
+                continue;
+            }
+
+            var existing = existingById[requestedInput.CustomInputId.Value];
+            service.UpdateCustomInput(
+                existing,
+                requestedInput.Name,
+                requestedInput.LabelEn,
+                requestedInput.LabelAr,
+                requestedInput.Type,
+                requestedInput.IsRequired,
+                requestedInput.MinLength,
+                requestedInput.MaxLength,
+                requestedInput.MinValue,
+                requestedInput.MaxValue,
+                requestedInput.StartWith,
+                requestedInput.Order,
+                modifiedByApplicationUserId);
+            service.RestoreCustomInput(existing, modifiedByApplicationUserId);
+        }
     }
 
     private async Task<Error?> ValidateAndRecalculateDefaultQuotasAsync(

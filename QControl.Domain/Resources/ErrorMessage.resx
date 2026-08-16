@@ -1561,4 +1561,27 @@
   <data name="GeneralBrand_AuthenticationRequired" xml:space="preserve">
     <value>Authentication is required to manage the general brand.</value>
   </data>
+  <data name="Service_Parent_ClientInputNotAllowed" xml:space="preserve"><value>Client input configuration is allowed only for leaf services. Parent services cannot require client inputs.</value></data>
+  <data name="Service_Parent_CustomInputsNotAllowed" xml:space="preserve"><value>Custom inputs are allowed only for leaf services. Parent services cannot contain custom inputs.</value></data>
+  <data name="Service_CustomInputs_Required" xml:space="preserve"><value>At least one custom input is required when IsClientInputRequired is true.</value></data>
+  <data name="Service_CustomInputs_NotAllowed" xml:space="preserve"><value>Custom inputs are not allowed when IsClientInputRequired is false.</value></data>
+  <data name="Service_CustomInput_Name_Required" xml:space="preserve"><value>The custom input name is required.</value></data>
+  <data name="Service_CustomInput_Name_MaxLength" xml:space="preserve"><value>The custom input name must not exceed 100 characters.</value></data>
+  <data name="Service_CustomInput_Label_MaxLength" xml:space="preserve"><value>Custom input labels must not exceed 200 characters.</value></data>
+  <data name="Service_CustomInput_Type_Invalid" xml:space="preserve"><value>The custom input type is invalid.</value></data>
+  <data name="Service_CustomInput_Order_Invalid" xml:space="preserve"><value>The custom input order must be greater than zero.</value></data>
+  <data name="Service_CustomInput_Id_Duplicate" xml:space="preserve"><value>A custom input id cannot appear more than once.</value></data>
+  <data name="Service_CustomInput_Name_Duplicate" xml:space="preserve"><value>Custom input names must be unique within the service.</value></data>
+  <data name="Service_CustomInput_Order_Duplicate" xml:space="preserve"><value>Custom input orders must be unique within the service.</value></data>
+  <data name="Service_CustomInput_NotFound" xml:space="preserve"><value>The custom input could not be found.</value></data>
+  <data name="Service_CustomInput_OwnershipConflict" xml:space="preserve"><value>The custom input does not belong to this service.</value></data>
+  <data name="Service_CustomInput_StringRestrictions_Invalid" xml:space="preserve"><value>The restrictions supplied for the string custom input are invalid.</value></data>
+  <data name="Service_CustomInput_IntegerRestrictions_Invalid" xml:space="preserve"><value>The restrictions supplied for the integer custom input are invalid.</value></data>
+  <data name="Service_CustomInput_StartWith_StringOnly" xml:space="preserve"><value>StartWith is allowed only for string custom inputs.</value></data>
+  <data name="Service_CustomInput_StartWith_Empty" xml:space="preserve"><value>StartWith cannot be empty or whitespace.</value></data>
+  <data name="Service_CustomInput_StartWith_MaxLength" xml:space="preserve"><value>StartWith must not exceed 100 characters.</value></data>
+  <data name="Service_CustomInput_LengthRange_Invalid" xml:space="preserve"><value>The custom input maximum length must be greater than or equal to its minimum length.</value></data>
+  <data name="Service_CustomInput_ValueRange_Invalid" xml:space="preserve"><value>The custom input maximum value must be greater than or equal to its minimum value.</value></data>
+  <data name="Service_Parent_HasActiveCustomInputs" xml:space="preserve"><value>The selected parent has active custom inputs. Disable its client input configuration first.</value></data>
+  <data name="Service_Parent_RequiresClientInput" xml:space="preserve"><value>The selected parent requires client input. Disable its client input configuration first.</value></data>
 </root>
