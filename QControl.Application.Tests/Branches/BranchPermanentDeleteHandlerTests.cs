@@ -229,6 +229,47 @@ public sealed class BranchPermanentDeleteHandlerTests
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);
     }
 
+    [Fact]
+    public async Task Permanent_delete_is_blocked_by_branch_videos()
+    {
+        var branch = EntityTestFactory.Branch(1);
+        branch.Deactivate(DateTime.UtcNow, EntityTestFactory.CurrentUserId);
+        var branches = new List<Branch> { branch };
+        var videos = new List<BranchVideo>
+        {
+            EntityTestFactory.BranchVideo(50, branch.Id, 1, isActive: false)
+        };
+        var unitOfWork = new TestUnitOfWork();
+        var branchWriter = new InMemoryWriteRepository<Branch>(branches);
+        var handler = new PermanentDeleteBranchCommandHandler(
+            new InMemoryWriteReadRepository<Branch>(branches),
+            branchWriter,
+            new InMemoryWriteRepository<Location>(new() { branch.Location! }),
+            new InMemoryWriteReadRepository<WaitingArea>(new()),
+            new InMemoryWriteReadRepository<Display>(new()),
+            new TestConcurrencyTokenManager(),
+            new TestCurrentUser(),
+            unitOfWork,
+            branchVideoReadRepository:
+                new InMemoryWriteReadRepository<BranchVideo>(videos));
+
+        var result = await handler.Handle(
+            new PermanentDeleteBranchCommand
+            {
+                BranchId = branch.Id,
+                RowVersion = ValidRowVersion
+            },
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(
+            result.Errors,
+            error => error.Code == "Branches.PermanentDelete.HasRelatedData");
+        Assert.Contains(branch, branches);
+        Assert.Equal(0, branchWriter.DeleteCallCount);
+        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+    }
+
     private static PermanentDeleteBranchCommandHandler CreateHandler(
         List<Branch> branches,
         List<WaitingArea> waitingAreas,

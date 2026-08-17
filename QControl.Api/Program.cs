@@ -2,6 +2,7 @@ using BuildingBlock.Api.Bootstrap;
 using BuildingBlock.Api.Logging;
 using BuildingBlock.Api.OpenAi;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.StaticFiles;
 using QControl.Api.Swagger;
 using QControl.Application.Bootstrap;
 using QControl.infrastructure.Bootstrap;
@@ -106,9 +107,16 @@ app.UseSerilogPipeline();
 app.UseHttpsRedirection();
 app.UseHsts();
 
-app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("NiletronixCrm");
+
+var staticMediaTypes = new FileExtensionContentTypeProvider();
+staticMediaTypes.Mappings[".m3u8"] = "application/vnd.apple.mpegurl";
+staticMediaTypes.Mappings[".ts"] = "video/mp2t";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticMediaTypes
+});
 
 app.UseAuthentication();
 app.UseBuildingBlockMultiTenancy();

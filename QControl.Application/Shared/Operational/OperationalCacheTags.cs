@@ -17,6 +17,7 @@ internal static class OperationalCacheTags
     public const string DisplayWindows = "display-windows";
     public const string BranchBranding = "branch-branding";
     public const string BranchAdvertisements = "branch-advertisements";
+    public const string BranchVideos = "branch-videos";
     public const string GeneralBrand = "general-brand";
     public const string GeneralBrandSingleton = "general-brand:singleton";
     public const string Segments = "segments";
@@ -31,6 +32,9 @@ internal static class OperationalCacheTags
 
     public static string BranchAdvertisementsForBranch(int branchId) =>
         $"branch:{branchId}:advertisements";
+
+    public static string BranchVideosForBranch(int branchId) =>
+        $"branch:{branchId}:videos";
 
     public static string WaitingArea(int waitingAreaId) =>
         $"waiting-area:{waitingAreaId}";

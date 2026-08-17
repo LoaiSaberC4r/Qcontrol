@@ -64,6 +64,52 @@ internal static class EntityTestFactory
         return branding;
     }
 
+    public static BranchVideo BranchVideo(
+        int id,
+        int branchId,
+        int displayOrder,
+        bool isActive = true,
+        QControl.Domain.Enums.BranchVideoProcessingStatus processingStatus =
+            QControl.Domain.Enums.BranchVideoProcessingStatus.Processing,
+        string? hlsManifestPath = null,
+        byte[]? rowVersion = null)
+    {
+        var video = QControl.Domain.Entities.BranchVideo.Create(
+            branchId,
+            $"video-{id}.mp4",
+            $"Branches/{branchId}/Videos/key-{id}/original/source.mp4",
+            displayOrder,
+            CurrentUserId);
+        SetId(video, id);
+
+        if (processingStatus ==
+            QControl.Domain.Enums.BranchVideoProcessingStatus.Ready)
+        {
+            video.MarkReady(hlsManifestPath ??
+                $"Branches/{branchId}/Videos/key-{id}/hls/master.m3u8");
+        }
+        else if (processingStatus ==
+                 QControl.Domain.Enums.BranchVideoProcessingStatus.Failed)
+        {
+            video.MarkFailed();
+        }
+
+        if (!isActive)
+        {
+            video.Deactivate(DateTime.UtcNow, CurrentUserId);
+        }
+
+        if (rowVersion is not null)
+        {
+            SetPrivateProperty(
+                video,
+                nameof(QControl.Domain.Entities.BranchVideo.RowVersion),
+                rowVersion);
+        }
+
+        return video;
+    }
+
     public static GeneralBrand GeneralBrand(
         int id,
         BrandingLayoutSettings layout,

@@ -1584,4 +1584,23 @@
   <data name="Service_CustomInput_ValueRange_Invalid" xml:space="preserve"><value>يجب أن تكون القيمة القصوى أكبر من أو تساوي القيمة الدنيا.</value></data>
   <data name="Service_Parent_HasActiveCustomInputs" xml:space="preserve"><value>تحتوي الخدمة الأب المحددة على مدخلات مخصصة نشطة. عطّل إعداد مدخلات العميل أولاً.</value></data>
   <data name="Service_Parent_RequiresClientInput" xml:space="preserve"><value>تتطلب الخدمة الأب المحددة مدخلات العميل. عطّل إعداد مدخلات العميل أولاً.</value></data>
+  <data name="BranchVideo_Video_Required" xml:space="preserve"><value>ملف الفيديو مطلوب.</value></data>
+  <data name="BranchVideo_InvalidVideoType" xml:space="preserve"><value>الملف المرفوع ليس من أنواع الفيديو المدعومة.</value></data>
+  <data name="BranchVideo_InvalidDisplayOrder" xml:space="preserve"><value>يجب أن يكون ترتيب العرض أكبر من صفر.</value></data>
+  <data name="BranchVideo_DuplicateVideoId" xml:space="preserve"><value>يجب ألا يتكرر الفيديو في طلب إعادة الترتيب.</value></data>
+  <data name="BranchVideo_DuplicateDisplayOrder" xml:space="preserve"><value>يجب أن تكون ترتيبات عرض الفيديوهات المطلوبة فريدة.</value></data>
+  <data name="BranchVideo_NotFound" xml:space="preserve"><value>تعذر العثور على فيديو الفرع.</value></data>
+  <data name="BranchVideo_DoesNotBelongToBranch" xml:space="preserve"><value>الفيديو لا ينتمي إلى الفرع المطلوب.</value></data>
+  <data name="BranchVideo_AlreadyActive" xml:space="preserve"><value>فيديو الفرع نشط بالفعل.</value></data>
+  <data name="BranchVideo_AlreadyInactive" xml:space="preserve"><value>فيديو الفرع غير نشط بالفعل.</value></data>
+  <data name="BranchVideo_PermanentDelete_MustBeInactive" xml:space="preserve"><value>يجب تعطيل فيديو الفرع قبل حذفه نهائياً.</value></data>
+  <data name="BranchVideo_MediaSaveFailed" xml:space="preserve"><value>تعذر حفظ ملف الفيديو الأصلي.</value></data>
+  <data name="BranchVideo_PersistenceFailed" xml:space="preserve"><value>تعذر حفظ بيانات فيديو الفرع.</value></data>
+  <data name="BranchVideo_OrderConflict" xml:space="preserve"><value>يوجد فيديو آخر في الفرع يستخدم ترتيب العرض المطلوب.</value></data>
+  <data name="BranchVideo_Upload_Success" xml:space="preserve"><value>تم رفع الفيديو وإضافته إلى قائمة المعالجة.</value></data>
+  <data name="BranchVideo_Deactivate_Success" xml:space="preserve"><value>تم تعطيل فيديو الفرع بنجاح.</value></data>
+  <data name="BranchVideo_Reactivate_Success" xml:space="preserve"><value>تم إعادة تنشيط فيديو الفرع بنجاح.</value></data>
+  <data name="BranchVideo_Delete_Success" xml:space="preserve"><value>تم حذف فيديو الفرع نهائياً.</value></data>
+  <data name="BranchVideo_Reorder_Success" xml:space="preserve"><value>تمت إعادة ترتيب فيديوهات الفرع بنجاح.</value></data>
+  <data name="BranchVideo_ProcessingFailed" xml:space="preserve"><value>تعذر تجهيز الفيديو للبث.</value></data>
 </root>

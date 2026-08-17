@@ -1584,4 +1584,23 @@
   <data name="Service_CustomInput_ValueRange_Invalid" xml:space="preserve"><value>The custom input maximum value must be greater than or equal to its minimum value.</value></data>
   <data name="Service_Parent_HasActiveCustomInputs" xml:space="preserve"><value>The selected parent has active custom inputs. Disable its client input configuration first.</value></data>
   <data name="Service_Parent_RequiresClientInput" xml:space="preserve"><value>The selected parent requires client input. Disable its client input configuration first.</value></data>
+  <data name="BranchVideo_Video_Required" xml:space="preserve"><value>A video file is required.</value></data>
+  <data name="BranchVideo_InvalidVideoType" xml:space="preserve"><value>The uploaded file is not a supported video type.</value></data>
+  <data name="BranchVideo_InvalidDisplayOrder" xml:space="preserve"><value>Display order must be greater than zero.</value></data>
+  <data name="BranchVideo_DuplicateVideoId" xml:space="preserve"><value>Each video may appear only once in a reorder request.</value></data>
+  <data name="BranchVideo_DuplicateDisplayOrder" xml:space="preserve"><value>Requested video display orders must be unique.</value></data>
+  <data name="BranchVideo_NotFound" xml:space="preserve"><value>The branch video could not be found.</value></data>
+  <data name="BranchVideo_DoesNotBelongToBranch" xml:space="preserve"><value>The video does not belong to the requested branch.</value></data>
+  <data name="BranchVideo_AlreadyActive" xml:space="preserve"><value>The branch video is already active.</value></data>
+  <data name="BranchVideo_AlreadyInactive" xml:space="preserve"><value>The branch video is already inactive.</value></data>
+  <data name="BranchVideo_PermanentDelete_MustBeInactive" xml:space="preserve"><value>Deactivate the branch video before permanently deleting it.</value></data>
+  <data name="BranchVideo_MediaSaveFailed" xml:space="preserve"><value>The original video could not be saved.</value></data>
+  <data name="BranchVideo_PersistenceFailed" xml:space="preserve"><value>The branch video could not be saved.</value></data>
+  <data name="BranchVideo_OrderConflict" xml:space="preserve"><value>Another branch video already uses the requested display order.</value></data>
+  <data name="BranchVideo_Upload_Success" xml:space="preserve"><value>The video was uploaded and queued for processing.</value></data>
+  <data name="BranchVideo_Deactivate_Success" xml:space="preserve"><value>The branch video was deactivated successfully.</value></data>
+  <data name="BranchVideo_Reactivate_Success" xml:space="preserve"><value>The branch video was reactivated successfully.</value></data>
+  <data name="BranchVideo_Delete_Success" xml:space="preserve"><value>The branch video was permanently deleted.</value></data>
+  <data name="BranchVideo_Reorder_Success" xml:space="preserve"><value>The branch videos were reordered successfully.</value></data>
+  <data name="BranchVideo_ProcessingFailed" xml:space="preserve"><value>The video could not be prepared for streaming.</value></data>
 </root>

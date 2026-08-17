@@ -16,6 +16,14 @@ namespace BuildingBlock.Infrastracture.Service
         // NEW: تتبّع شامل لكل المفاتيح
         private static readonly ConcurrentDictionary<string, byte> _allKeys = new();
 
+        public MemoryCacheService(
+            IMemoryCache cache,
+            ILogger<MemoryCacheService> log)
+        {
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
+
         public Task<(bool found, T? value)> TryGetAsync<T>(string key, CancellationToken ct = default)
         {
             if (_cache.TryGetValue(key, out var obj) && obj is T v)

@@ -28,6 +28,7 @@ internal sealed class PermanentDeleteBranchCommandHandler
     private readonly IWriteRepository<QControl.Domain.Entities.BranchBranding>? _brandingWriteRepository;
     private readonly IWriteReadRepository<BranchAdvertisement>? _advertisementReadRepository;
     private readonly IWriteRepository<BranchAdvertisement>? _advertisementWriteRepository;
+    private readonly IWriteReadRepository<BranchVideo>? _branchVideoReadRepository;
     private readonly IConcurrencyTokenManager _concurrencyTokenManager;
     private readonly ICurrentUser _currentUser;
     private readonly IUnitOfWork _unitOfWork;
@@ -50,7 +51,8 @@ internal sealed class PermanentDeleteBranchCommandHandler
         IMediaService? mediaService = null,
         ILogger<PermanentDeleteBranchCommandHandler>? logger = null,
         IWriteReadRepository<ServiceWorkflow>? serviceWorkflowReadRepository = null,
-        IWriteReadRepository<ServiceSchedule>? serviceScheduleReadRepository = null)
+        IWriteReadRepository<ServiceSchedule>? serviceScheduleReadRepository = null,
+        IWriteReadRepository<BranchVideo>? branchVideoReadRepository = null)
     {
         _branchReadRepository = branchReadRepository
             ?? throw new ArgumentNullException(nameof(branchReadRepository));
@@ -68,6 +70,7 @@ internal sealed class PermanentDeleteBranchCommandHandler
         _brandingWriteRepository = brandingWriteRepository;
         _advertisementReadRepository = advertisementReadRepository;
         _advertisementWriteRepository = advertisementWriteRepository;
+        _branchVideoReadRepository = branchVideoReadRepository;
         _concurrencyTokenManager = concurrencyTokenManager
             ?? throw new ArgumentNullException(nameof(concurrencyTokenManager));
         _currentUser = currentUser
@@ -138,6 +141,12 @@ internal sealed class PermanentDeleteBranchCommandHandler
                 x => x.BranchId == branch.Id,
                 cancellationToken);
 
+        var hasBranchVideos =
+            _branchVideoReadRepository is not null &&
+            await _branchVideoReadRepository.AnyAsync(
+                x => x.BranchId == branch.Id,
+                cancellationToken);
+
         if (hasServiceSchedules)
         {
             return Result<PermanentDeleteBranchResponse>.Fail(new Error(
@@ -146,7 +155,7 @@ internal sealed class PermanentDeleteBranchCommandHandler
                 ErrorType.Conflict));
         }
 
-        if (hasWaitingAreas || hasDisplays || hasServiceWorkflows)
+        if (hasWaitingAreas || hasDisplays || hasServiceWorkflows || hasBranchVideos)
         {
             return Result<PermanentDeleteBranchResponse>.Fail(new Error(
                 "Branches.PermanentDelete.HasRelatedData",

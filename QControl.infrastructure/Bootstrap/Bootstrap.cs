@@ -28,6 +28,7 @@ using QControl.infrastructure.Services;
 using QControl.infrastructure.Services.Security;
 using QControl.infrastructure.Services.Token;
 using System.Text;
+using System.Text.RegularExpressions;
 using static Qcontrol.infrastructure.Seeders.SeedConstants;
 
 namespace QControl.infrastructure.Bootstrap
@@ -48,6 +49,21 @@ namespace QControl.infrastructure.Bootstrap
           .Validate(o => !string.IsNullOrWhiteSpace(o.Secret),
               "Security:Otp:Secret is required.")
           .ValidateOnStart();
+            services.AddOptions<BranchVideoProcessingOptions>()
+                .Bind(configuration.GetSection(BranchVideoProcessingOptions.SectionName))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.FfmpegPath),
+                    "BranchVideoProcessing:FfmpegPath is required.")
+                .Validate(o => Regex.IsMatch(o.TargetResolution, @"^\d{2,5}[xX]\d{2,5}$"),
+                    "BranchVideoProcessing:TargetResolution must use WIDTHxHEIGHT.")
+                .Validate(o => o.MaximumFrameRate is > 0 and <= 30,
+                    "BranchVideoProcessing:MaximumFrameRate must be between 1 and 30.")
+                .Validate(o => Regex.IsMatch(o.VideoBitrate, @"^\d+[kKmM]$"),
+                    "BranchVideoProcessing:VideoBitrate is invalid.")
+                .Validate(o => Regex.IsMatch(o.AudioBitrate, @"^\d+[kKmM]$"),
+                    "BranchVideoProcessing:AudioBitrate is invalid.")
+                .Validate(o => o.SegmentDurationSeconds > 0,
+                    "BranchVideoProcessing:SegmentDurationSeconds must be positive.")
+                .ValidateOnStart();
             //Hasing
             services.AddScoped<IOtpHasher, OtpHasher>();
             //Email Service
@@ -85,6 +101,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IDisplayPermanentDeleteRepository, DisplayPermanentDeleteRepository>();
             services.AddScoped<IServicePermanentDeleteRepository, ServicePermanentDeleteRepository>();
             services.AddScoped<IBranchAdvertisementReorderRepository, BranchAdvertisementReorderRepository>();
+            services.AddScoped<IBranchVideoReorderRepository, BranchVideoReorderRepository>();
             services.AddScoped<IServiceWorkflowDefaultRepository, ServiceWorkflowDefaultRepository>();
             services.AddScoped<IConcurrencyTokenManager, ConcurrencyTokenManager>();
             services.AddScoped<IServiceTicketUsageChecker, ServiceTicketUsageChecker>();
@@ -107,6 +124,10 @@ namespace QControl.infrastructure.Bootstrap
             // Seeding + DB init (HostedServices - correct place)
             services.AddSeeding();
             services.AddHostedService<DbInitAndSeedingHostedService>();
+            services.AddSingleton<IBranchVideoProcessingQueue, BranchVideoProcessingQueue>();
+            services.AddSingleton<IBranchVideoProcessingCoordinator, BranchVideoProcessingCoordinator>();
+            services.AddSingleton<IBranchVideoTranscoder, FfmpegBranchVideoTranscoder>();
+            services.AddHostedService<BranchVideoProcessingWorker>();
 
             return services;
         }

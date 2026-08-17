@@ -536,6 +536,103 @@ namespace Qcontrol.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchVideo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<Guid?>("DeactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HlsManifestPath")
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("LastModifiedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("OriginalPath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("ProcessingStatus")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ReactivatedByApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReactivatedOnUtc")
+                        .HasColumnType("datetime2(3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByApplicationUserId");
+
+                    b.HasIndex("DeactivatedByApplicationUserId");
+
+                    b.HasIndex("LastModifiedByApplicationUserId");
+
+                    b.HasIndex("ReactivatedByApplicationUserId");
+
+                    b.HasIndex("BranchId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "IsActive", "ProcessingStatus", "DisplayOrder");
+
+                    b.ToTable("BranchVideo", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BranchVideo_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
+
+                            t.HasCheckConstraint("CK_BranchVideo_DisplayOrder_Positive", "[DisplayOrder] > 0");
+
+                            t.HasCheckConstraint("CK_BranchVideo_OriginalFileName_NotBlank", "NULLIF(LTRIM(RTRIM([OriginalFileName])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_BranchVideo_OriginalPath_NotBlank", "NULLIF(LTRIM(RTRIM([OriginalPath])), '') IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_BranchVideo_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
+                        });
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.Property<int>("Id")
@@ -2641,6 +2738,46 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("Segment");
                 });
 
+            modelBuilder.Entity("QControl.Domain.Entities.BranchVideo", b =>
+                {
+                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
+                        .WithMany("Videos")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("DeactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifiedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ReactivatedByApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByApplicationUser");
+
+                    b.Navigation("DeactivatedByApplicationUser");
+
+                    b.Navigation("LastModifiedByApplicationUser");
+
+                    b.Navigation("ReactivatedByApplicationUser");
+                });
+
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
                 {
                     b.HasOne("QControl.Domain.Entities.Branch", "Branch")
@@ -3260,6 +3397,8 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("OwnedServices");
+
+                    b.Navigation("Videos");
 
                     b.Navigation("WaitingAreas");
                 });

@@ -8,6 +8,7 @@ public sealed class Branch : AggregateRoot<int>
     private readonly List<WaitingArea> _waitingAreas = new();
     private readonly List<Display> _displays = new();
     private readonly List<BranchAdvertisement> _advertisements = new();
+    private readonly List<BranchVideo> _videos = new();
     private readonly List<Service> _ownedServices = new();
     private readonly List<BranchService> _branchServices = new();
 
@@ -55,6 +56,9 @@ public sealed class Branch : AggregateRoot<int>
 
     public IReadOnlyCollection<BranchAdvertisement> Advertisements =>
         _advertisements.AsReadOnly();
+
+    public IReadOnlyCollection<BranchVideo> Videos =>
+        _videos.AsReadOnly();
 
     public IReadOnlyCollection<Service> OwnedServices =>
         _ownedServices.AsReadOnly();
