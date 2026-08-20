@@ -1603,4 +1603,27 @@
   <data name="BranchVideo_Delete_Success" xml:space="preserve"><value>تم حذف فيديو الفرع نهائياً.</value></data>
   <data name="BranchVideo_Reorder_Success" xml:space="preserve"><value>تمت إعادة ترتيب فيديوهات الفرع بنجاح.</value></data>
   <data name="BranchVideo_ProcessingFailed" xml:space="preserve"><value>تعذر تجهيز الفيديو للبث.</value></data>
+  <data name="BranchDisplayConfiguration_NotFound" xml:space="preserve"><value>تعذر العثور على إعدادات شاشة الفرع.</value></data>
+  <data name="BranchDisplayConfiguration_AlreadyExists" xml:space="preserve"><value>توجد بالفعل إعدادات شاشة لهذا الفرع.</value></data>
+  <data name="BranchDisplayConfiguration_Created" xml:space="preserve"><value>تم إنشاء إعدادات شاشة الفرع بنجاح.</value></data>
+  <data name="BranchDisplayConfiguration_Updated" xml:space="preserve"><value>تم تحديث إعدادات شاشة الفرع بنجاح.</value></data>
+  <data name="BranchDisplayConfiguration_ColorRequired" xml:space="preserve"><value>لون الشاشة مطلوب.</value></data>
+  <data name="BranchDisplayConfiguration_InvalidColor" xml:space="preserve"><value>يجب أن تكون ألوان الشاشة بالصيغة ‎#RRGGBB.</value></data>
+  <data name="BranchDisplayConfiguration_TitleRequired" xml:space="preserve"><value>جميع عناوين الشاشة مطلوبة.</value></data>
+  <data name="BranchDisplayConfiguration_TitleMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز عنوان الشاشة 200 حرف.</value></data>
+  <data name="BranchDisplayConfiguration_InvalidFontSize" xml:space="preserve"><value>يجب أن يكون حجم خط الشاشة بين 1 و100.</value></data>
+  <data name="BranchDisplayMessage_NotFound" xml:space="preserve"><value>تعذر العثور على رسالة شاشة الفرع.</value></data>
+  <data name="BranchDisplayMessage_DoesNotBelongToBranch" xml:space="preserve"><value>رسالة الشاشة لا تنتمي إلى الفرع المطلوب.</value></data>
+  <data name="BranchDisplayMessage_Created" xml:space="preserve"><value>تم إنشاء رسالة الشاشة بنجاح.</value></data>
+  <data name="BranchDisplayMessage_Updated" xml:space="preserve"><value>تم تحديث رسالة الشاشة بنجاح.</value></data>
+  <data name="BranchDisplayMessage_Deactivated" xml:space="preserve"><value>تم تعطيل رسالة الشاشة بنجاح.</value></data>
+  <data name="BranchDisplayMessage_Reactivated" xml:space="preserve"><value>تم إعادة تنشيط رسالة الشاشة بنجاح.</value></data>
+  <data name="BranchDisplayMessage_AlreadyActive" xml:space="preserve"><value>رسالة الشاشة نشطة بالفعل.</value></data>
+  <data name="BranchDisplayMessage_AlreadyInactive" xml:space="preserve"><value>رسالة الشاشة غير نشطة بالفعل.</value></data>
+  <data name="BranchDisplayMessage_TextRequired" xml:space="preserve"><value>نص رسالة الشاشة بالعربية والإنجليزية مطلوب.</value></data>
+  <data name="BranchDisplayMessage_TextMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز نص رسالة الشاشة 500 حرف.</value></data>
+  <data name="BranchDisplayMessage_InvalidDisplayOrder" xml:space="preserve"><value>يجب أن يكون ترتيب رسالة الشاشة أكبر من صفر.</value></data>
+  <data name="BranchDisplayMessage_DuplicateMessageId" xml:space="preserve"><value>يجب ألا تتكرر رسالة الشاشة في طلب إعادة الترتيب.</value></data>
+  <data name="BranchDisplayMessage_DuplicateDisplayOrder" xml:space="preserve"><value>يجب أن تكون ترتيبات رسائل الشاشة المطلوبة فريدة.</value></data>
+  <data name="BranchDisplayMessage_OrderConflict" xml:space="preserve"><value>توجد رسالة شاشة أخرى تستخدم الترتيب المطلوب.</value></data>
 </root>

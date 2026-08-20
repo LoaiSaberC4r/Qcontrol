@@ -102,6 +102,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IServicePermanentDeleteRepository, ServicePermanentDeleteRepository>();
             services.AddScoped<IBranchAdvertisementReorderRepository, BranchAdvertisementReorderRepository>();
             services.AddScoped<IBranchVideoReorderRepository, BranchVideoReorderRepository>();
+            services.AddScoped<IBranchDisplayMessageReorderRepository, BranchDisplayMessageReorderRepository>();
             services.AddScoped<IServiceWorkflowDefaultRepository, ServiceWorkflowDefaultRepository>();
             services.AddScoped<IConcurrencyTokenManager, ConcurrencyTokenManager>();
             services.AddScoped<IServiceTicketUsageChecker, ServiceTicketUsageChecker>();

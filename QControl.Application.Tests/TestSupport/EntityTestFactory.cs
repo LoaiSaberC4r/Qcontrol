@@ -110,6 +110,85 @@ internal static class EntityTestFactory
         return video;
     }
 
+    public static BranchDisplayConfiguration BranchDisplayConfiguration(
+        int id,
+        int branchId,
+        byte[]? rowVersion = null)
+    {
+        var configuration = QControl.Domain.Entities.BranchDisplayConfiguration.Create(
+            branchId,
+            BranchDisplayConfigurationSettings(),
+            CurrentUserId);
+        SetId(configuration, id);
+        if (rowVersion is not null)
+        {
+            SetPrivateProperty(configuration, nameof(configuration.RowVersion), rowVersion);
+        }
+
+        return configuration;
+    }
+
+    public static BranchDisplayConfigurationSettings BranchDisplayConfigurationSettings() =>
+        new(
+            "#FFFFFF",
+            "العنوان الرئيسي",
+            "Main title",
+            "#FFFFFF",
+            "#158EA3",
+            28,
+            "#158EA3",
+            "#FFFFFF",
+            "#FFFFFF",
+            "#333333",
+            "#168EA4",
+            "#FFFFFF",
+            "رقم التذكرة",
+            "Ticket Number",
+            "الخدمة",
+            "Service",
+            "الشباك",
+            "Window",
+            "#FFFFFF",
+            "#168EA4",
+            18,
+            true,
+            "#147E92",
+            "#FFFFFF");
+
+    public static BranchDisplayMessage BranchDisplayMessage(
+        int id,
+        int branchId,
+        int displayOrder,
+        bool isActive = true,
+        byte[]? rowVersion = null)
+    {
+        var message = QControl.Domain.Entities.BranchDisplayMessage.Create(
+            branchId,
+            $"رسالة {id}",
+            $"Message {id}",
+            displayOrder,
+            CurrentUserId);
+        SetId(message, id);
+        if (!isActive)
+        {
+            message.Deactivate(DateTime.UtcNow, CurrentUserId);
+        }
+        if (rowVersion is not null)
+        {
+            SetPrivateProperty(message, nameof(message.RowVersion), rowVersion);
+        }
+
+        return message;
+    }
+
+    public static void AttachDisplayConfiguration(
+        Branch branch,
+        BranchDisplayConfiguration configuration)
+    {
+        SetPrivateProperty(branch, nameof(branch.DisplayConfiguration), configuration);
+        SetPrivateProperty(configuration, nameof(configuration.Branch), branch);
+    }
+
     public static GeneralBrand GeneralBrand(
         int id,
         BrandingLayoutSettings layout,

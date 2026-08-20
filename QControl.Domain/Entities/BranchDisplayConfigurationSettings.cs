@@ -1,0 +1,27 @@
+namespace QControl.Domain.Entities;
+
+public sealed record BranchDisplayConfigurationSettings(
+    string DisplayBackgroundColor,
+    string MainTitleAr,
+    string MainTitleEn,
+    string HeaderBackgroundColor,
+    string MainTitleTextColor,
+    int MainTitleFontSize,
+    string TableHeaderBackgroundColor,
+    string TableHeaderTextColor,
+    string TableRowBackgroundColor,
+    string TableRowTextColor,
+    string TicketNumberBackgroundColor,
+    string TicketNumberTextColor,
+    string TicketColumnTitleAr,
+    string TicketColumnTitleEn,
+    string ServiceColumnTitleAr,
+    string ServiceColumnTitleEn,
+    string WindowColumnTitleAr,
+    string WindowColumnTitleEn,
+    string TickerBackgroundColor,
+    string TickerTextColor,
+    int TickerFontSize,
+    bool ShowClock,
+    string ClockBackgroundColor,
+    string ClockTextColor);
