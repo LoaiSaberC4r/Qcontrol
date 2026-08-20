@@ -9,6 +9,7 @@ public sealed class Branch : AggregateRoot<int>
     private readonly List<Display> _displays = new();
     private readonly List<BranchAdvertisement> _advertisements = new();
     private readonly List<BranchVideo> _videos = new();
+    private readonly List<BranchDisplayMessage> _displayMessages = new();
     private readonly List<Service> _ownedServices = new();
     private readonly List<BranchService> _branchServices = new();
 
@@ -27,6 +28,8 @@ public sealed class Branch : AggregateRoot<int>
     public Location Location { get; private set; } = null!;
 
     public BranchBranding? Branding { get; private set; }
+
+    public BranchDisplayConfiguration? DisplayConfiguration { get; private set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
 
@@ -59,6 +62,9 @@ public sealed class Branch : AggregateRoot<int>
 
     public IReadOnlyCollection<BranchVideo> Videos =>
         _videos.AsReadOnly();
+
+    public IReadOnlyCollection<BranchDisplayMessage> DisplayMessages =>
+        _displayMessages.AsReadOnly();
 
     public IReadOnlyCollection<Service> OwnedServices =>
         _ownedServices.AsReadOnly();

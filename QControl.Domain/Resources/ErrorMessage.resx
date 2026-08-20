@@ -1603,4 +1603,27 @@
   <data name="BranchVideo_Delete_Success" xml:space="preserve"><value>The branch video was permanently deleted.</value></data>
   <data name="BranchVideo_Reorder_Success" xml:space="preserve"><value>The branch videos were reordered successfully.</value></data>
   <data name="BranchVideo_ProcessingFailed" xml:space="preserve"><value>The video could not be prepared for streaming.</value></data>
+  <data name="BranchDisplayConfiguration_NotFound" xml:space="preserve"><value>The branch display configuration could not be found.</value></data>
+  <data name="BranchDisplayConfiguration_AlreadyExists" xml:space="preserve"><value>A display configuration already exists for this branch.</value></data>
+  <data name="BranchDisplayConfiguration_Created" xml:space="preserve"><value>The branch display configuration was created successfully.</value></data>
+  <data name="BranchDisplayConfiguration_Updated" xml:space="preserve"><value>The branch display configuration was updated successfully.</value></data>
+  <data name="BranchDisplayConfiguration_ColorRequired" xml:space="preserve"><value>A display color is required.</value></data>
+  <data name="BranchDisplayConfiguration_InvalidColor" xml:space="preserve"><value>Display colors must use the #RRGGBB format.</value></data>
+  <data name="BranchDisplayConfiguration_TitleRequired" xml:space="preserve"><value>All display titles are required.</value></data>
+  <data name="BranchDisplayConfiguration_TitleMaxLength" xml:space="preserve"><value>Display titles must not exceed 200 characters.</value></data>
+  <data name="BranchDisplayConfiguration_InvalidFontSize" xml:space="preserve"><value>Display font sizes must be between 1 and 100.</value></data>
+  <data name="BranchDisplayMessage_NotFound" xml:space="preserve"><value>The branch display message could not be found.</value></data>
+  <data name="BranchDisplayMessage_DoesNotBelongToBranch" xml:space="preserve"><value>The display message does not belong to the requested branch.</value></data>
+  <data name="BranchDisplayMessage_Created" xml:space="preserve"><value>The display message was created successfully.</value></data>
+  <data name="BranchDisplayMessage_Updated" xml:space="preserve"><value>The display message was updated successfully.</value></data>
+  <data name="BranchDisplayMessage_Deactivated" xml:space="preserve"><value>The display message was deactivated successfully.</value></data>
+  <data name="BranchDisplayMessage_Reactivated" xml:space="preserve"><value>The display message was reactivated successfully.</value></data>
+  <data name="BranchDisplayMessage_AlreadyActive" xml:space="preserve"><value>The display message is already active.</value></data>
+  <data name="BranchDisplayMessage_AlreadyInactive" xml:space="preserve"><value>The display message is already inactive.</value></data>
+  <data name="BranchDisplayMessage_TextRequired" xml:space="preserve"><value>Arabic and English display message text is required.</value></data>
+  <data name="BranchDisplayMessage_TextMaxLength" xml:space="preserve"><value>Display message text must not exceed 500 characters.</value></data>
+  <data name="BranchDisplayMessage_InvalidDisplayOrder" xml:space="preserve"><value>Display message order must be greater than zero.</value></data>
+  <data name="BranchDisplayMessage_DuplicateMessageId" xml:space="preserve"><value>Each display message may appear only once in a reorder request.</value></data>
+  <data name="BranchDisplayMessage_DuplicateDisplayOrder" xml:space="preserve"><value>Requested display message orders must be unique.</value></data>
+  <data name="BranchDisplayMessage_OrderConflict" xml:space="preserve"><value>Another display message already uses the requested order.</value></data>
 </root>
