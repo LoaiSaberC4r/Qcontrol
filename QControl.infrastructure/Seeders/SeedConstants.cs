@@ -296,6 +296,15 @@ internal static class SeedConstants
 
         public const string GeneralBrandUpdate =
             "GeneralBrand.Update";
+
+        public const string BranchConfigurationsView =
+            "BranchConfigurations.View";
+
+        public const string BranchConfigurationsCreate =
+            "BranchConfigurations.Create";
+
+        public const string BranchConfigurationsUpdate =
+            "BranchConfigurations.Update";
     }
 
     public static class SeedIds
@@ -648,6 +657,15 @@ internal static class SeedConstants
 
             public static readonly Guid GeneralBrandUpdate =
                 Guid.Parse("30000000-0000-0000-0000-000000000095");
+
+            public static readonly Guid BranchConfigurationsView =
+                Guid.Parse("30000000-0000-0000-0000-000000000096");
+
+            public static readonly Guid BranchConfigurationsCreate =
+                Guid.Parse("30000000-0000-0000-0000-000000000097");
+
+            public static readonly Guid BranchConfigurationsUpdate =
+                Guid.Parse("30000000-0000-0000-0000-000000000098");
         }
     }
 
@@ -1023,6 +1041,18 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.BranchServicesUnassign,
                     PermissionNames.BranchServicesUnassign),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchConfigurationsView,
+                    PermissionNames.BranchConfigurationsView),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchConfigurationsCreate,
+                    PermissionNames.BranchConfigurationsCreate),
+
+                new PermissionSeedItem(
+                    SeedIds.Permissions.BranchConfigurationsUpdate,
+                    PermissionNames.BranchConfigurationsUpdate),
             };
 
         public static IReadOnlyCollection<RolePermissionSeedItem>
@@ -1086,7 +1116,10 @@ internal static class SeedConstants
         SeedIds.Permissions.ServiceWorkflowsViewStartOptions,
         SeedIds.Permissions.ServiceSchedulesView,
         SeedIds.Permissions.ServiceSchedulesCreate,
-        SeedIds.Permissions.ServiceSchedulesUpdate
+        SeedIds.Permissions.ServiceSchedulesUpdate,
+        SeedIds.Permissions.BranchConfigurationsView,
+        SeedIds.Permissions.BranchConfigurationsCreate,
+        SeedIds.Permissions.BranchConfigurationsUpdate
     }
             .Select(permissionId =>
                 new RolePermissionSeedItem(

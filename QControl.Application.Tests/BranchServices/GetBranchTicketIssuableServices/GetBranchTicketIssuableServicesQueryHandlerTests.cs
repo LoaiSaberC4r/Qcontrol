@@ -393,6 +393,103 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
     }
 
     [Fact]
+    public async Task Missing_configuration_uses_zero_allowed_time()
+    {
+        var fixture = Fixture.Default(
+            timeSlots: new[]
+            {
+                Slot(DayOfWeek.Sunday, 10, 20, 11, 0)
+            });
+
+        var result = await Handle(CreateHandler(fixture));
+
+        Assert.Empty(result.Value.Services);
+    }
+
+    [Theory]
+    [InlineData(0, 9, 0, 11, 0, true)]
+    [InlineData(30, 10, 20, 11, 0, true)]
+    [InlineData(30, 10, 45, 11, 30, false)]
+    [InlineData(30, 8, 0, 9, 59, false)]
+    [InlineData(30, 10, 30, 11, 0, true)]
+    public async Task Allowed_time_extends_only_the_same_day_schedule_window(
+        int allowedMinutes,
+        int startHour,
+        int startMinute,
+        int endHour,
+        int endMinute,
+        bool expected)
+    {
+        var fixture = Fixture.Default(
+            timeSlots: new[]
+            {
+                Slot(
+                    DayOfWeek.Sunday,
+                    startHour,
+                    startMinute,
+                    endHour,
+                    endMinute)
+            });
+        AttachConfiguration(
+            fixture,
+            TimeSpan.FromMinutes(allowedMinutes));
+
+        var result = await Handle(CreateHandler(fixture));
+
+        Assert.Equal(expected, result.Value.Services.Count == 1);
+    }
+
+    [Fact]
+    public async Task Midnight_window_includes_same_day_slot_before_day_end()
+    {
+        var fixture = Fixture.Default(
+            timeSlots: new[]
+            {
+                Slot(DayOfWeek.Sunday, 23, 55, 23, 59)
+            });
+        AttachConfiguration(fixture, TimeSpan.FromMinutes(30));
+
+        var result = await Handle(CreateHandler(
+            fixture,
+            dateTimeProvider: new CountingDateTimeProvider(
+                new DateTime(
+                    2026,
+                    8,
+                    2,
+                    23,
+                    50,
+                    0,
+                    DateTimeKind.Utc))));
+
+        Assert.Single(result.Value.Services);
+    }
+
+    [Fact]
+    public async Task Midnight_window_does_not_evaluate_tomorrow()
+    {
+        var fixture = Fixture.Default(
+            timeSlots: new[]
+            {
+                Slot(DayOfWeek.Monday, 0, 5, 0, 20)
+            });
+        AttachConfiguration(fixture, TimeSpan.FromMinutes(30));
+
+        var result = await Handle(CreateHandler(
+            fixture,
+            dateTimeProvider: new CountingDateTimeProvider(
+                new DateTime(
+                    2026,
+                    8,
+                    2,
+                    23,
+                    50,
+                    0,
+                    DateTimeKind.Utc))));
+
+        Assert.Empty(result.Value.Services);
+    }
+
+    [Fact]
     public async Task Excludes_schedule_for_another_day()
     {
         var fixture = Fixture.Default(
@@ -794,6 +891,30 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
         int startHour,
         int endHour) =>
         new(day, new TimeOnly(startHour, 0), new TimeOnly(endHour, 0));
+
+    private static ServiceScheduleTimeSlotDefinition Slot(
+        DayOfWeek day,
+        int startHour,
+        int startMinute,
+        int endHour,
+        int endMinute) =>
+        new(
+            day,
+            new TimeOnly(startHour, startMinute),
+            new TimeOnly(endHour, endMinute));
+
+    private static void AttachConfiguration(
+        Fixture fixture,
+        TimeSpan allowedTime)
+    {
+        var branch = Assert.Single(fixture.Branches);
+        var configuration = EntityTestFactory.BranchConfiguration(
+            1,
+            branch.Id,
+            allowedTime,
+            new byte[8]);
+        EntityTestFactory.AttachConfiguration(branch, configuration);
+    }
 
     private sealed record Fixture(
         List<Branch> Branches,

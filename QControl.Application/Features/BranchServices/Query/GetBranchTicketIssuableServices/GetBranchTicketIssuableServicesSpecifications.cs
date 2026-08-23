@@ -11,6 +11,8 @@ internal sealed record BranchTicketIssuanceState
 
     public bool IsActive { get; init; }
 
+    public TimeSpan AllowedTime { get; init; }
+
     public int? BrandingId { get; init; }
 
     public string? LogoPath { get; init; }
@@ -188,6 +190,9 @@ internal sealed class GetBranchTicketIssuanceStateSpec
         {
             BranchId = branch.Id,
             IsActive = branch.IsActive,
+            AllowedTime = branch.Configuration == null
+                ? TimeSpan.Zero
+                : branch.Configuration.AllowedTime,
             BrandingId = branch.Branding == null
                 ? null
                 : branch.Branding.Id,
@@ -306,21 +311,22 @@ internal sealed class GetAssignedBranchServiceIdsSpec
     }
 }
 
-internal sealed class GetCurrentlyAvailableScheduledServiceIdsSpec
+internal sealed class GetAllowedScheduledServiceIdsSpec
     : Specification<ServiceSchedule, int>
 {
-    public GetCurrentlyAvailableScheduledServiceIdsSpec(
+    public GetAllowedScheduledServiceIdsSpec(
         int branchId,
         DayOfWeek currentDay,
-        TimeOnly currentTime)
+        TimeOnly currentTime,
+        TimeOnly allowedUntil)
     {
         UseNoTracking();
         EnableDistinct();
         AddCriteria(schedule => schedule.BranchId == branchId);
         AddCriteria(schedule => schedule.TimeSlots.Any(slot =>
             slot.DayOfWeek == currentDay &&
-            slot.StartTime <= currentTime &&
-            currentTime < slot.EndTime));
+            slot.StartTime <= allowedUntil &&
+            slot.EndTime > currentTime));
         Select(schedule => schedule.ServiceId);
     }
 }

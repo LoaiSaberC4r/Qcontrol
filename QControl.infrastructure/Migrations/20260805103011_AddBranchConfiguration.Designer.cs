@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QControl.infrastructure.Persistence;
 
 #nullable disable
 
-namespace Qcontrol.Infrastructure.Migrations
+namespace QControl.infrastructure.Migrations
 {
     [DbContext(typeof(PlatformWriteDbContext))]
-    partial class PlatformWriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260805103011_AddBranchConfiguration")]
+    partial class AddBranchConfiguration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -473,303 +476,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.ToTable("BranchConfiguration", (string)null);
                 });
 
-            modelBuilder.Entity("QControl.Domain.Entities.BranchDisplayConfiguration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ClockBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("ClockTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<string>("DisplayBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("HeaderBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("MainTitleAr")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("MainTitleEn")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("MainTitleFontSize")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MainTitleTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<DateTime?>("ModifiedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("ServiceColumnTitleAr")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("ServiceColumnTitleEn")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("ShowClock")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TableHeaderBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TableHeaderTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TableRowBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TableRowTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TickerBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<int>("TickerFontSize")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TickerTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TicketColumnTitleAr")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("TicketColumnTitleEn")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("TicketNumberBackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("TicketNumberTextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(7)");
-
-                    b.Property<string>("WindowColumnTitleAr")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("WindowColumnTitleEn")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BranchId")
-                        .IsUnique();
-
-                    b.HasIndex("CreatedByApplicationUserId");
-
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
-                    b.ToTable("BranchDisplayConfiguration", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_ClockBackgroundColor_Format", "[ClockBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ClockBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_ClockTextColor_Format", "[ClockTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([ClockTextColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_DisplayBackgroundColor_Format", "[DisplayBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([DisplayBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_HeaderBackgroundColor_Format", "[HeaderBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([HeaderBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_MainTitleFontSize_Range", "[MainTitleFontSize] >= 1 AND [MainTitleFontSize] <= 100");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_MainTitleTextColor_Format", "[MainTitleTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([MainTitleTextColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TableHeaderBackgroundColor_Format", "[TableHeaderBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TableHeaderBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TableHeaderTextColor_Format", "[TableHeaderTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TableHeaderTextColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TableRowBackgroundColor_Format", "[TableRowBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TableRowBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TableRowTextColor_Format", "[TableRowTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TableRowTextColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TickerBackgroundColor_Format", "[TickerBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TickerBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TickerFontSize_Range", "[TickerFontSize] >= 1 AND [TickerFontSize] <= 100");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TickerTextColor_Format", "[TickerTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TickerTextColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TicketNumberBackgroundColor_Format", "[TicketNumberBackgroundColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TicketNumberBackgroundColor]) = 7");
-
-                            t.HasCheckConstraint("CK_BranchDisplayConfiguration_TicketNumberTextColor_Format", "[TicketNumberTextColor] COLLATE Latin1_General_BIN2 LIKE '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]' AND LEN([TicketNumberTextColor]) = 7");
-                        });
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.BranchDisplayMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<Guid?>("DeactivatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeactivatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ModifiedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<Guid?>("ReactivatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ReactivatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("TextAr")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("TextEn")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByApplicationUserId");
-
-                    b.HasIndex("DeactivatedByApplicationUserId");
-
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
-                    b.HasIndex("ReactivatedByApplicationUserId");
-
-                    b.HasIndex("BranchId", "DisplayOrder")
-                        .IsUnique();
-
-                    b.HasIndex("BranchId", "IsActive", "DisplayOrder");
-
-                    b.ToTable("BranchDisplayMessage", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_BranchDisplayMessage_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
-
-                            t.HasCheckConstraint("CK_BranchDisplayMessage_DisplayOrder_Positive", "[DisplayOrder] > 0");
-
-                            t.HasCheckConstraint("CK_BranchDisplayMessage_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
-
-                            t.HasCheckConstraint("CK_BranchDisplayMessage_TextAr_NotBlank", "NULLIF(LTRIM(RTRIM([TextAr])), N'') IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_BranchDisplayMessage_TextEn_NotBlank", "NULLIF(LTRIM(RTRIM([TextEn])), N'') IS NOT NULL");
-                        });
-                });
-
             modelBuilder.Entity("QControl.Domain.Entities.BranchService", b =>
                 {
                     b.Property<int>("Id")
@@ -865,103 +571,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.ToTable("BranchServiceSegment", null, t =>
                         {
                             t.HasCheckConstraint("CK_BranchServiceSegment_Quota_NonNegative", "[Quota] >= 0");
-                        });
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.BranchVideo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<Guid?>("DeactivatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeactivatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("HlsManifestPath")
-                        .HasMaxLength(500)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ModifiedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasMaxLength(260)
-                        .HasColumnType("nvarchar(260)");
-
-                    b.Property<string>("OriginalPath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<int>("ProcessingStatus")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("ReactivatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ReactivatedOnUtc")
-                        .HasColumnType("datetime2(3)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByApplicationUserId");
-
-                    b.HasIndex("DeactivatedByApplicationUserId");
-
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
-                    b.HasIndex("ReactivatedByApplicationUserId");
-
-                    b.HasIndex("BranchId", "DisplayOrder")
-                        .IsUnique();
-
-                    b.HasIndex("BranchId", "IsActive", "ProcessingStatus", "DisplayOrder");
-
-                    b.ToTable("BranchVideo", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_BranchVideo_DeactivationAudit_Pair", "(([DeactivatedOnUtc] IS NULL AND [DeactivatedByApplicationUserId] IS NULL) OR ([DeactivatedOnUtc] IS NOT NULL AND [DeactivatedByApplicationUserId] IS NOT NULL))");
-
-                            t.HasCheckConstraint("CK_BranchVideo_DisplayOrder_Positive", "[DisplayOrder] > 0");
-
-                            t.HasCheckConstraint("CK_BranchVideo_OriginalFileName_NotBlank", "NULLIF(LTRIM(RTRIM([OriginalFileName])), '') IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_BranchVideo_OriginalPath_NotBlank", "NULLIF(LTRIM(RTRIM([OriginalPath])), '') IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_BranchVideo_ReactivationAudit_Pair", "(([ReactivatedOnUtc] IS NULL AND [ReactivatedByApplicationUserId] IS NULL) OR ([ReactivatedOnUtc] IS NOT NULL AND [ReactivatedByApplicationUserId] IS NOT NULL))");
                         });
                 });
 
@@ -1765,115 +1374,6 @@ namespace Qcontrol.Infrastructure.Migrations
                             t.HasCheckConstraint("CK_Service_TicketIssuable_Settings_Required", "[IsTicketIssuable] = 0 OR ([RangePrefix] IS NOT NULL AND LEN(LTRIM(RTRIM([RangePrefix]))) > 0 AND [RangeStartNumber] IS NOT NULL AND [RangeEndNumber] IS NOT NULL AND [WaitingDuration] IS NOT NULL AND [NoOfTicketCopies] IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Service_WaitingDuration_NullOrNonNegative", "[WaitingDuration] IS NULL OR [WaitingDuration] >= 0");
-                        });
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.ServiceCustomInput", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("CreatedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LabelAr")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("LabelEn")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<Guid?>("LastModifiedByApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("MaxLength")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MaxValue")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MinLength")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MinValue")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ModifiedOnUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StartWith")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByApplicationUserId");
-
-                    b.HasIndex("LastModifiedByApplicationUserId");
-
-                    b.HasIndex("ServiceId")
-                        .HasDatabaseName("IX_ServiceCustomInput_ServiceId");
-
-                    b.HasIndex("ServiceId", "Name")
-                        .IsUnique()
-                        .HasDatabaseName("UX_ServiceCustomInput_ServiceId_Name_Active")
-                        .HasFilter("[IsActive] = 1");
-
-                    b.HasIndex("ServiceId", "IsActive", "Order")
-                        .HasDatabaseName("IX_ServiceCustomInput_ServiceId_IsActive_Order");
-
-                    b.ToTable("ServiceCustomInput", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Integer_Restrictions", "[Type] <> 2 OR ([MinLength] IS NULL AND [MaxLength] IS NULL AND [StartWith] IS NULL)");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Length_Range", "[MinLength] IS NULL OR [MaxLength] IS NULL OR [MaxLength] >= [MinLength]");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_MaxLength_Valid", "[MaxLength] IS NULL OR ([MaxLength] > 0 AND [MaxLength] <= 3000)");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_MinLength_NonNegative", "[MinLength] IS NULL OR [MinLength] >= 0");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Order_Positive", "[Order] > 0");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_StartWith_NotBlank", "[StartWith] IS NULL OR LEN(LTRIM(RTRIM([StartWith]))) > 0");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_StartWith_StringOnly", "[StartWith] IS NULL OR [Type] = 1");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_String_Restrictions", "[Type] <> 1 OR ([MinValue] IS NULL AND [MaxValue] IS NULL)");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Type_Valid", "[Type] IN (1, 2)");
-
-                            t.HasCheckConstraint("CK_ServiceCustomInput_Value_Range", "[MinValue] IS NULL OR [MaxValue] IS NULL OR [MaxValue] >= [MinValue]");
                         });
                 });
 
@@ -3009,32 +2509,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("LastModifiedByApplicationUser");
                 });
 
-            modelBuilder.Entity("QControl.Domain.Entities.BranchDisplayConfiguration", b =>
-                {
-                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
-                        .WithOne("DisplayConfiguration")
-                        .HasForeignKey("QControl.Domain.Entities.BranchDisplayConfiguration", "BranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
-                });
-
             modelBuilder.Entity("QControl.Domain.Entities.BranchConfiguration", b =>
                 {
                     b.HasOne("QControl.Domain.Entities.Branch", "Branch")
@@ -3044,46 +2518,6 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.BranchDisplayMessage", b =>
-                {
-                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
-                        .WithMany("DisplayMessages")
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("DeactivatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ReactivatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("DeactivatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
-
-                    b.Navigation("ReactivatedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.BranchService", b =>
@@ -3145,46 +2579,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("LastModifiedByApplicationUser");
 
                     b.Navigation("Segment");
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.BranchVideo", b =>
-                {
-                    b.HasOne("QControl.Domain.Entities.Branch", "Branch")
-                        .WithMany("Videos")
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "DeactivatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("DeactivatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "ReactivatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ReactivatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("DeactivatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
-
-                    b.Navigation("ReactivatedByApplicationUser");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.Display", b =>
@@ -3372,32 +2766,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("OwnerBranch");
 
                     b.Navigation("ParentService");
-                });
-
-            modelBuilder.Entity("QControl.Domain.Entities.ServiceCustomInput", b =>
-                {
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "CreatedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Qcontrol.Domain.Identity.ApplicationUser", "LastModifiedByApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedByApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("QControl.Domain.Entities.Service", "Service")
-                        .WithMany("CustomInputs")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByApplicationUser");
-
-                    b.Navigation("LastModifiedByApplicationUser");
-
-                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("QControl.Domain.Entities.ServiceGlobalizationRequest", b =>
@@ -3802,18 +3170,12 @@ namespace Qcontrol.Infrastructure.Migrations
 
                     b.Navigation("Configuration");
 
-                    b.Navigation("DisplayConfiguration");
-
-                    b.Navigation("DisplayMessages");
-
                     b.Navigation("Displays");
 
                     b.Navigation("Location")
                         .IsRequired();
 
                     b.Navigation("OwnedServices");
-
-                    b.Navigation("Videos");
 
                     b.Navigation("WaitingAreas");
                 });
@@ -3828,8 +3190,6 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Navigation("BranchServices");
 
                     b.Navigation("Children");
-
-                    b.Navigation("CustomInputs");
 
                     b.Navigation("Images");
                 });
