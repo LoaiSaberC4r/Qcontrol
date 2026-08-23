@@ -31,6 +31,44 @@ internal static class EntityTestFactory
         return branch;
     }
 
+    public static BranchConfiguration BranchConfiguration(
+        int id,
+        int branchId,
+        TimeSpan allowedTime,
+        byte[]? rowVersion = null)
+    {
+        var configuration =
+            QControl.Domain.Entities.BranchConfiguration.Create(
+                branchId,
+                allowedTime);
+
+        SetId(configuration, id);
+
+        if (rowVersion is not null)
+        {
+            SetPrivateProperty(
+                configuration,
+                nameof(configuration.RowVersion),
+                rowVersion);
+        }
+
+        return configuration;
+    }
+
+    public static void AttachConfiguration(
+        Branch branch,
+        BranchConfiguration configuration)
+    {
+        SetPrivateProperty(
+            branch,
+            nameof(QControl.Domain.Entities.Branch.Configuration),
+            configuration);
+        SetPrivateProperty(
+            configuration,
+            nameof(configuration.Branch),
+            branch);
+    }
+
     public static BranchBranding BranchBranding(
         int id,
         int branchId,

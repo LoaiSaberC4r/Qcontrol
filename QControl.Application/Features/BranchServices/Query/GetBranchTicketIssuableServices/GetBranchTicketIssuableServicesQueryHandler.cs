@@ -136,6 +136,9 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         var currentDateTime = _dateTimeProvider.UtcNow;
         var currentDay = currentDateTime.DayOfWeek;
         var currentTime = TimeOnly.FromDateTime(currentDateTime);
+        var allowedUntil = CalculateAllowedUntil(
+            currentTime,
+            branchState.AllowedTime);
         var assignedServiceIds = (await _branchServiceReadRepository.ListAsync(
                 new GetAssignedBranchServiceIdsSpec(request.BranchId),
                 cancellationToken))
@@ -148,10 +151,11 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
 
         var availableScheduleServiceIds =
             (await _scheduleReadRepository.ListAsync(
-                new GetCurrentlyAvailableScheduledServiceIdsSpec(
+                new GetAllowedScheduledServiceIdsSpec(
                     request.BranchId,
                     currentDay,
-                    currentTime),
+                    currentTime,
+                    allowedUntil),
                 cancellationToken))
             .ToHashSet();
 
@@ -187,6 +191,17 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
             customInputsByServiceId);
 
         return Success(request.BranchId, branding, services);
+    }
+
+    private static TimeOnly CalculateAllowedUntil(
+        TimeOnly currentTime,
+        TimeSpan allowedTime)
+    {
+        var calculatedEnd = currentTime.ToTimeSpan() + allowedTime;
+
+        return calculatedEnd >= TimeSpan.FromDays(1)
+            ? TimeOnly.MaxValue
+            : TimeOnly.FromTimeSpan(calculatedEnd);
     }
 
     private async Task<IReadOnlyDictionary<

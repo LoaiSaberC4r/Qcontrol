@@ -29,6 +29,8 @@ public sealed class Branch : AggregateRoot<int>
 
     public BranchBranding? Branding { get; private set; }
 
+    public BranchConfiguration? Configuration { get; private set; }
+
     public BranchDisplayConfiguration? DisplayConfiguration { get; private set; }
 
     public Guid CreatedByApplicationUserId { get; private set; }
