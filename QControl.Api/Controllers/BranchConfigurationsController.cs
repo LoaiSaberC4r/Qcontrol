@@ -49,7 +49,10 @@ public sealed class BranchConfigurationsController : ControllerBase
         var command = new CreateBranchConfigurationCommand
         {
             BranchId = branchId,
-            AllowedTime = request.AllowedTime
+            AllowedTime = request.AllowedTime,
+            MaximumTicketCallAttempts = request.MaximumTicketCallAttempts,
+            TicketNoShowAutoCancellationMinutes = request.TicketNoShowAutoCancellationMinutes,
+            TicketArchiveRetentionDays = request.TicketArchiveRetentionDays
         };
 
         var result = await sender.Send(command, cancellationToken);
@@ -68,6 +71,9 @@ public sealed class BranchConfigurationsController : ControllerBase
         {
             BranchId = branchId,
             AllowedTime = request.AllowedTime,
+            MaximumTicketCallAttempts = request.MaximumTicketCallAttempts,
+            TicketNoShowAutoCancellationMinutes = request.TicketNoShowAutoCancellationMinutes,
+            TicketArchiveRetentionDays = request.TicketArchiveRetentionDays,
             RowVersion = request.RowVersion
         };
 

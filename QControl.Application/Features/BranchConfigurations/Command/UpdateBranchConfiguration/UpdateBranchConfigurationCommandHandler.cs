@@ -113,6 +113,10 @@ internal sealed class UpdateBranchConfigurationCommandHandler
             rowVersion);
 
         configuration.UpdateAllowedTime(request.AllowedTime!.Value);
+        configuration.UpdateTicketSettings(
+            request.MaximumTicketCallAttempts ?? configuration.MaximumTicketCallAttempts,
+            request.TicketNoShowAutoCancellationMinutes ?? configuration.TicketNoShowAutoCancellationMinutes,
+            request.TicketArchiveRetentionDays ?? configuration.TicketArchiveRetentionDays);
         _configurationWriteRepository.Update(configuration);
 
         try

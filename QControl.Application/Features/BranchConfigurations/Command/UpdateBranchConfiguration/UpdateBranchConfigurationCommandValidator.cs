@@ -42,5 +42,12 @@ internal sealed class UpdateBranchConfigurationCommandValidator
                 BranchConfigurationFeatureMessages.InvalidRowVersion)
             .WithErrorCode(
                 "BranchConfigurations.Update.InvalidRowVersion");
+
+        RuleFor(x => x.MaximumTicketCallAttempts)
+            .GreaterThan(0).When(x => x.MaximumTicketCallAttempts.HasValue);
+        RuleFor(x => x.TicketNoShowAutoCancellationMinutes)
+            .GreaterThan(0).When(x => x.TicketNoShowAutoCancellationMinutes.HasValue);
+        RuleFor(x => x.TicketArchiveRetentionDays)
+            .GreaterThan(0).When(x => x.TicketArchiveRetentionDays.HasValue);
     }
 }

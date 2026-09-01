@@ -1656,4 +1656,26 @@
   <data name="BranchConfiguration_ConcurrencyConflict" xml:space="preserve">
     <value>تم تعديل إعدادات الفرع بواسطة طلب آخر.</value>
   </data>
+  <data name="TicketRuntime_AuthenticationRequired" xml:space="preserve"><value>المصادقة مطلوبة.</value></data>
+  <data name="TicketRuntime_TicketNotFound" xml:space="preserve"><value>التذكرة غير موجودة.</value></data>
+  <data name="TicketRuntime_ReservationNotFound" xml:space="preserve"><value>الحجز غير موجود.</value></data>
+  <data name="TicketRuntime_WrongBranch" xml:space="preserve"><value>السجل لا يتبع هذا الفرع.</value></data>
+  <data name="TicketRuntime_InvalidTransition" xml:space="preserve"><value>انتقال الحالة المطلوب غير مسموح.</value></data>
+  <data name="TicketRuntime_TicketCannotCancelAfterStart" xml:space="preserve"><value>لا يمكن إلغاء التذكرة بعد بدء الخدمة.</value></data>
+  <data name="TicketRuntime_TicketMustBeCalled" xml:space="preserve"><value>يجب أن تكون التذكرة في حالة تم النداء قبل بدء الخدمة.</value></data>
+  <data name="TicketRuntime_TicketMustBeInProgress" xml:space="preserve"><value>يجب أن تكون التذكرة قيد الخدمة لتنفيذ هذه العملية.</value></data>
+  <data name="TicketRuntime_TicketMustBeNoShow" xml:space="preserve"><value>يجب أن تكون التذكرة في حالة عدم حضور لإعادتها إلى الانتظار.</value></data>
+  <data name="TicketRuntime_WorkflowTransferForbidden" xml:space="preserve"><value>لا يمكن تحويل تذكرة مرتبطة بمسار عمل يدوياً.</value></data>
+  <data name="TicketRuntime_ServiceUnavailable" xml:space="preserve"><value>الخدمة غير متاحة حالياً في هذا الفرع.</value></data>
+  <data name="TicketRuntime_WorkflowServiceUnavailable" xml:space="preserve"><value>خدمة الخطوة التالية في مسار العمل غير متاحة حالياً.</value></data>
+  <data name="TicketRuntime_NumberRangeExhausted" xml:space="preserve"><value>تم استنفاد نطاق أرقام تذاكر الخدمة ليوم العمل الحالي.</value></data>
+  <data name="TicketRuntime_QuotaExceeded" xml:space="preserve"><value>تم الوصول إلى الحصة اليومية للشريحة.</value></data>
+  <data name="TicketRuntime_ConcurrencyConflict" xml:space="preserve"><value>تم تغيير السجل أثناء العملية. حدّث البيانات ثم أعد المحاولة.</value></data>
+  <data name="TicketRuntime_AlreadyConverted" xml:space="preserve"><value>تم تحويل الحجز إلى تذكرة بالفعل.</value></data>
+  <data name="TicketRuntime_ReasonRequired" xml:space="preserve"><value>السبب مطلوب.</value></data>
+  <data name="TicketRuntime_CustomInputsInvalid" xml:space="preserve"><value>قيمة واحدة أو أكثر من مدخلات الخدمة غير صالحة.</value></data>
+  <data name="TicketRuntime_ReservationTerminal" xml:space="preserve"><value>الحجز في حالة نهائية.</value></data>
+  <data name="TicketRuntime_DifferentReservationDay" xml:space="preserve"><value>يمكن تحويل حجز عدم الحضور في يوم الحجز نفسه فقط.</value></data>
+  <data name="TicketRuntime_ReservationTimeInvalid" xml:space="preserve"><value>يجب أن يكون وقت الحجز في المستقبل وضمن جدول الخدمة.</value></data>
+  <data name="TicketRuntime_AutomaticNoShowCancellation" xml:space="preserve"><value>تم الإلغاء تلقائياً بعد انتهاء مهلة عدم الحضور المحددة للفرع.</value></data>
 </root>

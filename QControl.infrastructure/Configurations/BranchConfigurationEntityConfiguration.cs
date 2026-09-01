@@ -11,7 +11,15 @@ internal sealed class BranchConfigurationEntityConfiguration
 {
     public void Configure(EntityTypeBuilder<BranchConfigurationEntity> builder)
     {
-        builder.ToTable("BranchConfiguration");
+        builder.ToTable("BranchConfiguration", table =>
+        {
+            table.HasCheckConstraint("CK_BranchConfiguration_MaxTicketCallAttempts_Positive",
+                "[MaximumTicketCallAttempts] > 0");
+            table.HasCheckConstraint("CK_BranchConfiguration_NoShowTimeout_Positive",
+                "[TicketNoShowAutoCancellationMinutes] > 0");
+            table.HasCheckConstraint("CK_BranchConfiguration_ArchiveRetention_Positive",
+                "[TicketArchiveRetentionDays] > 0");
+        });
 
         builder.HasKey(x => x.Id);
 
@@ -24,6 +32,18 @@ internal sealed class BranchConfigurationEntityConfiguration
         builder.Property(x => x.AllowedTime)
             .IsRequired()
             .HasColumnType("time(0)");
+
+        builder.Property(x => x.MaximumTicketCallAttempts)
+            .HasDefaultValue(3)
+            .IsRequired();
+
+        builder.Property(x => x.TicketNoShowAutoCancellationMinutes)
+            .HasDefaultValue(30)
+            .IsRequired();
+
+        builder.Property(x => x.TicketArchiveRetentionDays)
+            .HasDefaultValue(30)
+            .IsRequired();
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion()

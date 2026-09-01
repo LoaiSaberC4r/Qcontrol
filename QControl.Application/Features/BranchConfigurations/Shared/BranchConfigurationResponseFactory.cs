@@ -13,6 +13,9 @@ internal static class BranchConfigurationResponseFactory
         {
             BranchId = configuration.BranchId,
             AllowedTime = configuration.AllowedTime,
+            MaximumTicketCallAttempts = configuration.MaximumTicketCallAttempts,
+            TicketNoShowAutoCancellationMinutes = configuration.TicketNoShowAutoCancellationMinutes,
+            TicketArchiveRetentionDays = configuration.TicketArchiveRetentionDays,
             IsConfigured = true,
             RowVersion = RowVersionConverter.ToBase64(
                 configuration.RowVersion),
@@ -26,6 +29,9 @@ internal static class BranchConfigurationResponseFactory
         {
             BranchId = branchId,
             AllowedTime = TimeSpan.Zero,
+            MaximumTicketCallAttempts = 3,
+            TicketNoShowAutoCancellationMinutes = 30,
+            TicketArchiveRetentionDays = 30,
             IsConfigured = false,
             RowVersion = null,
             Message = null

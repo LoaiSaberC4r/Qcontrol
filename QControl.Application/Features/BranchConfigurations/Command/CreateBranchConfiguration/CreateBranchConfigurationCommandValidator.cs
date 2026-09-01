@@ -28,5 +28,9 @@ internal sealed class CreateBranchConfigurationCommandValidator
                 BranchConfigurationFeatureMessages.AllowedTimeOutOfRange)
             .WithErrorCode(
                 "BranchConfigurations.Create.AllowedTimeOutOfRange");
+
+        RuleFor(x => x.MaximumTicketCallAttempts).GreaterThan(0);
+        RuleFor(x => x.TicketNoShowAutoCancellationMinutes).GreaterThan(0);
+        RuleFor(x => x.TicketArchiveRetentionDays).GreaterThan(0);
     }
 }
