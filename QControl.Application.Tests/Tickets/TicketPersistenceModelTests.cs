@@ -31,6 +31,17 @@ public sealed class TicketPersistenceModelTests
         var steps = model.FindEntityType(typeof(TicketWorkflowStepSnapshot))!;
         Assert.Contains(steps.GetIndexes(), x => x.IsUnique && x.Properties.Select(p => p.Name)
             .SequenceEqual(new[] { "TicketId", "StepOrder" }));
+
+        AssertLookupValue(model.FindEntityType(typeof(Ticket))!);
+        AssertLookupValue(model.FindEntityType(typeof(Reservation))!);
+        AssertLookupValue(model.GetEntityTypes().Single(x => x.ClrType.Name == "TicketArchive"));
+        AssertLookupValue(model.GetEntityTypes().Single(x => x.ClrType.Name == "ReservationArchive"));
+
+        var reservationInputs = model.FindEntityType(typeof(ReservationCustomInputValue))!;
+        Assert.Contains(reservationInputs.GetIndexes(), x =>
+            x.GetDatabaseName() == "IX_ReservationCustomInputValue_Reservation_Input" &&
+            x.Properties.Select(p => p.Name).SequenceEqual(
+                new[] { "ReservationId", "ServiceCustomInputId" }));
     }
 
     private static void AssertRowVersion(IEntityType entity, string propertyName)
@@ -39,6 +50,16 @@ public sealed class TicketPersistenceModelTests
         Assert.True(property.IsConcurrencyToken);
         Assert.Equal(ValueGenerated.OnAddOrUpdate, property.ValueGenerated);
         Assert.Equal("rowversion", property.GetColumnType());
+    }
+
+    private static void AssertLookupValue(IEntityType entity)
+    {
+        var property = entity.FindProperty("LookupValue");
+        Assert.NotNull(property);
+        Assert.True(property!.IsNullable);
+        Assert.Equal(3000, property.GetMaxLength());
+        Assert.DoesNotContain(entity.GetIndexes(), index =>
+            index.Properties.Any(x => x.Name == "LookupValue"));
     }
 
     private static PlatformWriteDbContext CreateContext()

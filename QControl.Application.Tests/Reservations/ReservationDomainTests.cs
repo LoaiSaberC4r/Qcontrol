@@ -17,6 +17,16 @@ public sealed class ReservationDomainTests
     }
 
     [Fact]
+    public void Create_stores_normalized_generic_lookup_value()
+    {
+        var reservation = Reservation.Create(1, 10, 3, 8,
+            Now.AddHours(1), new DateOnly(2026, 8, 31), Now, Performer,
+            "  REF-42  ");
+
+        Assert.Equal("REF-42", reservation.LookupValue);
+    }
+
+    [Fact]
     public void Cancel_is_terminal_and_keeps_reason()
     {
         var reservation = Create();

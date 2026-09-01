@@ -19,6 +19,15 @@ public sealed class TicketDomainTests
     }
 
     [Fact]
+    public void Create_stores_normalized_generic_lookup_value()
+    {
+        var ticket = Ticket.Create(1, 10, 3, null, "A1",
+            new DateOnly(2026, 8, 31), Now, Performer, "  REF-42  ");
+
+        Assert.Equal("REF-42", ticket.LookupValue);
+    }
+
+    [Fact]
     public void Waiting_can_cancel_but_cancelled_is_terminal()
     {
         var ticket = Create();

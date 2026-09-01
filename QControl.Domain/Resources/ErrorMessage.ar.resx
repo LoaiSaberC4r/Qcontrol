@@ -1678,4 +1678,11 @@
   <data name="TicketRuntime_DifferentReservationDay" xml:space="preserve"><value>يمكن تحويل حجز عدم الحضور في يوم الحجز نفسه فقط.</value></data>
   <data name="TicketRuntime_ReservationTimeInvalid" xml:space="preserve"><value>يجب أن يكون وقت الحجز في المستقبل وضمن جدول الخدمة.</value></data>
   <data name="TicketRuntime_AutomaticNoShowCancellation" xml:space="preserve"><value>تم الإلغاء تلقائياً بعد انتهاء مهلة عدم الحضور المحددة للفرع.</value></data>
+  <data name="TicketRuntime_CustomInputsNotAllowed" xml:space="preserve"><value>لا يُسمح بمدخلات مخصصة لهذه الخدمة.</value></data>
+  <data name="TicketRuntime_CustomInputsRequiredForSearch" xml:space="preserve"><value>يجب إدخال قيمة واحدة على الأقل من مدخلات الخدمة للبحث.</value></data>
+  <data name="TicketRuntime_DuplicateCustomInput" xml:space="preserve"><value>لا يمكن إرسال نفس مدخل الخدمة أكثر من مرة.</value></data>
+  <data name="TicketRuntime_CustomInputNotApplicable" xml:space="preserve"><value>أحد مدخلات الخدمة المرسلة لا يتبع الخدمة المختارة.</value></data>
+  <data name="TicketRuntime_FieldRequired" xml:space="preserve"><value>الحقل مطلوب لهذه الخدمة.</value></data>
+  <data name="TicketRuntime_FieldInvalid" xml:space="preserve"><value>قيمة الحقل غير صالحة.</value></data>
+  <data name="TicketRuntime_FieldNotAllowed" xml:space="preserve"><value>لا يُسمح بالحقل لخدمة تستخدم مدخلات مخصصة.</value></data>
 </root>

@@ -243,7 +243,7 @@ internal sealed partial class TicketRuntimeRepository
         {
             OriginalTicketId = x.Id, BranchId = x.BranchId, IssuingServiceId = x.IssuingServiceId,
             CurrentServiceId = x.CurrentServiceId, SegmentId = x.SegmentId, ReservationId = x.ReservationId,
-            TicketNumber = x.TicketNumber, BusinessDate = x.BusinessDate, Status = x.Status,
+            LookupValue = x.LookupValue, TicketNumber = x.TicketNumber, BusinessDate = x.BusinessDate, Status = x.Status,
             CurrentQueueEnteredOnUtc = x.CurrentQueueEnteredOnUtc,
             CurrentServiceStartedOnUtc = x.CurrentServiceStartedOnUtc, CompletedOnUtc = x.CompletedOnUtc,
             CancelledOnUtc = x.CancelledOnUtc, CancellationReason = x.CancellationReason,
@@ -281,7 +281,7 @@ internal sealed partial class TicketRuntimeRepository
         {
             OriginalReservationId = x.Id, BranchId = x.BranchId, ServiceId = x.ServiceId,
             SegmentId = x.SegmentId, BranchServiceSegmentId = x.BranchServiceSegmentId,
-            ScheduledOnUtc = x.ScheduledOnUtc, BusinessDate = x.BusinessDate, Status = x.Status,
+            LookupValue = x.LookupValue, ScheduledOnUtc = x.ScheduledOnUtc, BusinessDate = x.BusinessDate, Status = x.Status,
             CancellationReason = x.CancellationReason, CancelledOnUtc = x.CancelledOnUtc,
             ConvertedToTicketOnUtc = x.ConvertedToTicketOnUtc, ExpiredOnUtc = x.ExpiredOnUtc,
             CreatedOnUtc = x.CreatedOnUtc, ArchivedOnUtc = archivedOnUtc
@@ -315,7 +315,7 @@ internal sealed partial class TicketRuntimeRepository
             v.Reason, v.OccurredOnUtc)).ToArray(),
         x.CallAttempts.OrderBy(v => v.CallCycleNumber).ThenBy(v => v.AttemptNumber)
             .Select(v => new TicketCallAttemptResponse(v.CallCycleNumber, v.AttemptNumber,
-                v.WindowId, v.PerformerApplicationUserId, v.CalledOnUtc)).ToArray());
+                v.WindowId, v.PerformerApplicationUserId, v.CalledOnUtc)).ToArray(), x.LookupValue);
 
     private static ReservationDetailsResponse Map(ReservationArchive x) => new(
         x.OriginalReservationId, x.BranchId, x.ServiceId, x.SegmentId, x.ScheduledOnUtc,
@@ -326,5 +326,5 @@ internal sealed partial class TicketRuntimeRepository
         null, true, x.History.OrderBy(v => v.OccurredOnUtc).ThenBy(v => v.Id)
             .Select(v => new ReservationHistoryResponse(v.OriginalHistoryId ?? v.Id,
                 v.EventType, v.FromStatus, v.ToStatus, v.PerformerApplicationUserId,
-                v.Reason, v.OccurredOnUtc)).ToArray());
+                v.Reason, v.OccurredOnUtc)).ToArray(), x.LookupValue);
 }

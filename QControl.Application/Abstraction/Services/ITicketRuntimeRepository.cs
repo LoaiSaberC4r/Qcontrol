@@ -8,11 +8,15 @@ namespace QControl.Application.Abstraction.Services;
 public interface ITicketRuntimeRepository
 {
     Task<Result<TicketDetailsResponse>> CreateTicketAsync(int branchId, int serviceId,
-        int segmentId, IReadOnlyCollection<CustomInputSubmission> inputs, Guid performerId,
+        int segmentId, string? lookupValue, IReadOnlyCollection<CustomInputSubmission> inputs,
+        bool requireLookupValueWhenNoCustomInputs, Guid performerId,
         CancellationToken cancellationToken);
     Task<Result<ReservationDetailsResponse>> CreateReservationAsync(int branchId, int serviceId,
-        int segmentId, DateTime scheduledOnUtc, IReadOnlyCollection<CustomInputSubmission> inputs,
+        int segmentId, DateTime scheduledOnUtc, string? lookupValue, IReadOnlyCollection<CustomInputSubmission> inputs,
         Guid performerId, CancellationToken cancellationToken);
+    Task<Result<IReadOnlyList<KioskReservationSearchItemResponse>>> SearchReservationsForKioskAsync(
+        int branchId, int serviceId, string? lookupValue,
+        IReadOnlyCollection<CustomInputSubmission> inputs, CancellationToken cancellationToken);
     Task<Result<TicketDetailsResponse>> CreateTicketFromReservationAsync(int branchId,
         int reservationId, Guid performerId, CancellationToken cancellationToken);
     Task<Result<TicketDetailsResponse>> CancelTicketAsync(int branchId, int ticketId,

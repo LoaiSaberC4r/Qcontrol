@@ -21,7 +21,7 @@ public sealed class ReservationsController : ControllerBase
 
     [HttpPost, Permission("Reservations.Create")]
     public async Task<IActionResult> Create(int branchId, CreateReservationRequest request, CancellationToken ct)
-        => (await _sender.Send(new CreateReservationCommand { BranchId = branchId, ServiceId = request.ServiceId, SegmentId = request.SegmentId, ScheduledOnUtc = request.ScheduledOnUtc, CustomInputs = Map(request.CustomInputs) }, ct)).ToIActionResult();
+        => (await _sender.Send(new CreateReservationCommand { BranchId = branchId, ServiceId = request.ServiceId, SegmentId = request.SegmentId, ScheduledOnUtc = request.ScheduledOnUtc, Field = request.Field, CustomInputs = Map(request.CustomInputs) }, ct)).ToIActionResult();
 
     [HttpGet, Permission("Reservations.View")]
     public async Task<IActionResult> Get(int branchId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20,

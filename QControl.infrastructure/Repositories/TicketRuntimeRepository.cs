@@ -31,7 +31,9 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
     }
 
     public async Task<Result<TicketDetailsResponse>> CreateTicketAsync(int branchId,
-        int serviceId, int segmentId, IReadOnlyCollection<CustomInputSubmission> inputs,
+        int serviceId, int segmentId, string? lookupValue,
+        IReadOnlyCollection<CustomInputSubmission> inputs,
+        bool requireLookupValueWhenNoCustomInputs,
         Guid performerId, CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
@@ -39,8 +41,10 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         if (!availability.IsAvailable || !availability.IsTicketIssuable)
             return FailTicket("Tickets.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
 
-        var snapshots = await ValidateInputsAsync(serviceId, inputs, cancellationToken);
-        if (snapshots.IsFailure) return Result<TicketDetailsResponse>.Fail(snapshots.Errors);
+        var validatedInputs = await ValidateCreateInputsAsync(serviceId, lookupValue, inputs,
+            "Tickets.Create", requireLookupValueWhenNoCustomInputs, cancellationToken);
+        if (validatedInputs.IsFailure)
+            return Result<TicketDetailsResponse>.Fail(validatedInputs.Errors);
 
         await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         try
@@ -62,8 +66,8 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             }
 
             var ticket = Ticket.Create(branchId, serviceId, segmentId, null,
-                number.Value, businessDate, now, performerId);
-            foreach (var snapshot in snapshots.Value)
+                number.Value, businessDate, now, performerId, validatedInputs.Value.LookupValue);
+            foreach (var snapshot in validatedInputs.Value.Snapshots)
                 ticket.AddCustomInput(snapshot.ToTicket(now));
             await BindDefaultWorkflowAsync(ticket, branchId, serviceId, cancellationToken);
             _db.Add(ticket);
@@ -86,7 +90,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
     }
 
     public async Task<Result<ReservationDetailsResponse>> CreateReservationAsync(int branchId,
-        int serviceId, int segmentId, DateTime scheduledOnUtc,
+        int serviceId, int segmentId, DateTime scheduledOnUtc, string? lookupValue,
         IReadOnlyCollection<CustomInputSubmission> inputs, Guid performerId,
         CancellationToken cancellationToken)
     {
@@ -96,8 +100,11 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         var availability = await _availability.CheckAsync(branchId, serviceId, scheduledOnUtc, cancellationToken);
         if (!availability.IsAvailable || !availability.HasReservation)
             return FailReservation("Reservations.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
-        var snapshots = await ValidateInputsAsync(serviceId, inputs, cancellationToken);
-        if (snapshots.IsFailure) return Result<ReservationDetailsResponse>.Fail(snapshots.Errors);
+        var validatedInputs = await ValidateCreateInputsAsync(serviceId, lookupValue, inputs,
+            "Reservations.Create", requireLookupValueWhenNoCustomInputs: true,
+            cancellationToken);
+        if (validatedInputs.IsFailure)
+            return Result<ReservationDetailsResponse>.Fail(validatedInputs.Errors);
 
         await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         try
@@ -110,8 +117,9 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 return await RollbackReservationAsync(transaction, "Reservations.Create.QuotaExceeded", TicketRuntimeMessages.QuotaExceeded, ErrorType.Conflict, cancellationToken);
 
             var reservation = Reservation.Create(branchId, serviceId, segmentId,
-                relationship.Id, scheduledOnUtc, businessDate, now, performerId);
-            foreach (var snapshot in snapshots.Value)
+                relationship.Id, scheduledOnUtc, businessDate, now, performerId,
+                validatedInputs.Value.LookupValue);
+            foreach (var snapshot in validatedInputs.Value.Snapshots)
                 reservation.AddCustomInput(snapshot.ToReservation(now));
             _db.Add(reservation);
             await _db.SaveChangesAsync(cancellationToken);
@@ -167,7 +175,8 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             if (number.IsFailure) { await transaction.RollbackAsync(cancellationToken); return Result<TicketDetailsResponse>.Fail(number.Errors); }
 
             var ticket = Ticket.Create(branchId, reservation.ServiceId, reservation.SegmentId,
-                reservation.Id, number.Value, businessDate, now, performerId);
+                reservation.Id, number.Value, businessDate, now, performerId,
+                reservation.LookupValue);
             foreach (var input in reservation.CustomInputValues)
                 ticket.AddCustomInput(TicketCustomInputValue.Create(input.ServiceCustomInputId,
                     input.NameSnapshot, input.LabelEnSnapshot, input.LabelArSnapshot,
@@ -190,6 +199,77 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             await transaction.RollbackAsync(cancellationToken); _logger.LogWarning(ex, "Reservation {ReservationId} duplicate conversion conflict", reservationId);
             return ConcurrencyTicket("Reservations.Convert.ConcurrencyConflict");
         }
+    }
+
+    public async Task<Result<IReadOnlyList<KioskReservationSearchItemResponse>>>
+        SearchReservationsForKioskAsync(int branchId, int serviceId, string? lookupValue,
+            IReadOnlyCollection<CustomInputSubmission> inputs,
+            CancellationToken cancellationToken)
+    {
+        var availability = await _availability.CheckAsync(branchId, serviceId, _clock.UtcNow,
+            cancellationToken);
+        if (!availability.IsAvailable || !availability.IsTicketIssuable)
+            return FailKioskSearch("Kiosk.Reservations.Search.ServiceUnavailable",
+                TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
+
+        var definitions = await _db.Set<ServiceCustomInput>().AsNoTracking()
+            .Where(x => x.ServiceId == serviceId && x.IsActive)
+            .OrderBy(x => x.Order)
+            .ToListAsync(cancellationToken);
+
+        IQueryable<Reservation> query = _db.Set<Reservation>().AsNoTracking()
+            .Where(x => x.BranchId == branchId && x.ServiceId == serviceId);
+
+        if (definitions.Count == 0)
+        {
+            if (inputs.Count != 0)
+                return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsNotAllowed",
+                    TicketRuntimeMessages.CustomInputsNotAllowed, ErrorType.Validation);
+            if (string.IsNullOrWhiteSpace(lookupValue))
+                return FailKioskSearch("Kiosk.Reservations.Search.FieldRequired",
+                    TicketRuntimeMessages.FieldRequired, ErrorType.Validation);
+            if (lookupValue.Trim().Length > 3000)
+                return FailKioskSearch("Kiosk.Reservations.Search.FieldInvalid",
+                    TicketRuntimeMessages.FieldInvalid, ErrorType.Validation);
+
+            var normalizedLookupValue = lookupValue.Trim();
+            query = query.Where(x => x.LookupValue == normalizedLookupValue);
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(lookupValue))
+                return FailKioskSearch("Kiosk.Reservations.Search.FieldNotAllowed",
+                    TicketRuntimeMessages.FieldNotAllowed, ErrorType.Validation);
+            if (inputs.Count == 0)
+                return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsRequired",
+                    TicketRuntimeMessages.CustomInputsRequiredForSearch, ErrorType.Validation);
+            if (inputs.Any(x => string.IsNullOrWhiteSpace(x.Value)))
+                return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsInvalid",
+                    TicketRuntimeMessages.CustomInputsInvalid, ErrorType.Validation);
+
+            var validated = ValidateInputs(definitions, inputs, requireAllRequired: false);
+            if (validated.IsFailure)
+                return Result<IReadOnlyList<KioskReservationSearchItemResponse>>.Fail(
+                    validated.Errors);
+
+            foreach (var input in validated.Value)
+            {
+                var inputId = input.Id;
+                var value = input.Value;
+                query = query.Where(reservation => reservation.CustomInputValues.Any(
+                    stored => stored.ServiceCustomInputId == inputId && stored.Value == value));
+            }
+        }
+
+        var reservations = await query
+            .OrderBy(x => x.ScheduledOnUtc)
+            .ThenBy(x => x.Id)
+            .Select(x => new KioskReservationSearchItemResponse(
+                x.Id, x.ServiceId, x.SegmentId, x.ScheduledOnUtc,
+                x.BusinessDate, x.Status))
+            .ToListAsync(cancellationToken);
+
+        return Result<IReadOnlyList<KioskReservationSearchItemResponse>>.Ok(reservations);
     }
 
     public async Task<Result<TicketDetailsResponse>> CancelTicketAsync(int branchId,
@@ -470,21 +550,68 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         }
     }
 
-    private async Task<Result<IReadOnlyList<InputSnapshot>>> ValidateInputsAsync(int serviceId,
-        IReadOnlyCollection<CustomInputSubmission> submitted, CancellationToken ct)
+    private async Task<Result<ValidatedCreateInputs>> ValidateCreateInputsAsync(int serviceId,
+        string? lookupValue, IReadOnlyCollection<CustomInputSubmission> submitted,
+        string errorCodePrefix, bool requireLookupValueWhenNoCustomInputs,
+        CancellationToken ct)
     {
         var definitions = await _db.Set<ServiceCustomInput>().AsNoTracking()
             .Where(x => x.ServiceId == serviceId && x.IsActive).OrderBy(x => x.Order).ToListAsync(ct);
-        if (submitted.GroupBy(x => x.ServiceCustomInputId).Any(x => x.Count() > 1) ||
-            submitted.Any(x => definitions.All(d => d.Id != x.ServiceCustomInputId)))
-            return InvalidInputs();
+
+        if (definitions.Count == 0)
+        {
+            if (submitted.Count != 0)
+                return Result<ValidatedCreateInputs>.Fail(new Error(
+                    $"{errorCodePrefix}.CustomInputsNotAllowed",
+                    TicketRuntimeMessages.CustomInputsNotAllowed, ErrorType.Validation));
+            if (requireLookupValueWhenNoCustomInputs && string.IsNullOrWhiteSpace(lookupValue))
+                return Result<ValidatedCreateInputs>.Fail(new Error(
+                    $"{errorCodePrefix}.FieldRequired", TicketRuntimeMessages.FieldRequired,
+                    ErrorType.Validation));
+            if (string.IsNullOrWhiteSpace(lookupValue))
+                return Result<ValidatedCreateInputs>.Ok(new(null,
+                    Array.Empty<InputSnapshot>()));
+            var normalizedLookupValue = lookupValue.Trim();
+            if (normalizedLookupValue.Length > 3000)
+                return Result<ValidatedCreateInputs>.Fail(new Error(
+                    $"{errorCodePrefix}.FieldInvalid", TicketRuntimeMessages.FieldInvalid,
+                    ErrorType.Validation));
+            return Result<ValidatedCreateInputs>.Ok(new(normalizedLookupValue,
+                Array.Empty<InputSnapshot>()));
+        }
+
+        if (!string.IsNullOrWhiteSpace(lookupValue))
+            return Result<ValidatedCreateInputs>.Fail(new Error(
+                $"{errorCodePrefix}.FieldNotAllowed", TicketRuntimeMessages.FieldNotAllowed,
+                ErrorType.Validation));
+
+        var snapshots = ValidateInputs(definitions, submitted, requireAllRequired: true);
+        return snapshots.IsFailure
+            ? Result<ValidatedCreateInputs>.Fail(snapshots.Errors)
+            : Result<ValidatedCreateInputs>.Ok(new(null, snapshots.Value));
+    }
+
+    private static Result<IReadOnlyList<InputSnapshot>> ValidateInputs(
+        IReadOnlyCollection<ServiceCustomInput> definitions,
+        IReadOnlyCollection<CustomInputSubmission> submitted,
+        bool requireAllRequired)
+    {
+        if (submitted.GroupBy(x => x.ServiceCustomInputId).Any(x => x.Count() > 1))
+            return Result<IReadOnlyList<InputSnapshot>>.Fail(new Error(
+                "TicketRuntime.CustomInputs.Duplicate",
+                TicketRuntimeMessages.DuplicateCustomInput, ErrorType.Validation));
+        if (submitted.Any(x => definitions.All(d => d.Id != x.ServiceCustomInputId)))
+            return Result<IReadOnlyList<InputSnapshot>>.Fail(new Error(
+                "TicketRuntime.CustomInputs.NotApplicable",
+                TicketRuntimeMessages.CustomInputNotApplicable, ErrorType.Validation));
         var values = submitted.ToDictionary(x => x.ServiceCustomInputId, x => x.Value ?? string.Empty);
         var snapshots = new List<InputSnapshot>();
         foreach (var definition in definitions)
         {
             values.TryGetValue(definition.Id, out var value);
             value ??= string.Empty;
-            if (definition.IsRequired && string.IsNullOrWhiteSpace(value)) return InvalidInputs();
+            if (requireAllRequired && definition.IsRequired && string.IsNullOrWhiteSpace(value))
+                return InvalidInputs();
             if (string.IsNullOrWhiteSpace(value)) continue;
             if (definition.Type == ServiceCustomInputType.String)
             {
@@ -511,6 +638,10 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         public ReservationCustomInputValue ToReservation(DateTime now) => ReservationCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now);
     }
 
+    private sealed record ValidatedCreateInputs(
+        string? LookupValue,
+        IReadOnlyList<InputSnapshot> Snapshots);
+
     private static TicketDetailsResponse Map(Ticket x) => new(x.Id, x.BranchId,
         x.TicketNumber, x.BusinessDate, x.Status, x.IssuingServiceId, x.CurrentServiceId,
         x.SegmentId, x.ReservationId, x.CurrentWindowId, x.CurrentQueueEnteredOnUtc,
@@ -520,14 +651,20 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
         x.ServiceJourneys.OrderBy(v => v.Id).Select(v => new TicketJourneyResponse(v.ServiceId,
             v.EntryType, v.WorkflowStepOrder, v.EnteredWaitingOnUtc, v.ServiceStartedOnUtc,
-            v.ServiceEndedOnUtc, v.Outcome)).ToArray(), Convert.ToBase64String(x.RowVersion));
+            v.ServiceEndedOnUtc, v.Outcome)).ToArray(), Convert.ToBase64String(x.RowVersion),
+        Field: x.LookupValue);
 
     private static ReservationDetailsResponse Map(Reservation x) => new(x.Id, x.BranchId,
         x.ServiceId, x.SegmentId, x.ScheduledOnUtc, x.BusinessDate, x.Status,
         x.CancellationReason, x.CancelledOnUtc, x.ConvertedToTicketOnUtc, x.ExpiredOnUtc,
         x.CustomInputValues.OrderBy(v => v.Id).Select(v => new CustomInputValueResponse(v.ServiceCustomInputId,
             v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
-        Convert.ToBase64String(x.RowVersion));
+        Convert.ToBase64String(x.RowVersion), Field: x.LookupValue);
+
+    private static Result<IReadOnlyList<KioskReservationSearchItemResponse>> FailKioskSearch(
+        string code, string message, ErrorType type) =>
+        Result<IReadOnlyList<KioskReservationSearchItemResponse>>.Fail(
+            new Error(code, message, type));
 
     private static Result<TicketDetailsResponse> FailTicket(string code, string message, ErrorType type) => Result<TicketDetailsResponse>.Fail(new Error(code, message, type));
     private static Result<ReservationDetailsResponse> FailReservation(string code, string message, ErrorType type) => Result<ReservationDetailsResponse>.Fail(new Error(code, message, type));

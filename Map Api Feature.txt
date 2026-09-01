@@ -1,0 +1,5282 @@
+# QControl API — Business Feature Blocks
+
+## 0. القواعد العامة لكل الـAPI
+
+معظم الـEndpoints الإدارية تعمل بالنمط:
+
+```text
+Controller
+→ MediatR Command / Query
+→ Handler
+→ Repository / Domain
+→ Result<T>
+→ ToIActionResult()
+→ ProblemDetails on failure
+```
+
+الـAuthorization يعتمد على:
+
+```text
+[Authorize]
+[Permission("...")]
+```
+
+والـRuntime الخاص بالـ`Ticket/Reservation/Kiosk` يضيف أيضًا:
+
+```text
+TicketRuntimeRequestGuard
+→ authenticated user
+→ branch access
+→ performerId
+```
+
+الـ`RowVersion` تستخدم في العمليات التي تحتاج `Optimistic Concurrency`.
+
+---
+
+# Block 1 — Authentication
+
+## Business Capability
+
+إدارة دخول المستخدم وإجباره على تغيير الـTemporary Password في أول Login.
+
+---
+
+### 1. Login
+
+```http
+POST /api/auth/login
+```
+
+**Request**
+
+```json
+{
+  "userNameOrEmail": "admin@example.com",
+  "password": "******"
+}
+```
+
+**Response**
+
+```text
+UserTokenDto
+```
+
+وتحتوي على بيانات الـJWT والـroles والـpermissions والـbranch context ومعلومات password lifecycle.
+
+**Validation**
+
+* `UserNameOrEmail` مطلوب.
+* Max length = 200.
+* `Password` مطلوبة.
+* Max length = 200.
+* بيانات الدخول الخاطئة → `Unauthorized`.
+
+**Business Capability**
+
+Authentication + بناء Authorization context للمستخدم.
+
+**Outcome**
+
+JWT صالح للاستخدام في باقي الـAPI.
+
+**Value**
+
+بوابة الوصول لكل الـAdministrative/Operational APIs.
+
+---
+
+### 2. Change Initial Password
+
+```http
+POST /api/auth/change-initial-password
+```
+
+**Authorization**
+
+```text
+Authenticated
+```
+
+**Request**
+
+```json
+{
+  "newPassword": "..."
+}
+```
+
+**Validation / Business**
+
+* الـToken لازم يكون خاص بسيناريو تغيير أول Password.
+* المستخدم `IsFirstLogin = true`.
+* المستخدم Active.
+* الـpassword الجديدة تحقق Password Policy.
+* لا تكون نفس الـTemporary Password.
+
+**Outcome**
+
+تغيير الـPassword وإصدار Token جديدة بدون `passwordChangeRequired`.
+
+---
+
+# Block 2 — Branch Management
+
+## Business Capability
+
+إدارة أعلى مستوى تشغيلي في النظام: الـ`Branch`.
+
+---
+
+### 1. List Branches
+
+```http
+GET /api/branches
+```
+
+Permission:
+
+```text
+Branches.ViewAll
+```
+
+**Request**
+
+Query مثل:
+
+```text
+PageNumber
+PageSize
+SearchText
+...
+```
+
+**Response**
+
+```text
+Pagination<BranchResponse>
+```
+
+**Value**
+
+شاشة إدارة واختيار الفروع.
+
+---
+
+### 2. Branch Details
+
+```http
+GET /api/branches/{branchId}
+```
+
+Permission:
+
+```text
+Branches.ViewDetails
+```
+
+**Validation**
+
+* `branchId > 0`
+* Branch must exist.
+* Access scope applied.
+
+**Outcome**
+
+تفاصيل الفرع.
+
+---
+
+### 3. Create Branch
+
+```http
+POST /api/branches
+```
+
+Permission:
+
+```text
+Branches.Create
+```
+
+**Request**
+
+```json
+{
+  "arabicName": "...",
+  "englishName": "...",
+  "ipAddress": "...",
+  "license": "...",
+  "location": {
+    "governorate": "...",
+    "city": "...",
+    "area": "...",
+    "address": "...",
+    "latitude": 30.0,
+    "longitude": 31.0
+  }
+}
+```
+
+**Business Capability**
+
+إنشاء Location تشغيلي جديد.
+
+---
+
+### 4. Update Branch
+
+```http
+PUT /api/branches/{branchId}
+```
+
+Permission:
+
+```text
+Branches.Update
+```
+
+Request = بيانات Create +:
+
+```text
+RowVersion
+```
+
+**Validation**
+
+بيانات الفرع + Concurrency.
+
+---
+
+### 5. Deactivate Branch
+
+```http
+POST /api/branches/{branchId}/deactivate
+```
+
+Permission:
+
+```text
+Branches.Deactivate
+```
+
+Request:
+
+```http
+If-Match: {rowVersion}
+```
+
+**Outcome**
+
+الفرع يصبح غير Active بدون حذف البيانات.
+
+---
+
+### 6. Reactivate Branch
+
+```http
+POST /api/branches/{branchId}/reactivate
+```
+
+Permission:
+
+```text
+Branches.Reactivate
+```
+
+---
+
+### 7. Permanent Delete Branch
+
+```http
+DELETE /api/branches/{branchId}/permanent
+```
+
+Permission:
+
+```text
+Branches.DeletePermanent
+```
+
+**Business**
+
+Hard Delete مشروط بعدم وجود dependencies تمنع الحذف.
+
+---
+
+### 8. Create Branch Admin
+
+```http
+POST /api/branches/{branchId}/admins
+```
+
+Permission:
+
+```text
+BranchAdmins.Create
+```
+
+**Request**
+
+```json
+{
+  "userName": "...",
+  "email": "...",
+  "nameEn": "...",
+  "nameAr": "...",
+  "phoneNumber": "...",
+  "temporaryPassword": "..."
+}
+```
+
+**Validation**
+
+* Technical Admin actor.
+* Branch exists and Active.
+* Username unique.
+* Email unique.
+* Password Policy.
+* `Branch Administrator` role exists.
+
+**Outcome**
+
+إنشاء:
+
+```text
+ApplicationUser
+BranchAdmin
+ApplicationUserBranch
+UserRole
+```
+
+---
+
+# Block 3 — Branch Branding & Advertisements
+
+## Branding
+
+### Get Branding
+
+```http
+GET /api/branches/{branchId}/branding
+```
+
+Permission:
+
+```text
+Branches.ViewDetails
+```
+
+---
+
+### Update Branch Theme
+
+```http
+PUT /api/branches/{branchId}/branding/theme
+```
+
+Permission:
+
+```text
+Branches.Update
+```
+
+**Request**
+
+يشمل:
+
+```text
+MainColor
+SecondaryColor
+BackgroundColor
+HeaderColor
+FooterColor
+MainTextColor
+
+ShowLanguagePage
+DefaultLanguageIsArabic
+AlwaysRequireUserInput
+ShowServiceNavigationPath
+AllowOperatorSelection
+AllowRequestMoreServices
+
+LanguageButton*
+ServiceButton*
+KeypadButton*
+FooterButton*
+
+RowVersion
+```
+
+**Business Value**
+
+التحكم في تجربة الـKiosk/Customer UI لكل Branch.
+
+---
+
+### Upload Branch Logo
+
+```http
+PUT /api/branches/{branchId}/branding/logo
+```
+
+`multipart/form-data`
+
+Request:
+
+```text
+Logo
+RowVersion
+```
+
+---
+
+## Branch Advertisements
+
+### Get
+
+```http
+GET /api/branches/{branchId}/advertisements
+```
+
+Query:
+
+```text
+isActive?
+```
+
+### Add
+
+```http
+POST /api/branches/{branchId}/advertisements
+```
+
+Request:
+
+```text
+multipart/form-data
+Images[]
+```
+
+### Reorder
+
+```http
+PUT /api/branches/{branchId}/advertisements/order
+```
+
+Request:
+
+```json
+{
+  "items": [
+    {
+      "advertisementId": 10,
+      "displayOrder": 1,
+      "rowVersion": "..."
+    }
+  ]
+}
+```
+
+### Deactivate
+
+```http
+POST /api/branches/{branchId}/advertisements/{advertisementId}/deactivate
+```
+
+### Reactivate
+
+```http
+POST /api/branches/{branchId}/advertisements/{advertisementId}/reactivate
+```
+
+### Delete
+
+```http
+DELETE /api/branches/{branchId}/advertisements/{advertisementId}
+```
+
+الـimplementation الحالي يحدد بحد أقصى 20 Advertisement للـBranch ويستخدم atomic reorder و`RowVersion`.
+
+---
+
+# Block 4 — Branch Configuration
+
+## Business Capability
+
+إعدادات Runtime خاصة بكل Branch.
+
+### Get
+
+```http
+GET /api/branches/{branchId}/configuration
+```
+
+Permission:
+
+```text
+BranchConfigurations.View
+```
+
+### Create
+
+```http
+POST /api/branches/{branchId}/configuration
+```
+
+Permission:
+
+```text
+BranchConfigurations.Create
+```
+
+Request:
+
+```json
+{
+  "allowedTime": "...",
+  "maximumTicketCallAttempts": 3,
+  "ticketNoShowAutoCancellationMinutes": 30,
+  "ticketArchiveRetentionDays": 30
+}
+```
+
+### Update
+
+```http
+PUT /api/branches/{branchId}/configuration
+```
+
+Request:
+
+```text
+AllowedTime?
+MaximumTicketCallAttempts?
+TicketNoShowAutoCancellationMinutes?
+TicketArchiveRetentionDays?
+RowVersion
+```
+
+**Business Value**
+
+يتحكم في أجزاء من Runtime الـTicket مثل:
+
+```text
+Call Attempts
+NoShow Auto Cancellation
+Ticket Archive Retention
+Schedule AllowedTime
+```
+
+---
+
+# Block 5 — Waiting Areas
+
+## Business Capability
+
+تقسيم الفرع إلى مناطق انتظار تضم `Windows`.
+
+الـbusiness الحالي يؤكد علاقة:
+
+```text
+Branch
+   ↓
+WaitingArea
+   ↓
+Window
+```
+
+### Endpoints
+
+```http
+GET /api/waiting-areas
+GET /api/waiting-areas/{waitingAreaId}
+POST /api/waiting-areas
+PUT /api/waiting-areas/{waitingAreaId}
+POST /api/waiting-areas/{waitingAreaId}/deactivate
+POST /api/waiting-areas/{waitingAreaId}/reactivate
+DELETE /api/waiting-areas/{waitingAreaId}/permanent
+```
+
+**Create Request**
+
+```text
+BranchId
+Number
+AudioDevice?
+ControlDevice?
+DescriptiveName?
+```
+
+**Update**
+
+نفس البيانات بدون BranchId +:
+
+```text
+RowVersion
+```
+
+**Validation Highlights**
+
+* Branch exists.
+* Number valid within business constraints.
+* Update/state changes use concurrency.
+* Permanent Delete may fail if dependent Windows exist.
+
+---
+
+# Block 6 — Windows
+
+## Business Capability
+
+تمثل نقطة تقديم الخدمة الفعلية داخل `WaitingArea`.
+
+### Endpoints
+
+```http
+GET /api/windows
+GET /api/windows/{windowId}
+POST /api/windows
+PUT /api/windows/{windowId}
+POST /api/windows/{windowId}/deactivate
+POST /api/windows/{windowId}/reactivate
+DELETE /api/windows/{windowId}/permanent
+```
+
+Permissions:
+
+```text
+Windows.ViewAll
+Windows.ViewDetails
+Windows.Create
+Windows.Update
+Windows.Deactivate
+Windows.Reactivate
+Windows.DeletePermanent
+```
+
+**Create Request**
+
+```json
+{
+  "waitingAreaId": 10,
+  "number": "3",
+  "descriptiveName": "...",
+  "ipAddress": "...",
+  "enableTicketBooking": true,
+  "enableDirectCall": false
+}
+```
+
+**Business**
+
+`EnableTicketBooking` و`EnableDirectCall` capabilities/configuration فقط؛ لا يعني أن Calling Algorithm نفسها موجودة.
+
+## Hard Delete يمكن منعه عند وجود `Terminal` أو `DisplayWindow` dependencies.
+
+# Block 7 — Terminals
+
+## Business Capability
+
+تعريف الأجهزة/Terminals المرتبطة بالـWindows.
+
+### Endpoints
+
+```http
+GET /api/terminals
+GET /api/terminals/{terminalId}
+POST /api/terminals
+PUT /api/terminals/{terminalId}
+POST /api/terminals/{terminalId}/deactivate
+POST /api/terminals/{terminalId}/reactivate
+DELETE /api/terminals/{terminalId}/permanent
+```
+
+**Create Request**
+
+```text
+WindowId
+Number
+IPAddress
+SerialNo
+Type
+```
+
+**Update**
+
+```text
+Number
+IPAddress
+SerialNo
+Type
+RowVersion
+```
+
+**Value**
+
+ربط أجهزة التشغيل الفعلية بنقطة الخدمة.
+
+---
+
+# Block 8 — Physical Displays + DisplayWindow
+
+## Business Capability
+
+إدارة الـPhysical Displays وربطها بالـWindows التي تظهر عليها.
+
+الـcurrent routes موجودة فعليًا في `DisplaysController`.
+
+### Display Management
+
+```http
+GET /api/displays
+GET /api/displays/{displayId}
+POST /api/displays
+PUT /api/displays/{displayId}
+POST /api/displays/{displayId}/deactivate
+POST /api/displays/{displayId}/reactivate
+DELETE /api/displays/{displayId}/permanent
+```
+
+**Create**
+
+```text
+BranchId
+Number
+IPAddress
+SerialNo
+Type
+```
+
+---
+
+## Display ↔ Window
+
+### Linked Windows
+
+```http
+GET /api/displays/{displayId}/windows
+```
+
+Permission:
+
+```text
+DisplayWindows.ViewLinked
+```
+
+### Available Windows
+
+```http
+GET /api/displays/{displayId}/available-windows
+```
+
+Permission:
+
+```text
+DisplayWindows.ViewAvailable
+```
+
+### Assign
+
+```http
+POST /api/displays/{displayId}/windows/{windowId}
+```
+
+Permission:
+
+```text
+DisplayWindows.Assign
+```
+
+### Unassign
+
+```http
+DELETE /api/displays/{displayId}/windows/{windowId}
+```
+
+Permission:
+
+```text
+DisplayWindows.Unassign
+```
+
+**Business Rule**
+
+منع duplicate:
+
+```text
+DisplayId + WindowId
+```
+
+ولا يعني فك الربط حذف Display أو Window.
+
+---
+
+# Block 9 — Branch Display Runtime & Messages
+
+## Business Capability
+
+تكوين شكل شاشة النداء المشتركة على مستوى الـBranch.
+
+---
+
+## Display Configuration
+
+```http
+GET /api/branches/{branchId}/display-configuration
+POST /api/branches/{branchId}/display-configuration
+PUT /api/branches/{branchId}/display-configuration
+```
+
+**Request**
+
+يشمل:
+
+```text
+DisplayBackgroundColor
+
+MainTitleAr
+MainTitleEn
+HeaderBackgroundColor
+MainTitleTextColor
+MainTitleFontSize
+
+TableHeaderBackgroundColor
+TableHeaderTextColor
+
+TableRowBackgroundColor
+TableRowTextColor
+
+TicketNumberBackgroundColor
+TicketNumberTextColor
+
+TicketColumnTitleAr/En
+ServiceColumnTitleAr/En
+WindowColumnTitleAr/En
+
+TickerBackgroundColor
+TickerTextColor
+TickerFontSize
+
+ShowClock
+ClockBackgroundColor
+ClockTextColor
+```
+
+Update يضيف:
+
+```text
+RowVersion
+```
+
+---
+
+## Display Messages
+
+```http
+GET /api/branches/{branchId}/display-messages
+POST /api/branches/{branchId}/display-messages
+PUT /api/branches/{branchId}/display-messages/{messageId}
+PUT /api/branches/{branchId}/display-messages/order
+POST /api/branches/{branchId}/display-messages/{messageId}/deactivate
+POST /api/branches/{branchId}/display-messages/{messageId}/reactivate
+```
+
+**Message Request**
+
+```text
+TextAr
+TextEn
+DisplayOrder
+```
+
+Update/Reorder/state mutation تستخدم `RowVersion`.
+
+---
+
+## Public Runtime
+
+```http
+GET /api/branches/{branchId}/display-runtime-configuration
+```
+
+```http
+GET /api/branches/{branchId}/display-runtime-playlist
+```
+
+Authorization:
+
+```text
+AllowAnonymous
+```
+
+**Value**
+
+الـDisplay Client يحصل على:
+
+```text
+Branding
+Display style
+Active ticker messages
+Clock configuration
+Runtime video playlist
+```
+
+بدون Login.
+
+---
+
+# Block 10 — Branch Videos
+
+## Business Capability
+
+Playlist واحدة للفرع تُستخدم في الـDisplays.
+
+### Endpoints
+
+```http
+GET /api/branches/{branchId}/display-videos
+POST /api/branches/{branchId}/display-videos
+PUT /api/branches/{branchId}/display-videos/order
+POST /api/branches/{branchId}/display-videos/{videoId}/deactivate
+POST /api/branches/{branchId}/display-videos/{videoId}/reactivate
+DELETE /api/branches/{branchId}/display-videos/{videoId}/permanent
+GET /api/branches/{branchId}/display-videos/playlist
+```
+
+**Upload Request**
+
+```text
+Video
+DisplayOrder
+```
+
+**Business**
+
+* Video processing إلى HLS.
+* `Inactive` لا يظهر في Runtime.
+* Hard Delete لا يسمح به للفيديو Active؛ يجب Deactivate أولًا.
+* Playlist تعتمد الترتيب وReady state.
+
+---
+
+# Block 11 — General Brand
+
+## Business Capability
+
+Branding افتراضي/عام للنظام.
+
+### Endpoints
+
+```http
+GET /api/general-brand
+POST /api/general-brand
+PUT /api/general-brand
+```
+
+Permissions:
+
+```text
+GeneralBrand.View
+GeneralBrand.Create
+GeneralBrand.Update
+```
+
+**Request**
+
+نفس family الخاصة بـBranch Theme تقريبًا:
+
+```text
+MainColor
+SecondaryColor
+BackgroundColor
+Header/Footer/MainText
+language options
+service button options
+keypad options
+footer options
+```
+
+Update يستخدم:
+
+```text
+RowVersion
+```
+
+هو Singleton General Brand بحسب الـbusiness الحالي.
+
+---
+
+# Block 12 — Service Catalog
+
+## Business Capability
+
+إدارة تعريفات الـService والـHierarchy والـCustom Inputs والـTicket configuration.
+
+النسخة الحالية تحتوي `central-tree`, `selection-options`, images وغيرها.
+
+---
+
+## Read Services
+
+```http
+GET /api/services
+```
+
+Filters عبر `GetServicesQuery`.
+
+---
+
+```http
+GET /api/services/tree
+```
+
+Query:
+
+```text
+includeInactive
+includeDeleted
+scope?
+ownerBranchId?
+searchText?
+```
+
+---
+
+```http
+GET /api/services/central-tree
+```
+
+Query:
+
+```text
+includeInactive
+includeDeleted
+```
+
+---
+
+```http
+GET /api/services/available-parents
+```
+
+Query:
+
+```text
+excludeServiceId?
+searchText?
+```
+
+---
+
+```http
+GET /api/services/selection-options
+```
+
+Query:
+
+```text
+serviceId?
+```
+
+---
+
+```http
+GET /api/services/{serviceId}
+```
+
+---
+
+## Create Service
+
+```http
+POST /api/services
+```
+
+Request:
+
+```text
+ParentServiceId?
+
+ArabicName
+EnglishName
+
+ServiceCode?
+IsServiceCodeRequired
+
+ArabicUserMessage?
+EnglishUserMessage?
+
+IsTicketIssuable?
+IsClientInputRequired
+
+CustomInputs[]
+
+HasReservation
+
+OrderNo
+Priority
+
+RangePrefix?
+RangeStartNumber?
+RangeEndNumber?
+
+WaitingDuration?
+NoOfTicketCopies?
+```
+
+---
+
+## Custom Input Definition
+
+كل input يحتوي:
+
+```text
+Name
+LabelEn?
+LabelAr?
+Type
+IsRequired
+
+MinLength?
+MaxLength?
+
+MinValue?
+MaxValue?
+
+StartWith?
+Order
+```
+
+---
+
+## Update Service
+
+```http
+PUT /api/services/{serviceId}
+```
+
+نفس Create بالإضافة إلى:
+
+```text
+RowVersion
+CustomInputId? for existing custom inputs
+```
+
+---
+
+## Delete / Restore
+
+```http
+DELETE /api/services/{serviceId}
+POST /api/services/{serviceId}/restore
+DELETE /api/services/{serviceId}/permanent
+```
+
+---
+
+# Block 13 — Service Images
+
+### Get Images
+
+```http
+GET /api/services/{serviceId}/images
+```
+
+Query:
+
+```text
+imageType?
+```
+
+### Upload Logo
+
+```http
+POST /api/services/{serviceId}/images/logo
+```
+
+### Upload Icon
+
+```http
+POST /api/services/{serviceId}/images/icon
+```
+
+### Upload Advertisement Images
+
+```http
+POST /api/services/{serviceId}/images/ads
+```
+
+### Delete Image
+
+```http
+DELETE /api/services/{serviceId}/images/{imageId}
+```
+
+Uploads تستخدم:
+
+```text
+multipart/form-data
+RowVersion
+```
+
+---
+
+# Block 14 — Branch Service Assignment & Service Trees
+
+## Assigned Tree
+
+```http
+GET /api/branches/{branchId}/services/tree
+```
+
+Query:
+
+```text
+includeInactive
+includeDeleted
+searchText?
+```
+
+---
+
+## Kiosk Ticket-Issuable Services
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+Authorization:
+
+```text
+AllowAnonymous
+```
+
+**Business Capability**
+
+تجميع الـLeaf Services التي يمكن للعميل استخدامها فعليًا في الوقت الحالي.
+
+**Value**
+
+Endpoint الرئيسية لبداية الـKiosk flow.
+
+---
+
+## Assign Existing Services
+
+```http
+POST /api/branches/{branchId}/services/assign
+```
+
+Request:
+
+```json
+{
+  "serviceIds": [1, 2, 3]
+}
+```
+
+---
+
+## Unassign Leaf Service
+
+```http
+DELETE /api/branches/{branchId}/services/{leafServiceId}
+```
+
+Permission:
+
+```text
+BranchServices.Unassign
+```
+
+يفك الربط ولا يحذف تعريف Service نفسه.
+
+---
+
+## Create Branch Service Tree
+
+```http
+POST /api/branches/{branchId}/service-trees
+```
+
+Request:
+
+```text
+Root Tree Node
+```
+
+والNode تحتوي Service properties + Children recursively.
+
+---
+
+## Add Subtree
+
+```http
+POST /api/branches/{branchId}/services/{parentServiceId}/subtree
+```
+
+---
+
+# Block 15 — Service Schedule
+
+## Business Capability
+
+تحديد أوقات توفر الـLeaf Service داخل Branch معينة.
+
+### Endpoints
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/schedule
+POST /api/branches/{branchId}/services/{leafServiceId}/schedule
+PUT /api/branches/{branchId}/services/{leafServiceId}/schedule
+```
+
+**Request**
+
+```json
+{
+  "days": [
+    {
+      "dayOfWeek": "Saturday",
+      "timeSlots": [
+        {
+          "startTime": "09:00",
+          "endTime": "14:00"
+        }
+      ]
+    }
+  ],
+  "isSlotCodeRequired": false,
+  "slotCode": null
+}
+```
+
+Update يضيف:
+
+```text
+RowVersion
+```
+
+**Validation Highlights**
+
+* Leaf Service context.
+* One Schedule per Branch + Leaf Service.
+* Duplicate days غير مسموح.
+* Valid time ranges.
+* overlapping slots غير مسموح.
+* `SlotCode` required when configured.
+
+---
+
+# Block 16 — Service Workflow
+
+## Business Capability
+
+تعريف رحلة خدمة متعددة الخطوات.
+
+### List
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/workflows
+```
+
+### Details
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/workflows/{workflowId}
+```
+
+### Create
+
+```http
+POST /api/branches/{branchId}/services/{leafServiceId}/workflows
+```
+
+Request:
+
+```json
+{
+  "arabicName": "...",
+  "englishName": "...",
+  "steps": [
+    {
+      "serviceId": 10,
+      "stepOrder": 1
+    },
+    {
+      "serviceId": 20,
+      "stepOrder": 2
+    }
+  ]
+}
+```
+
+### Update
+
+```http
+PUT /api/branches/{branchId}/services/{leafServiceId}/workflows/{workflowId}
+```
+
+* `RowVersion`.
+
+### Set Default
+
+```http
+POST /api/branches/{branchId}/services/{leafServiceId}/workflows/{workflowId}/set-default
+```
+
+### Deactivate
+
+```http
+POST /api/branches/{branchId}/services/{leafServiceId}/workflows/{workflowId}/deactivate
+```
+
+### Reactivate
+
+```http
+POST /api/branches/{branchId}/services/{leafServiceId}/workflows/{workflowId}/reactivate
+```
+
+### Start Options
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/workflow-start-options
+```
+
+### Workflow Candidate Services
+
+```http
+GET /api/branches/{branchId}/services/workflow-candidates
+```
+
+**Validation**
+
+* Workflow requires steps.
+* Minimum 2 steps.
+* `StepOrder > 0`.
+* Orders unique and sequential.
+* Services exist.
+* Service valid/effectively active/ticket issuable according to handler rules.
+
+---
+
+# Block 17 — Segments
+
+## Business Capability
+
+تعريف customer segments + priority.
+
+---
+
+## Global Segments
+
+```http
+GET /api/segments
+GET /api/segments/{segmentId}
+POST /api/segments
+PUT /api/segments/{segmentId}
+```
+
+Create request:
+
+```text
+ArabicName
+EnglishName
+Priority
+```
+
+Update adds:
+
+```text
+RowVersion
+```
+
+---
+
+## Branch Scoped Segment
+
+```http
+POST /api/branches/{branchId}/segments
+```
+
+Permission:
+
+```text
+Segments.CreateBranchScoped
+```
+
+---
+
+# Block 18 — Branch Service Segments & Quota
+
+## Business Capability
+
+تخصيص Segment Quota داخل Service + Branch.
+
+### Assigned
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/segments
+```
+
+### Available
+
+```http
+GET /api/branches/{branchId}/services/{leafServiceId}/segments/available
+```
+
+### Assign
+
+```http
+POST /api/branches/{branchId}/services/{leafServiceId}/segments/assign
+```
+
+Request:
+
+```json
+{
+  "items": [
+    {
+      "segmentId": 2,
+      "quota": 10
+    }
+  ]
+}
+```
+
+### Update Quota
+
+```http
+PUT /api/branches/{branchId}/services/{leafServiceId}/segments/{segmentId}/quota
+```
+
+```json
+{
+  "quota": 5,
+  "rowVersion": "..."
+}
+```
+
+### Unassign
+
+```http
+DELETE /api/branches/{branchId}/services/{leafServiceId}/segments/{segmentId}
+```
+
+Header:
+
+```text
+If-Match
+```
+
+**Business**
+
+* مجموع Non-default quotas لا يتجاوز ticket range capacity.
+* Default Segment تحصل على remainder تلقائيًا.
+* Default Segment العادية لا يتم Unassign لها.
+* Assign/Update/Unassign تعيد حساب Default quota.
+
+---
+
+# Block 19 — Service Globalization
+
+## Branch-side Requests
+
+```http
+GET /api/branches/{branchId}/service-globalization-requests
+```
+
+Permission:
+
+```text
+ServiceGlobalizationRequests.ViewOwn
+```
+
+---
+
+## Central Review
+
+```http
+GET /api/service-globalization-requests
+GET /api/service-globalization-requests/{requestId}
+POST /api/service-globalization-requests/{requestId}/approve
+POST /api/service-globalization-requests/{requestId}/reject
+```
+
+Reject Request:
+
+```json
+{
+  "rejectionReason": "..."
+}
+```
+
+Approve/Reject:
+
+```http
+If-Match: rowVersion
+```
+
+**Business**
+
+* Pending requests only reviewed.
+* Approve يحول التعريف المعتمد إلى Global.
+* Reject يبقي الخدمة BranchScoped.
+* Concurrency تمنع double review.
+
+---
+
+# Block 20 — Segment Globalization
+
+## Branch Requests
+
+```http
+GET /api/branches/{branchId}/segment-globalization-requests
+```
+
+---
+
+## Central Review
+
+```http
+GET /api/segment-globalization-requests
+GET /api/segment-globalization-requests/{requestId}
+POST /api/segment-globalization-requests/{requestId}/approve
+POST /api/segment-globalization-requests/{requestId}/reject
+```
+
+Reject Request:
+
+```text
+RejectionReason?
+```
+
+State changes تستخدم:
+
+```text
+If-Match
+```
+
+---
+
+# Block 21 — Reservation Runtime
+
+النسخة الحالية أضافت `Field` بجانب `CustomInputs`.
+
+## 1. Create Reservation
+
+```http
+POST /api/branches/{branchId}/reservations
+```
+
+Permission:
+
+```text
+Reservations.Create
+```
+
+**Request**
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "scheduledOnUtc": "2026-09-01T10:00:00Z",
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    }
+  ]
+}
+```
+
+**Response**
+
+```text
+ReservationDetailsResponse
+```
+
+**Validation**
+
+Basic:
+
+```text
+BranchId > 0
+ServiceId > 0
+SegmentId > 0
+ScheduledOnUtc required
+Field max 3000
+CustomInputId > 0
+Value max 3000
+```
+
+ثم Runtime business validation.
+
+---
+
+## 2. Reservations List
+
+```http
+GET /api/branches/{branchId}/reservations
+```
+
+Query:
+
+```text
+pageNumber
+pageSize
+status?
+serviceId?
+segmentId?
+businessDate?
+```
+
+Response:
+
+```text
+Pagination<ReservationListItemResponse>
+```
+
+---
+
+## 3. Reservation Details
+
+```http
+GET /api/branches/{branchId}/reservations/{reservationId}
+```
+
+Response:
+
+```text
+ReservationDetailsResponse
+```
+
+---
+
+## 4. Reservation History
+
+```http
+GET /api/branches/{branchId}/reservations/{reservationId}/history
+```
+
+Response:
+
+```text
+IReadOnlyList<ReservationHistoryResponse>
+```
+
+---
+
+## 5. Cancel Reservation
+
+```http
+POST /api/branches/{branchId}/reservations/{reservationId}/cancel
+```
+
+Request:
+
+```json
+{
+  "reason": "..."
+}
+```
+
+---
+
+## 6. Convert Reservation to Ticket
+
+```http
+POST /api/branches/{branchId}/reservations/{reservationId}/ticket
+```
+
+Response:
+
+```text
+TicketDetailsResponse
+```
+
+**Business**
+
+Reservation snapshot → Ticket.
+
+Custom Inputs أو `LookupValue` تنتقل إلى Ticket.
+
+---
+
+## 7. Reservation Archive
+
+```http
+GET /api/branches/{branchId}/reservations/archive
+```
+
+نفس filters تقريبًا الخاصة بالـoperational list.
+
+---
+
+## 8. Archived Reservation Details
+
+```http
+GET /api/branches/{branchId}/reservations/archive/{reservationId}
+```
+
+---
+
+# Block 22 — Ticket Runtime
+
+طلبات الـTicket الحالية والـqueries والـvalidators موجودة في الـcurrent snapshot.
+
+## 1. Create Ticket
+
+```http
+POST /api/branches/{branchId}/tickets
+```
+
+Permission:
+
+```text
+Tickets.Create
+```
+
+Request:
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "field": null,
+  "customInputs": []
+}
+```
+
+Response:
+
+```text
+TicketDetailsResponse
+```
+
+**Validation**
+
+```text
+BranchId > 0
+ServiceId > 0
+SegmentId > 0
+Field <= 3000
+CustomInputId > 0
+CustomInput Value <= 3000
+```
+
+ثم:
+
+```text
+Service availability
+TicketIssuable
+Segment assignment
+Quota
+Number allocation
+Custom Input validation
+Workflow binding
+```
+
+---
+
+## 2. Ticket List
+
+```http
+GET /api/branches/{branchId}/tickets
+```
+
+Query:
+
+```text
+pageNumber
+pageSize
+status?
+serviceId?
+segmentId?
+ticketNumber?
+businessDate?
+```
+
+Response:
+
+```text
+Pagination<TicketListItemResponse>
+```
+
+---
+
+## 3. Ticket Details
+
+```http
+GET /api/branches/{branchId}/tickets/{ticketId}
+```
+
+Response:
+
+```text
+TicketDetailsResponse
+```
+
+---
+
+## 4. Ticket History
+
+```http
+GET /api/branches/{branchId}/tickets/{ticketId}/history
+```
+
+Response:
+
+```text
+IReadOnlyList<TicketHistoryResponse>
+```
+
+---
+
+## 5. Cancel Ticket
+
+```http
+POST /api/branches/{branchId}/tickets/{ticketId}/cancel
+```
+
+Request:
+
+```json
+{
+  "reason": "..."
+}
+```
+
+Permission:
+
+```text
+Tickets.Cancel
+```
+
+---
+
+## 6. Return NoShow → Waiting
+
+```http
+POST /api/branches/{branchId}/tickets/{ticketId}/return-to-waiting
+```
+
+Permission:
+
+```text
+Tickets.ReturnNoShowToWaiting
+```
+
+**Outcome**
+
+Ticket ترجع لنفس الـCurrent Service في `Waiting`.
+
+---
+
+## 7. Start Service
+
+```http
+POST /api/branches/{branchId}/tickets/{ticketId}/start-service
+```
+
+Permission:
+
+```text
+Tickets.StartService
+```
+
+**Outcome**
+
+```text
+Called → InProgress
+```
+
+---
+
+## 8. Complete Service
+
+```http
+POST /api/branches/{branchId}/tickets/{ticketId}/complete-service
+```
+
+Permission:
+
+```text
+Tickets.CompleteService
+```
+
+**Business Capability**
+
+إنهاء Current Service.
+
+Outcome:
+
+```text
+Workflow next step available
+→ Waiting on next Service
+
+No next step
+→ Completed
+```
+
+---
+
+## 9. Manual Transfer
+
+```http
+POST /api/branches/{branchId}/tickets/{ticketId}/manual-transfer
+```
+
+Request:
+
+```json
+{
+  "targetServiceId": 20,
+  "reason": "..."
+}
+```
+
+Permission:
+
+```text
+Tickets.ManualTransfer
+```
+
+---
+
+## 10. Ticket Archive
+
+```http
+GET /api/branches/{branchId}/tickets/archive
+```
+
+Query:
+
+```text
+pageNumber
+pageSize
+status?
+serviceId?
+segmentId?
+ticketNumber?
+businessDate?
+```
+
+---
+
+## 11. Archived Ticket Details
+
+```http
+GET /api/branches/{branchId}/tickets/archive/{ticketId}
+```
+
+**Value**
+
+الـoperational hot table تظل صغيرة بينما التاريخ الكامل يبقى searchable/read-only.
+
+---
+
+# Block 23 — Kiosk Runtime
+
+ده الـBlock الجديدة الخاصة بالـCustomer Self-Service flow.
+كل الـKiosk endpoints الحالية ما زالت:
+
+```text
+[Authorize]
+```
+
+وتستخدم Permissions الموجودة؛ لم يتم إنشاء Authentication scheme مستقلة للـKiosk.
+
+---
+
+## 1. Search Previous Reservation
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/search
+```
+
+Permission:
+
+```text
+Reservations.View
+```
+
+Request:
+
+```json
+{
+  "serviceId": 15,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    }
+  ]
+}
+```
+
+Response:
+
+```text
+IReadOnlyList<KioskReservationSearchItemResponse>
+```
+
+**Validation**
+
+Basic:
+
+```text
+BranchId > 0
+ServiceId > 0
+Field <= 3000
+
+CustomInputId > 0
+CustomInput Value required
+Value <= 3000
+```
+
+Business:
+
+```text
+Service with Custom Inputs
+→ at least one Custom Input used for lookup
+
+Multiple inputs
+→ AND matching
+
+Service without Custom Inputs
+→ Field lookup
+```
+
+**Outcome**
+
+List وليس Single Reservation.
+
+**Value**
+
+نفس الرقم/القيمة يمكن أن يكون عليها أكثر من Reservation والعميل يختار واحدة.
+
+---
+
+## 2. Convert Selected Reservation to Ticket
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/{reservationId}/ticket
+```
+
+Permission:
+
+```text
+Reservations.ConvertToTicket
+```
+
+Validation:
+
+```text
+branchId > 0
+reservationId > 0
+```
+
+Response:
+
+```text
+TicketDetailsResponse
+```
+
+**Business**
+
+Reuse نفس:
+
+```text
+CreateTicketFromReservationAsync
+```
+
+ولا يوجد duplicate Ticket creation business.
+
+---
+
+## 3. New Direct Ticket
+
+```http
+POST /api/branches/{branchId}/kiosk/tickets
+```
+
+Permission:
+
+```text
+Tickets.Create
+```
+
+Request:
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "field": "01012345678",
+  "customInputs": []
+}
+```
+
+Response:
+
+```text
+TicketDetailsResponse
+```
+
+**Business**
+
+```text
+Walk-in Customer
+→ Direct Ticket
+```
+
+ولا يتم إنشاء Reservation مؤقتة.
+
+في Kiosk flow، لو Service لا تملك CustomInputs:
+
+```text
+Field required
+```
+
+أما لو لديها CustomInputs:
+
+```text
+Full Ticket CustomInput validation
+```
+
+---
+
+# Block 24 — Kiosk Service Discovery
+
+رغم إن الـEndpoint موجودة داخل `BranchesController`، Business-wise مكانها الطبيعي في الـKiosk Block:
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+Authorization:
+
+```text
+AllowAnonymous
+```
+
+**Business Capability**
+
+ترجع Tree/Services التي يمكن إصدار Ticket لها حاليًا مع معلومات UX/Branding/Custom Inputs المطلوبة للـKiosk.
+
+**Outcome**
+
+الـKiosk يعرف:
+
+```text
+ما الخدمات المتاحة؟
+ما الـCustom Inputs؟
+ما القيود؟
+ما الـBranch Branding؟
+```
+
+ثم ينتقل إلى:
+
+```text
+Previous Reservation
+OR
+New Ticket
+```
+
+---
+
+# Block 25 — Public Display Runtime
+
+Business-wise يمكن فصلها عن Management:
+
+```http
+GET /api/branches/{branchId}/display-runtime-configuration
+GET /api/branches/{branchId}/display-runtime-playlist
+```
+
+الاثنان:
+
+```text
+AllowAnonymous
+```
+
+Client Value:
+
+```text
+Display TV/App يمكن تشغيلها بدون admin login.
+```
+
+---
+
+# Block 26 — Globalization Review
+
+يمكن تجميع الاثنين Business-wise في Approval Center:
+
+```text
+Service Globalization
+Segment Globalization
+```
+
+Capabilities:
+
+```text
+Branch submits/owns local definitions
+Central reviewer sees requests
+Central reviewer approves/rejects
+RowVersion prevents concurrent review
+```
+
+---
+
+# Block 27 — API Areas غير موجود لها Endpoint حاليًا
+
+في الـsnapshot المرجعية لا يوجد Controller مكتمل موثق لـ:
+
+```text
+GlobalConfiguration CRUD
+Logging CRUD
+Map
+Audit Management
+Data Synchronization APIs
+WindowService Management
+Calling Algorithm
+Operator Runtime
+```
+
+وجود المفهوم في business scope لا يعني وجود API، لذلك لا ينبغي اختراع endpoints لها.
+
+---
+
+# Final System Map
+
+```text
+QControl API
+│
+├── Authentication
+│   ├── Login
+│   └── Initial Password
+│
+├── Branch
+│   ├── Branch CRUD/Lifecycle
+│   ├── Branch Admin
+│   ├── Branding
+│   ├── Advertisement
+│   └── Configuration
+│
+├── Infrastructure
+│   ├── Waiting Area
+│   ├── Window
+│   ├── Terminal
+│   └── Display
+│       └── DisplayWindow
+│
+├── Customer Experience
+│   ├── General Brand
+│   ├── Branch Display Configuration
+│   ├── Display Messages
+│   ├── Branch Videos
+│   └── Public Display Runtime
+│
+├── Service Catalog
+│   ├── Services
+│   ├── Hierarchy
+│   ├── Custom Inputs
+│   ├── Images
+│   ├── Branch Assignment
+│   ├── Schedule
+│   └── Workflow
+│
+├── Segmentation
+│   ├── Global Segment
+│   ├── Branch Segment
+│   └── Service Segment Quota
+│
+├── Governance
+│   ├── Service Globalization
+│   └── Segment Globalization
+│
+├── Reservation Runtime
+│   ├── Create
+│   ├── List/Details
+│   ├── History
+│   ├── Cancel
+│   ├── Convert To Ticket
+│   └── Archive
+│
+├── Ticket Runtime
+│   ├── Create
+│   ├── List/Details
+│   ├── History
+│   ├── Cancel
+│   ├── NoShow → Waiting
+│   ├── Start Service
+│   ├── Complete Service
+│   ├── Manual Transfer
+│   └── Archive
+│
+└── Kiosk Runtime
+    ├── Ticket Issuable Services
+    ├── Reservation Search
+    ├── Reservation → Ticket
+    └── Direct Ticket
+```
+
+# أهم Business Value لكل Block
+
+| Block                  | القيمة الأساسية                           |
+| ---------------------- | ----------------------------------------- |
+| `Auth`                 | Secure access and authorization context   |
+| `Branch`               | إدارة المواقع التشغيلية                   |
+| `Branch Configuration` | ضبط Runtime rules لكل فرع                 |
+| `WaitingArea`          | تنظيم مناطق انتظار العملاء                |
+| `Window`               | نقطة تقديم الخدمة                         |
+| `Terminal`             | ربط الأجهزة بنقاط الخدمة                  |
+| `Display`              | عرض النداءات وربط Windows                 |
+| `Branding`             | تخصيص تجربة العميل                        |
+| `Branch Videos`        | Multimedia playlist للفرع                 |
+| `Service`              | تعريف الخدمات والـHierarchy               |
+| `Schedule`             | تحديد متى الخدمة متاحة                    |
+| `Workflow`             | تحديد رحلة الخدمة                         |
+| `Segment`              | تصنيف العملاء وتحديد الأولوية             |
+| `Quota`                | توزيع سعة الأرقام على Segments            |
+| `Reservation`          | إدارة الحجوزات المسبقة                    |
+| `Ticket`               | المعاملة الأساسية داخل Queue              |
+| `Kiosk`                | Self-service issuance/retrieval flow      |
+| `Archive`              | الحفاظ على التاريخ مع تخفيف الـHot Tables | 
+
+
+
+
+
+
+Kiosic scenario 
+# [FE][Kiosk] Implement Customer Ticket Issuance Flow – Service Selection, Reservation Lookup & Direct Ticket
+
+## الهدف
+
+تنفيذ تجربة الـ`Kiosk` الخاصة بإصدار التذاكر داخل الفرع.
+
+الـKiosk يجب أن تدعم مسارين رئيسيين بعد اختيار العميل للخدمة:
+
+```text
+1. لدي حجز مسبق
+2. تذكرة جديدة
+```
+
+السيناريو الأول يبحث عن `Reservation` موجودة مسبقًا ثم يحولها إلى `Ticket`.
+
+السيناريو الثاني ينشئ `Ticket` مباشرة بدون إنشاء `Reservation` وسيطة.
+
+---
+
+# 1. End-to-End Flow
+
+الـflow المقترح للـFrontend:
+
+```text
+Open Kiosk
+    |
+    v
+Load Branch Branding + Available Services
+    |
+    v
+Language Selection
+(if configured)
+    |
+    v
+Navigate Service Tree
+    |
+    v
+Select Leaf Service
+    |
+    v
+Choose Customer Flow
+    |
+    +----------------------------------+
+    |                                  |
+    v                                  v
+Previous Reservation              New Ticket
+    |                                  |
+    v                                  v
+Enter Lookup Data                Enter Customer Data
+    |                                  |
+    v                                  v
+Search Reservations              Create Direct Ticket
+    |
+    v
+Reservation List
+    |
+    v
+Select Reservation
+    |
+    v
+Convert Reservation → Ticket
+    |
+    +---------------+------------------+
+                    |
+                    v
+              Ticket Details
+                    |
+                    v
+                 Print
+                    |
+                    v
+             Reset Kiosk Flow
+```
+
+---
+
+# 2. API Summary
+
+الـFrontend سيحتاج الـEndpoints التالية:
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/search
+```
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/{reservationId}/ticket
+```
+
+```http
+POST /api/branches/{branchId}/kiosk/tickets
+```
+
+الـKiosk Controller الحالية تحتوي على الثلاثة `POST` endpoints السابقة، بينما `ticket-issuable-services` موجودة في `BranchesController`.
+
+---
+
+# 3. Screen 1 — Kiosk Initialization
+
+عند فتح الـKiosk يجب أولًا تحميل بيانات الفرع والخدمات المتاحة حاليًا.
+
+## Endpoint
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+### Authorization
+
+الـEndpoint الحالية:
+
+```text
+AllowAnonymous
+```
+
+ولا تحتاج Bearer Token حاليًا.
+
+---
+
+## Purpose
+
+تستخدم الـEndpoint للحصول على:
+
+```text
+Branch Branding
+Branch Theme
+Kiosk Behavior
+Button Styling
+Available Service Tree
+Service Custom Inputs
+Custom Input Restrictions
+```
+
+الـresponse الحالية تحتوي `BranchId`, `BranchBranding`, و`Services`.
+
+---
+
+# 4. Response — Branch Branding
+
+الـresponse تحتوي تقريبًا على:
+
+```json
+{
+  "branchId": 1,
+  "branchBranding": {
+    "logoUrl": "/Media/Branches/1/Logo/logo.png",
+    "theme": {
+      "mainColor": "#...",
+      "secondaryColor": "#...",
+      "backgroundColor": "#...",
+      "headerColor": "#...",
+      "footerColor": "#...",
+      "mainTextColor": "#..."
+    },
+    "behavior": {
+      "showLanguagePage": true,
+      "defaultLanguageIsArabic": true,
+      "alwaysRequireUserInput": false,
+      "showServiceNavigationPath": true,
+      "allowOperatorSelection": false,
+      "allowRequestMoreServices": false
+    },
+    "languageButton": {
+      "backgroundColor": "#...",
+      "textColor": "#...",
+      "width": 200,
+      "height": 60,
+      "text": "..."
+    },
+    "serviceButton": {
+      "backgroundColor": "#...",
+      "textColor": "#...",
+      "width": 300,
+      "height": 80,
+      "text": "...",
+      "space": 10,
+      "fontSize": 18
+    },
+    "keypadButton": {
+      "backgroundColor": "#...",
+      "textColor": "#...",
+      "width": 80,
+      "height": 80,
+      "text": "..."
+    },
+    "footerButton": {
+      "backgroundColor": "#...",
+      "textColor": "#...",
+      "width": 200,
+      "height": 60,
+      "text": "..."
+    }
+  },
+  "services": []
+}
+```
+
+الـFrontend يجب أن تستخدم هذه القيم بدل Hardcoded styling قدر الإمكان.
+
+---
+
+# 5. Language Handling
+
+استخدم:
+
+```text
+branchBranding.behavior.showLanguagePage
+```
+
+إذا:
+
+```text
+true
+```
+
+اعرض شاشة اختيار اللغة.
+
+مثال:
+
+```text
+العربية
+English
+```
+
+إذا:
+
+```text
+false
+```
+
+استخدم:
+
+```text
+defaultLanguageIsArabic
+```
+
+لتحديد اللغة الابتدائية.
+
+كل API call بعد ذلك يفضل أن يرسل:
+
+```http
+Accept-Language: ar
+```
+
+أو:
+
+```http
+Accept-Language: en
+```
+
+حتى تصل رسائل الـvalidation/business من الـBackend باللغة المناسبة.
+
+---
+
+# 6. Service Tree
+
+كل Service node في الـresponse تحتوي حاليًا على:
+
+```text
+serviceId
+arabicName
+englishName
+arabicUserMessage
+englishUserMessage
+isTicketIssuable
+isClientInputRequired
+customInputs
+rangePrefix
+rangeStartNumber
+rangeEndNumber
+children
+```
+
+---
+
+# 7. Rendering Service Tree
+
+إذا كان:
+
+```text
+children.length > 0
+```
+
+فالـFrontend تعرض الـService كـNavigation Node.
+
+مثال:
+
+```text
+الخدمات الطبية
+    |
+    +-- العيادات
+            |
+            +-- الباطنة
+            +-- القلب
+```
+
+العميل يتنقل في الـTree حتى يصل إلى `Leaf Service`.
+
+---
+
+# 8. Selectable Leaf Service
+
+الـFrontend يجب أن تعتبر الـService قابلة للاختيار النهائي عندما تكون Leaf في الـtree المرجعة.
+
+عمليًا:
+
+```text
+children.length == 0
+```
+
+وتكون:
+
+```text
+isTicketIssuable == true
+```
+
+الـBackend أصلًا يقوم بتصفية الخدمات المتاحة والتأكد من صلاحيتها للإصدار قبل إرجاعها.
+
+لا يجب على الـFrontend إعادة بناء Service Availability logic بنفسها.
+
+---
+
+# 9. Service User Message
+
+بعد اختيار Service يمكن عرض:
+
+```text
+arabicUserMessage
+```
+
+في اللغة العربية.
+
+أو:
+
+```text
+englishUserMessage
+```
+
+في الإنجليزية.
+
+إذا كانت القيمة `null` لا تعرض Message section.
+
+---
+
+# 10. Important Backend Gap — HasReservation
+
+يوجد في الـDomain/Service configuration حقل:
+
+```text
+HasReservation
+```
+
+لكن الـresponse الحالية الخاصة بـ:
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+لا تعرض `HasReservation` داخل `TicketIssuableServiceTreeNodeResponse`.
+
+الـresponse الحالية تعرض `IsTicketIssuable`, `IsClientInputRequired`, `CustomInputs`, وغيرها، لكنها لا تعرض `HasReservation`.
+
+### Impact on Frontend
+
+الـFrontend حاليًا لا تستطيع معرفة من نفس Kiosk response هل الخدمة تدعم:
+
+```text
+Previous Reservation
+```
+
+أم لا.
+
+### Required Backend Decision
+
+يفضل إضافة:
+
+```json
+{
+  "hasReservation": true
+}
+```
+
+داخل كل `Leaf Service` في Kiosk service discovery response.
+
+حتى يصبح الـFrontend flow:
+
+```text
+hasReservation = true
+→ Show:
+   - لدي حجز مسبق
+   - تذكرة جديدة
+
+hasReservation = false
+→ Show:
+   - تذكرة جديدة فقط
+```
+
+حتى يتم تعديل الـBackend، لا يجب على الـFrontend Hardcode هذه القاعدة.
+
+---
+
+# 11. Screen 2 — Choose Ticket Flow
+
+بعد اختيار Leaf Service:
+
+إذا كانت الخدمة تسمح بالحجز:
+
+اعرض:
+
+```text
+هل لديك حجز مسبق؟
+```
+
+مع:
+
+```text
+[ لدي حجز مسبق ]
+
+[ تذكرة جديدة ]
+```
+
+---
+
+# 12. Flow A — Previous Reservation
+
+إذا اختار العميل:
+
+```text
+لدي حجز مسبق
+```
+
+يجب تحديد طريقة البحث طبقًا لـ`CustomInputs` الخاصة بالخدمة.
+
+---
+
+# 13. Determine Lookup Mode
+
+استخدم:
+
+```text
+selectedService.customInputs
+```
+
+## Case A — Service لديها Custom Inputs
+
+إذا:
+
+```text
+customInputs.length > 0
+```
+
+يكون البحث عن الـReservation باستخدام واحدة أو أكثر من الـCustom Inputs.
+
+---
+
+## Case B — Service بدون Custom Inputs
+
+إذا:
+
+```text
+customInputs == null
+```
+
+أو:
+
+```text
+customInputs.length == 0
+```
+
+يتم استخدام:
+
+```text
+Field
+```
+
+كقيمة Lookup عامة.
+
+---
+
+# 14. Custom Input Definition
+
+كل Custom Input المرجعة تحتوي بيانات مثل:
+
+```text
+customInputId
+name
+labelEn
+labelAr
+type
+isRequired
+minLength
+maxLength
+minValue
+maxValue
+startWith
+order
+```
+
+الـBackend يقوم بتحميل الـCustom Inputs النشطة للخدمة مع القيود الخاصة بها.
+
+---
+
+# 15. Supported Input Types
+
+الأنواع الحالية:
+
+```text
+String
+Integer
+```
+
+لأن الـEnum الحالية هي:
+
+```text
+String = 1
+Integer = 2
+```
+
+والـAPI تعمل باستخدام `JsonStringEnumConverter`، لذلك الـFrontend تتوقع أسماء enum النصية مثل:
+
+```json
+"type": "String"
+```
+
+أو:
+
+```json
+"type": "Integer"
+```
+
+---
+
+# 16. Custom Input Rendering
+
+يفضل ترتيب الحقول حسب:
+
+```text
+order ASC
+```
+
+### Label
+
+لو اللغة عربية:
+
+```text
+labelAr
+```
+
+لو الإنجليزية:
+
+```text
+labelEn
+```
+
+ويمكن استخدام:
+
+```text
+name
+```
+
+كـfallback إذا لم يوجد translated label.
+
+---
+
+# 17. String Custom Input Validation
+
+عند:
+
+```text
+type = String
+```
+
+يجب دعم:
+
+```text
+minLength
+maxLength
+startWith
+```
+
+مثال:
+
+```json
+{
+  "customInputId": 10,
+  "name": "Phone",
+  "labelAr": "رقم الهاتف",
+  "type": "String",
+  "isRequired": true,
+  "minLength": 11,
+  "maxLength": 11,
+  "startWith": "01"
+}
+```
+
+الـFrontend يمكنها عمل Client Validation لتحسين UX.
+
+لكن الـBackend تظل Source of Truth.
+
+---
+
+# 18. Integer Custom Input Validation
+
+عند:
+
+```text
+type = Integer
+```
+
+استخدم:
+
+```text
+minValue
+maxValue
+```
+
+ولا تطبق String restrictions.
+
+الـDomain الحالي يفصل قيود String عن Integer.
+
+---
+
+# 19. Important Rule — Reservation Search
+
+في عملية البحث عن Reservation:
+
+**لا تطبق `isRequired` كأنها عملية Create.**
+
+مثال:
+
+الخدمة لديها:
+
+```text
+Phone        Required
+NationalId   Required
+CustomerCode Optional
+Email        Optional
+Passport     Optional
+```
+
+في شاشة البحث عن حجز مسبق:
+
+المستخدم ليس مطالبًا بإدخال كل الـRequired Fields.
+
+يكفي:
+
+```text
+Minimum = 1 Custom Input
+```
+
+مثلاً:
+
+```text
+Phone only
+```
+
+أو:
+
+```text
+Phone + NationalId
+```
+
+أو:
+
+```text
+NationalId + CustomerCode
+```
+
+الـBackend نفسها تستخدم:
+
+```text
+requireAllRequired = false
+```
+
+في Reservation Lookup.
+
+---
+
+# 20. Search Reservation Endpoint
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/search
+```
+
+### Authorization
+
+حاليًا:
+
+```text
+Bearer Token Required
+```
+
+Controller عليها:
+
+```text
+Authorize
+```
+
+Permission:
+
+```text
+Reservations.View
+```
+
+---
+
+# 21. Search Request — Custom Input Mode
+
+مثال البحث برقم الهاتف فقط:
+
+```json
+{
+  "serviceId": 15,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    }
+  ]
+}
+```
+
+---
+
+# 22. Search Request — Multiple Inputs
+
+مثال:
+
+```json
+{
+  "serviceId": 15,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    },
+    {
+      "serviceCustomInputId": 9,
+      "value": "29801011234567"
+    }
+  ]
+}
+```
+
+---
+
+# 23. Multiple Inputs Search Behavior
+
+لو أكثر من Input تم إرسالها فالـBackend تبحث باستخدام:
+
+```text
+AND
+```
+
+وليس:
+
+```text
+OR
+```
+
+مثال:
+
+```text
+Phone = 01012345678
+AND
+NationalId = 29801011234567
+```
+
+لازم نفس الـReservation تحقق القيمتين.
+
+التنفيذ الحالي يضيف شرط Matching مستقل لكل input داخل نفس Reservation.
+
+---
+
+# 24. Search Request — Field Mode
+
+لو الـService ليس لديها أي Custom Inputs:
+
+```json
+{
+  "serviceId": 15,
+  "field": "01012345678",
+  "customInputs": []
+}
+```
+
+الـField هنا Generic Lookup Value.
+
+لا تفترض أنها دائمًا Phone Number.
+
+قد تكون:
+
+```text
+Phone
+National ID
+Customer Code
+Reference Number
+Any configured business lookup value
+```
+
+---
+
+# 25. Search Validation — Basic
+
+الـBackend validator الحالية تتحقق من:
+
+```text
+BranchId > 0
+ServiceId > 0
+
+Field <= 3000 characters
+
+ServiceCustomInputId > 0
+
+CustomInput.Value:
+- Not Empty
+- Max 3000
+```
+
+---
+
+# 26. Search Validation — Service With Custom Inputs
+
+إذا كانت الـService لديها Custom Inputs:
+
+```text
+Field MUST NOT be sent
+```
+
+أي:
+
+```json
+{
+  "field": "010...",
+  "customInputs": [...]
+}
+```
+
+غير مسموح.
+
+سيعود:
+
+```text
+FieldNotAllowed
+```
+
+---
+
+يجب أيضًا إرسال:
+
+```text
+at least one CustomInput
+```
+
+وإلا يعود:
+
+```text
+CustomInputsRequiredForSearch
+```
+
+---
+
+# 27. Search Validation — Service Without Custom Inputs
+
+إذا كانت الـService لا تحتوي Custom Inputs:
+
+يجب:
+
+```text
+Field != null
+Field != empty
+```
+
+ويجب:
+
+```text
+customInputs = []
+```
+
+إذا تم إرسال Custom Inputs لخدمة ليس لديها definitions:
+
+يرجع Backend validation:
+
+```text
+CustomInputsNotAllowed
+```
+
+---
+
+# 28. Custom Input Ownership Validation
+
+الـFrontend يجب أن ترسل فقط:
+
+```text
+serviceCustomInputId
+```
+
+الموجودة داخل Custom Inputs الخاصة بالـSelected Service.
+
+لا تستخدم input id من Service أخرى.
+
+الـBackend تتحقق من أن كل Input تابع للخدمة.
+
+---
+
+# 29. Duplicate Input IDs
+
+غير مسموح:
+
+```json
+{
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "A"
+    },
+    {
+      "serviceCustomInputId": 8,
+      "value": "B"
+    }
+  ]
+}
+```
+
+نفس `ServiceCustomInputId` لا يجب أن يظهر مرتين.
+
+---
+
+# 30. Reservation Search Scope
+
+الـBackend تبحث فقط داخل:
+
+```text
+BranchId = Current Branch
+AND
+ServiceId = Selected Service
+```
+
+ثم تطبق Lookup criteria.
+
+يعني نفس Phone في Service أخرى لا يظهر.
+
+ونفس Phone في Branch أخرى لا يظهر.
+
+---
+
+# 31. Reservation Search Matching
+
+في `Field Mode` البحث هو Exact Match.
+
+مثال:
+
+```text
+Stored:
+01012345678
+```
+
+Request:
+
+```text
+01012345678
+```
+
+→ Match.
+
+ليس:
+
+```text
+Contains
+StartsWith
+Fuzzy Search
+```
+
+---
+
+# 32. Search Response
+
+الـresponse هي:
+
+```text
+List<Reservation>
+```
+
+وليس `Single Reservation`.
+
+الـcontract الحالية:
+
+```text
+reservationId
+serviceId
+segmentId
+scheduledOnUtc
+businessDate
+status
+```
+
+مثال:
+
+```json
+[
+  {
+    "reservationId": 1001,
+    "serviceId": 15,
+    "segmentId": 2,
+    "scheduledOnUtc": "2026-09-01T09:00:00Z",
+    "businessDate": "2026-09-01",
+    "status": "Active"
+  },
+  {
+    "reservationId": 1008,
+    "serviceId": 15,
+    "segmentId": 2,
+    "scheduledOnUtc": "2026-09-01T13:00:00Z",
+    "businessDate": "2026-09-01",
+    "status": "Active"
+  }
+]
+```
+
+---
+
+# 33. Why List Instead of Single
+
+نفس العميل ممكن يكون عنده:
+
+```text
+Phone = 01012345678
+```
+
+وأكثر من Reservation.
+
+مثلاً:
+
+```text
+09:00
+13:00
+17:00
+```
+
+لذلك الـFrontend:
+
+**ممنوع تختار أول Reservation تلقائيًا إذا كان عدد النتائج أكثر من واحد.**
+
+---
+
+# 34. Search Result Screen
+
+اعرض لكل Reservation:
+
+```text
+Reservation ID
+Date
+Time
+Status
+```
+
+والعميل يختار الحجز المطلوب.
+
+مثال UI:
+
+```text
+حجوزاتك
+
+09:00 AM
+01/09/2026
+Active
+
+----------------
+
+01:00 PM
+01/09/2026
+Active
+```
+
+---
+
+# 35. Reservation Status Values
+
+القيم الحالية:
+
+```text
+Active
+NoShow
+Cancelled
+Expired
+ConvertedToTicket
+```
+
+---
+
+# 36. Important Current Behavior — Search Does Not Filter Status
+
+الـBackend الحالية لا تعمل:
+
+```text
+WHERE Status = Active
+```
+
+في Kiosk search.
+
+هي تبحث فقط باستخدام:
+
+```text
+Branch
+Service
+Lookup Data
+```
+
+لذلك ممكن نظريًا ترجع:
+
+```text
+Active
+NoShow
+Cancelled
+Expired
+ConvertedToTicket
+```
+
+إذا كانت ما زالت في Operational table.
+
+### Frontend Rule
+
+اعرض الـStatus التي ترجع من الـBackend.
+
+لا تفترض أن كل نتيجة قابلة للتحويل.
+
+الـBackend conversion endpoint هي Source of Truth النهائية لتحديد هل الحجز يمكن تحويله إلى Ticket أم لا.
+
+---
+
+# 37. Empty Search Result
+
+إذا الـresponse:
+
+```json
+[]
+```
+
+اعرض Message مثل:
+
+```text
+لم يتم العثور على حجوزات مطابقة للبيانات المدخلة.
+```
+
+ويجب السماح للمستخدم بـ:
+
+```text
+Edit Search Data
+```
+
+أو:
+
+```text
+Back
+```
+
+---
+
+# 38. Select Reservation
+
+بعد اختيار Reservation احفظ:
+
+```text
+reservationId
+```
+
+ولا ترسل الـCustom Inputs مرة أخرى في عملية التحويل.
+
+---
+
+# 39. Convert Reservation to Ticket
+
+## Endpoint
+
+```http
+POST /api/branches/{branchId}/kiosk/reservations/{reservationId}/ticket
+```
+
+مثال:
+
+```http
+POST /api/branches/5/kiosk/reservations/1001/ticket
+```
+
+---
+
+# 40. Authorization
+
+حاليًا:
+
+```text
+Authorize
+```
+
+Permission:
+
+```text
+Reservations.ConvertToTicket
+```
+
+---
+
+# 41. Request
+
+لا يوجد Request Body.
+
+فقط:
+
+```text
+branchId
+reservationId
+```
+
+من الـroute.
+
+---
+
+# 42. Basic Validation
+
+```text
+branchId > 0
+reservationId > 0
+```
+
+---
+
+# 43. Business Behavior
+
+الـEndpoint تستخدم نفس Existing Reservation → Ticket business الموجودة في النظام.
+
+لا يوجد Logic منفصل خاص بالـKiosk.
+
+الـhandler تستدعي:
+
+```text
+CreateTicketFromReservationAsync
+```
+
+مباشرة.
+
+---
+
+# 44. Backend Responsibilities During Conversion
+
+الـFrontend لا يجب أن تنفذ هذه القواعد محليًا.
+
+الـBackend مسؤولة عن:
+
+```text
+Reservation existence
+Branch ownership
+Reservation state validation
+Already converted validation
+Service availability
+Schedule validation
+Ticket numbering
+Segment quota
+Reservation → Ticket relation
+Custom Input snapshot copy
+Field/LookupValue copy
+Workflow binding
+Transaction
+Concurrency
+History
+```
+
+---
+
+# 45. Conversion Success Response
+
+الـresponse:
+
+```text
+TicketDetailsResponse
+```
+
+والحقول الأساسية هي:
+
+```text
+id
+branchId
+ticketNumber
+businessDate
+status
+
+issuingServiceId
+currentServiceId
+segmentId
+
+reservationId
+currentWindowId
+
+currentQueueEnteredOnUtc
+currentServiceStartedOnUtc
+
+completedOnUtc
+cancelledOnUtc
+cancellationReason
+
+boundWorkflowId
+currentWorkflowStepOrder
+
+customInputs
+journeys
+
+rowVersion
+isArchived
+
+history
+callAttempts
+
+field
+```
+
+---
+
+# 46. Example Ticket Response
+
+مثال مبسط:
+
+```json
+{
+  "id": 5001,
+  "branchId": 5,
+  "ticketNumber": "A015",
+  "businessDate": "2026-09-01",
+  "status": "Waiting",
+
+  "issuingServiceId": 15,
+  "currentServiceId": 15,
+  "segmentId": 2,
+
+  "reservationId": 1001,
+  "currentWindowId": null,
+
+  "currentQueueEnteredOnUtc": "2026-09-01T08:45:00Z",
+  "currentServiceStartedOnUtc": null,
+
+  "completedOnUtc": null,
+  "cancelledOnUtc": null,
+  "cancellationReason": null,
+
+  "boundWorkflowId": null,
+  "currentWorkflowStepOrder": null,
+
+  "customInputs": [],
+  "journeys": [],
+
+  "rowVersion": "...",
+  "isArchived": false,
+
+  "history": null,
+  "callAttempts": null,
+
+  "field": "01012345678"
+}
+```
+
+---
+
+# 47. Ticket Status After Issuance
+
+الـTicket الجديدة تدخل الـQueue في:
+
+```text
+Waiting
+```
+
+والـFrontend لا تحتاج عمل أي State Transition إضافي.
+
+---
+
+# 48. Ticket Status Enum
+
+القيم الحالية:
+
+```text
+Waiting
+Called
+InProgress
+NoShow
+Completed
+Cancelled
+```
+
+---
+
+# 49. Printing Reservation Ticket
+
+بعد Success:
+
+استخدم:
+
+```text
+ticketNumber
+```
+
+كالمعلومة الأساسية للطباعة.
+
+مثال:
+
+```text
+A015
+```
+
+يمكن استخدام أيضًا:
+
+```text
+businessDate
+selected service name
+```
+
+من الـstate الموجودة في الـFrontend.
+
+### Important
+
+لا يوجد في الـBackend snapshot الحالية:
+
+```http
+POST /print
+```
+
+أو Printer API.
+
+لذلك عملية الطباعة نفسها مسؤولية الـKiosk Client / Device Integration.
+
+---
+
+# 50. Flow B — New Ticket
+
+إذا العميل اختار:
+
+```text
+تذكرة جديدة
+```
+
+لا يتم إنشاء Reservation.
+
+يتم إنشاء Ticket مباشرة.
+
+---
+
+# 51. Direct Ticket Business Rule
+
+المسار الصحيح:
+
+```text
+Customer
+    ↓
+Select Service
+    ↓
+Enter Data
+    ↓
+Create Ticket
+    ↓
+Waiting
+    ↓
+Print
+```
+
+وليس:
+
+```text
+Create Reservation
+    ↓
+Convert Reservation
+    ↓
+Ticket
+```
+
+---
+
+# 52. Direct Ticket Input Mode
+
+مرة أخرى:
+
+```text
+Service Has Custom Inputs?
+```
+
+## YES
+
+أظهر الـCustom Inputs.
+
+## NO
+
+أظهر `Field`.
+
+---
+
+# 53. Important Difference Between Search and New Ticket
+
+### Reservation Search
+
+إذا الخدمة عندها Custom Inputs:
+
+```text
+Minimum required for search = 1
+```
+
+ولا يلزم كل `isRequired`.
+
+---
+
+### New Ticket
+
+إذا الخدمة عندها Custom Inputs:
+
+```text
+All Custom Inputs where isRequired = true
+must be supplied.
+```
+
+دي نقطة مهمة جدًا في الـFrontend implementation.
+
+---
+
+# 54. New Ticket — Custom Inputs Example
+
+مثلاً Service لديها:
+
+```text
+Phone         Required
+NationalId    Required
+Email         Optional
+```
+
+الـFrontend يجب أن تمنع Submit إذا لم يدخل:
+
+```text
+Phone
+AND
+NationalId
+```
+
+---
+
+# 55. Direct Ticket Endpoint
+
+```http
+POST /api/branches/{branchId}/kiosk/tickets
+```
+
+Authorization:
+
+```text
+Authorize
+```
+
+Permission:
+
+```text
+Tickets.Create
+```
+
+---
+
+# 56. Request — Service With Custom Inputs
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    },
+    {
+      "serviceCustomInputId": 9,
+      "value": "29801011234567"
+    }
+  ]
+}
+```
+
+---
+
+# 57. Request — Service Without Custom Inputs
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "field": "01012345678",
+  "customInputs": []
+}
+```
+
+---
+
+# 58. Direct Ticket Basic Validation
+
+الـvalidator الحالية:
+
+```text
+BranchId > 0
+ServiceId > 0
+SegmentId > 0
+
+Field <= 3000
+
+CustomInput.ServiceCustomInputId > 0
+
+CustomInput.Value:
+- Not Null
+- Max Length = 3000
+```
+
+---
+
+# 59. Service With Custom Inputs — Backend Rules
+
+إذا الخدمة لديها active Custom Inputs:
+
+```text
+Field NOT allowed
+```
+
+ويجب إرسال كل Required Custom Inputs.
+
+الـBackend تستخدم:
+
+```text
+requireAllRequired = true
+```
+
+في Create Ticket.
+
+---
+
+# 60. Service Without Custom Inputs — Backend Rules
+
+في Kiosk direct ticket:
+
+إذا لا يوجد Custom Input definitions:
+
+```text
+Field REQUIRED
+```
+
+لأن الـKiosk handler تستدعي:
+
+```text
+requireLookupValueWhenNoCustomInputs = true
+```
+
+وفي نفس الوقت:
+
+```text
+customInputs MUST be empty
+```
+
+---
+
+# 61. Field Normalization
+
+الـBackend تعمل:
+
+```text
+Trim
+```
+
+لـField.
+
+مثال:
+
+```text
+"   01012345678   "
+```
+
+يتم تخزينه:
+
+```text
+"01012345678"
+```
+
+---
+
+# 62. Direct Ticket Backend Business
+
+بعد validation، الـBackend مسؤولة عن:
+
+```text
+Service current availability
+IsTicketIssuable
+Branch assignment
+Schedule availability
+
+Segment relationship
+Segment quota
+
+Ticket number allocation
+Daily numbering
+
+Custom Input validation
+Custom Input snapshots
+
+Default workflow binding
+
+Create Ticket
+Ticket history
+Transaction
+Concurrency
+```
+
+الـFrontend لا تعيد تنفيذ هذه الـbusiness rules.
+
+---
+
+# 63. Direct Ticket Success Response
+
+نفس:
+
+```text
+TicketDetailsResponse
+```
+
+المستخدمة في Reservation Conversion.
+
+---
+
+# 64. Important Backend Gap — SegmentId
+
+`POST /kiosk/tickets` يتطلب:
+
+```text
+segmentId
+```
+
+داخل الـrequest.
+
+لكن:
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+لا ترجع حاليًا:
+
+```text
+SegmentId
+Segment Options
+Default Segment Id
+```
+
+والـ`KioskController` الحالية لا تحتوي Endpoint لاختيار Segments؛ تحتوي فقط Search Reservation وReservation→Ticket وDirect Ticket.
+
+### Impact
+
+الـFrontend لا يجب أن تعمل:
+
+```text
+segmentId = 1
+```
+
+Hardcoded.
+
+ولا تفترض أن System Default Segment دائمًا لها نفس ID.
+
+---
+
+# 65. Required Backend Dependency — Segment
+
+قبل إكمال ربط:
+
+```http
+POST /kiosk/tickets
+```
+
+يجب الاتفاق على أحد الحلين.
+
+### Option A — Preferred
+
+إرجاع Segment المناسبة داخل `ticket-issuable-services`.
+
+مثلاً:
+
+```json
+{
+  "serviceId": 15,
+  "segments": [
+    {
+      "segmentId": 1,
+      "nameAr": "عادي",
+      "nameEn": "Normal"
+    },
+    {
+      "segmentId": 2,
+      "nameAr": "VIP",
+      "nameEn": "VIP"
+    }
+  ]
+}
+```
+
+---
+
+### Option B
+
+Endpoint Kiosk مخصصة مثل:
+
+```http
+GET /api/branches/{branchId}/kiosk/services/{serviceId}/segments
+```
+
+لكن هذه Endpoint **غير موجودة حاليًا**، وبالتالي لا يتم ربطها في الـFrontend قبل تنفيذها رسميًا.
+
+---
+
+# 66. Authentication Integration Gap
+
+هناك نقطة مهمة أخرى.
+
+الـService Discovery:
+
+```http
+GET /api/branches/{branchId}/ticket-issuable-services
+```
+
+هي:
+
+```text
+AllowAnonymous
+```
+
+لكن الثلاثة Kiosk POST endpoints هي:
+
+```text
+Authorize
+```
+
+وتحتاج permissions.
+
+```text
+Reservations.View
+Reservations.ConvertToTicket
+Tickets.Create
+```
+
+كما أن الـApplication Handler نفسها تستخدم `TicketRuntimeRequestGuard` للتحقق من authentication وBranch access.
+
+---
+
+# 67. Frontend Authentication Requirement
+
+قبل Production Integration يجب تحديد:
+
+```text
+كيف سيحصل جهاز الـKiosk على JWT؟
+```
+
+لا يجب على الـFrontend:
+
+```text
+Use Admin credentials hardcoded
+```
+
+ولا:
+
+```text
+Use fake user
+```
+
+ولا تخزين Technical Admin password داخل التطبيق.
+
+الـAuthentication mechanism النهائي للـKiosk ما زال Backend/Product dependency.
+
+---
+
+# 68. Prevent Double Submit
+
+في كل POST operation:
+
+```http
+POST /kiosk/reservations/search
+```
+
+```http
+POST /kiosk/reservations/{id}/ticket
+```
+
+```http
+POST /kiosk/tickets
+```
+
+عند الضغط على Submit:
+
+```text
+Disable button
+Show loading state
+Prevent repeated clicks
+```
+
+خصوصًا في Ticket Creation.
+
+---
+
+# 69. Do Not Automatically Retry Create Ticket POST
+
+لو حصل Network Timeout بعد:
+
+```http
+POST /kiosk/tickets
+```
+
+لا تعمل automatic retry مباشرة.
+
+لأن من الممكن أن تكون الـBackend أنشأت الـTicket بنجاح لكن الـresponse ضاعت.
+
+وحاليًا لا يوجد في الـcontract الظاهرة `Idempotency-Key`.
+
+لذلك automatic POST retries قد تؤدي إلى Duplicate ticket creation.
+
+---
+
+# 70. Loading States
+
+كل شاشة تعتمد على API يجب أن تحتوي:
+
+```text
+Loading
+Success
+Empty
+Validation Error
+Business Error
+Network Error
+```
+
+---
+
+# 71. Search Loading
+
+عند Search:
+
+```text
+Searching for reservations...
+```
+
+ويتم تعطيل Search button حتى اكتمال الـrequest.
+
+---
+
+# 72. Ticket Creation Loading
+
+عند Ticket Creation:
+
+```text
+جاري إصدار التذكرة...
+```
+
+ولا تسمح للعميل بالرجوع أو الضغط مرة أخرى أثناء الـrequest قدر الإمكان.
+
+---
+
+# 73. Error Handling
+
+المشروع يستخدم:
+
+```text
+Result Pattern
+→ ToIActionResult()
+→ ProblemDetails
+```
+
+الـFrontend يجب أن تعرض الـlocalized error القادمة من Backend.
+
+لا تستخدم رسائل عامة مثل:
+
+```text
+Something went wrong
+```
+
+إذا كانت الـBackend أرسلت Business Message واضحة.
+
+---
+
+# 74. Important Business Errors
+
+الـFrontend يجب أن تكون مستعدة لأخطاء مثل:
+
+```text
+Authentication required
+
+Wrong branch
+
+Service unavailable
+
+Custom inputs not allowed
+
+At least one custom input is required for search
+
+Field required
+
+Field not allowed
+
+Invalid custom input
+
+Duplicate custom input
+
+Quota exceeded
+
+Ticket number range exhausted
+
+Reservation not found
+
+Reservation already converted
+
+Invalid reservation transition
+
+Concurrency conflict
+```
+
+الـTicket Runtime الحالية تحتوي localized messages لهذه الحالات.
+
+---
+
+# 75. Service Unavailable
+
+مهم جدًا:
+
+العميل ممكن يفتح شاشة Kiosk ويختار Service.
+
+ثم قبل ما ينشئ Ticket:
+
+```text
+Schedule closes
+Service deactivates
+Branch assignment changes
+```
+
+لذلك الـBackend تعيد فحص availability عند الـPOST.
+
+إذا رجعت:
+
+```text
+ServiceUnavailable
+```
+
+الـFrontend يجب:
+
+```text
+Show message
+Return customer to service selection
+Reload available services
+```
+
+---
+
+# 76. Quota Exceeded
+
+لو:
+
+```text
+segment quota reached
+```
+
+يمكن للBackend أن ترجع:
+
+```text
+QuotaExceeded
+```
+
+اعرض الرسالة ولا تطبع Ticket.
+
+---
+
+# 77. Ticket Number Range Exhausted
+
+إذا انتهى Ticket Number Range لليوم:
+
+```text
+NumberRangeExhausted
+```
+
+اعرض Business Error للمستخدم.
+
+لا تنشئ رقم Ticket من الـFrontend.
+
+---
+
+# 78. Reservation Already Converted
+
+إذا المستخدم اختار Reservation وتم تحويلها سابقًا:
+
+قد ترجع:
+
+```text
+AlreadyConverted
+```
+
+اعرض Message واضحة ثم ارجع إلى Reservation Search أو Service Selection.
+
+---
+
+# 79. No Reservation Search Results
+
+UI:
+
+```text
+لم يتم العثور على حجز مطابق.
+```
+
+Actions:
+
+```text
+[ إعادة البحث ]
+
+[ رجوع ]
+```
+
+لا تحول العميل تلقائيًا إلى New Ticket بدون اختياره.
+
+---
+
+# 80. Multiple Reservations
+
+إذا النتائج أكثر من واحدة:
+
+```text
+Customer MUST select explicitly.
+```
+
+مثال:
+
+```text
+Reservation #1001
+01 Sep - 09:00
+
+Reservation #1045
+01 Sep - 13:00
+```
+
+---
+
+# 81. Single Reservation
+
+حتى لو النتيجة Reservation واحدة فقط، يفضل عرضها للعميل للتأكيد قبل Conversion.
+
+مثال:
+
+```text
+تم العثور على الحجز التالي:
+
+01/09/2026
+09:00 AM
+
+[ إصدار التذكرة ]
+```
+
+---
+
+# 82. No Custom Inputs — UX
+
+إذا الخدمة بدون Custom Inputs، استخدم Generic Field UI.
+
+لا تكتب label ثابت:
+
+```text
+رقم الهاتف
+```
+
+إلا لو الـBusiness تحدد لاحقًا أن `Field` هي Phone.
+
+حاليًا الـBackend تعرفها كقيمة Generic Lookup.
+
+---
+
+# 83. Final Success Screen
+
+بعد Success:
+
+اعرض بشكل prominent:
+
+```text
+تم إصدار تذكرتك بنجاح
+```
+
+والـTicket Number:
+
+```text
+A015
+```
+
+مثال UI:
+
+```text
+------------------------
+
+رقم التذكرة
+
+        A015
+
+الخدمة:
+كشف باطنة
+
+يرجى الاحتفاظ بالتذكرة
+ومتابعة شاشة النداء
+
+------------------------
+```
+
+---
+
+# 84. Printing
+
+بعد استقبال `TicketDetailsResponse`:
+
+```text
+1. Render printable ticket.
+2. Send to local kiosk printer integration.
+3. Show success state.
+```
+
+لا تنتظر Endpoint أخرى من الـBackend للطباعة، لأنها غير موجودة حاليًا في الـsnapshot.
+
+---
+
+# 85. Reset Flow
+
+بعد نجاح الطباعة:
+
+امسح:
+
+```text
+Selected Service
+Selected Reservation
+Field
+Custom Inputs
+Search Results
+Ticket Result
+```
+
+وارجع إلى:
+
+```text
+Initial Kiosk Screen
+```
+
+مع الاحتفاظ فقط بـ:
+
+```text
+BranchId
+Branding
+current language/configuration where applicable
+```
+
+---
+
+# 86. FE State Model — Recommended
+
+يمكن الاحتفاظ بحالة مثل:
+
+```text
+branchId
+
+branding
+language
+
+serviceTree
+selectedService
+serviceNavigationPath
+
+mode:
+- Reservation
+- NewTicket
+
+lookupField
+customInputValues
+
+reservationSearchResults
+selectedReservation
+
+selectedSegmentId
+
+createdTicket
+
+loadingState
+errorState
+```
+
+---
+
+# 87. Suggested Screen Flow
+
+```text
+Kiosk Home
+   |
+   v
+Language Screen
+   |
+   v
+Service Tree
+   |
+   v
+Leaf Service
+   |
+   v
+Choose Flow
+   |
+   +------------------------------------+
+   |                                    |
+   v                                    v
+Existing Reservation                New Ticket
+   |                                    |
+   v                                    v
+Lookup Form                       Customer Input Form
+   |                                    |
+   v                                    |
+Search API                              |
+   |                                    |
+   v                                    |
+Reservation Results                     |
+   |                                    |
+   v                                    |
+Select Reservation                      |
+   |                                    |
+   v                                    |
+Convert API                        Create Ticket API
+   |                                    |
+   +----------------+-------------------+
+                    |
+                    v
+               Ticket Result
+                    |
+                    v
+                  Print
+                    |
+                    v
+                  Reset
+```
+
+---
+
+# 88. Scenario Example — Reservation With Phone Custom Input
+
+Service:
+
+```text
+Cardiology
+```
+
+Custom Inputs:
+
+```text
+Phone
+National ID
+```
+
+Customer selects:
+
+```text
+لدي حجز مسبق
+```
+
+enters:
+
+```text
+Phone = 01012345678
+```
+
+Frontend sends:
+
+```json
+{
+  "serviceId": 15,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    }
+  ]
+}
+```
+
+Response:
+
+```json
+[
+  {
+    "reservationId": 1001,
+    "serviceId": 15,
+    "segmentId": 2,
+    "scheduledOnUtc": "2026-09-01T09:00:00Z",
+    "businessDate": "2026-09-01",
+    "status": "Active"
+  },
+  {
+    "reservationId": 1002,
+    "serviceId": 15,
+    "segmentId": 2,
+    "scheduledOnUtc": "2026-09-01T13:00:00Z",
+    "businessDate": "2026-09-01",
+    "status": "Active"
+  }
+]
+```
+
+Customer chooses:
+
+```text
+Reservation 1002
+```
+
+Frontend calls:
+
+```http
+POST /api/branches/5/kiosk/reservations/1002/ticket
+```
+
+Response:
+
+```text
+TicketNumber = A017
+Status = Waiting
+```
+
+ثم Print.
+
+---
+
+# 89. Scenario Example — Reservation With Multiple Inputs
+
+Customer enters:
+
+```text
+Phone = 01012345678
+National ID = 29801011234567
+```
+
+Request:
+
+```json
+{
+  "serviceId": 15,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    },
+    {
+      "serviceCustomInputId": 9,
+      "value": "29801011234567"
+    }
+  ]
+}
+```
+
+Backend searches:
+
+```text
+Phone matches
+AND
+National ID matches
+```
+
+والـFrontend تعرض النتائج فقط.
+
+---
+
+# 90. Scenario Example — Reservation Without Custom Inputs
+
+Service:
+
+```text
+General Inquiry
+```
+
+لا يوجد Custom Inputs.
+
+Customer chooses:
+
+```text
+لدي حجز مسبق
+```
+
+Frontend displays:
+
+```text
+Field
+```
+
+Customer enters:
+
+```text
+ABC-12548
+```
+
+Request:
+
+```json
+{
+  "serviceId": 20,
+  "field": "ABC-12548",
+  "customInputs": []
+}
+```
+
+---
+
+# 91. Scenario Example — Direct New Ticket With Custom Inputs
+
+Customer selects:
+
+```text
+تذكرة جديدة
+```
+
+Service requires:
+
+```text
+Phone
+National ID
+```
+
+Frontend collects both required values.
+
+Request:
+
+```json
+{
+  "serviceId": 15,
+  "segmentId": 2,
+  "field": null,
+  "customInputs": [
+    {
+      "serviceCustomInputId": 8,
+      "value": "01012345678"
+    },
+    {
+      "serviceCustomInputId": 9,
+      "value": "29801011234567"
+    }
+  ]
+}
+```
+
+Backend creates Ticket مباشرة.
+
+No Reservation is created.
+
+---
+
+# 92. Scenario Example — Direct Ticket Without Inputs
+
+Service has no Custom Inputs.
+
+Request:
+
+```json
+{
+  "serviceId": 20,
+  "segmentId": 1,
+  "field": "01012345678",
+  "customInputs": []
+}
+```
+
+Backend:
+
+```text
+Validate
+→ Allocate quota
+→ Allocate number
+→ Create Ticket
+→ Waiting
+```
+
+---
+
+# 93. Frontend Must NOT Do
+
+ممنوع على الـFrontend:
+
+```text
+Generate Ticket Number
+```
+
+ممنوع:
+
+```text
+Calculate Segment Quota
+```
+
+ممنوع:
+
+```text
+Determine next Queue position
+```
+
+ممنوع:
+
+```text
+Create Reservation before Direct Ticket
+```
+
+ممنوع:
+
+```text
+Assume custom input IDs
+```
+
+ممنوع:
+
+```text
+Hardcode SegmentId
+```
+
+ممنوع:
+
+```text
+Hardcode Branch Theme
+```
+
+ممنوع:
+
+```text
+Assume Service availability from cached state after POST failure
+```
+
+ممنوع:
+
+```text
+Auto select first reservation when several exist
+```
+
+---
+
+# 94. Current FE Blockers / Backend Dependencies
+
+قبل اعتبار Integration مكتملة Production-ready، يوجد نقطتان مطلوب حسمهما:
+
+## Blocker 1 — Kiosk Authentication
+
+الثلاثة Kiosk POST endpoints تحتاج حاليًا:
+
+```text
+JWT
++
+Permissions
++
+Branch Access
+```
+
+يجب تحديد Device/Kiosk authentication mechanism رسميًا.
+
+---
+
+## Blocker 2 — SegmentId
+
+Direct Ticket request تحتاج:
+
+```text
+SegmentId
+```
+
+لكن Kiosk service discovery لا ترجع حاليًا Segment options أو default Segment.
+
+يجب توفير مصدر رسمي للـFrontend.
+
+---
+
+## Contract Improvement Needed — HasReservation
+
+يفضل أيضًا إرجاع:
+
+```text
+HasReservation
+```
+
+داخل الـLeaf Service في `ticket-issuable-services`.
+
+حتى تعرف الـFrontend متى تعرض:
+
+```text
+لدي حجز مسبق
+```
+
+---
+
+# 95. Acceptance Criteria
+
+تعتبر الـFrontend task مكتملة عندما:
+
+```text
+✓ Kiosk loads Branch Branding dynamically.
+
+✓ Kiosk uses returned Service Tree.
+
+✓ Language behavior follows Branch configuration.
+
+✓ Only selectable Leaf Services can complete customer flow.
+
+✓ Service Custom Inputs are rendered dynamically.
+
+✓ String/Integer input constraints are supported.
+
+✓ Reservation lookup supports one Custom Input minimum.
+
+✓ Reservation lookup supports multiple Custom Inputs.
+
+✓ Search does not require all isRequired fields.
+
+✓ Multiple search inputs are sent together.
+
+✓ Search handles Field mode for services without Custom Inputs.
+
+✓ Reservation search results show multiple matching reservations.
+
+✓ Reservation status is displayed.
+
+✓ Customer explicitly selects Reservation.
+
+✓ Selected Reservation is converted using Kiosk conversion endpoint.
+
+✓ New Ticket flow creates Ticket directly.
+
+✓ New Ticket does not create Reservation.
+
+✓ Required Custom Inputs are enforced on Direct Ticket flow.
+
+✓ Field is required on Direct Ticket when Service has no Custom Inputs.
+
+✓ TicketDetailsResponse is used after successful issuance.
+
+✓ Ticket number is displayed prominently.
+
+✓ Printer flow starts only after successful ticket creation.
+
+✓ No ticket is printed when Backend returns failure.
+
+✓ Double submit is prevented.
+
+✓ POST create operations are not blindly auto-retried.
+
+✓ API localized error messages are displayed.
+
+✓ Kiosk state is cleared after successful completion.
+
+✓ SegmentId is never hardcoded.
+
+✓ Authentication credentials are never hardcoded.
+
+✓ Frontend does not recreate Backend quota/numbering/workflow logic.
+```
+
+---
+
+# 96. Backend Dependencies Before Final Production Release
+
+```text
+[BLOCKER]
+Define Kiosk Authentication / JWT strategy.
+
+[BLOCKER]
+Expose valid/default SegmentId for Direct Ticket flow.
+
+[RECOMMENDED CONTRACT FIX]
+Expose HasReservation on ticket-issuable service response.
+```
+
+---
+
+# Final Integration Map
+
+```text
+GET
+/api/branches/{branchId}/ticket-issuable-services
+        |
+        | Branch Branding
+        | Service Tree
+        | Custom Inputs
+        v
+Select Leaf Service
+        |
+        v
+Reservation or New Ticket?
+        |
+        +-----------------------------------------+
+        |                                         |
+        v                                         v
+Previous Reservation                         New Ticket
+        |                                         |
+        v                                         |
+POST                                              |
+/api/branches/{branchId}/kiosk/                   |
+reservations/search                               |
+        |                                         |
+        v                                         |
+List<Reservation>                                 |
+        |                                         |
+        v                                         |
+Select Reservation                               |
+        |                                         |
+        v                                         |
+POST                                              |
+/api/branches/{branchId}/kiosk/                   |
+reservations/{reservationId}/ticket               |
+        |                                         |
+        |                                         v
+        |                              POST
+        |                              /api/branches/{branchId}/
+        |                              kiosk/tickets
+        |                                         |
+        +-------------------+---------------------+
+                            |
+                            v
+                   TicketDetailsResponse
+                            |
+                            v
+                          Print
+                            |
+                            v
+                          Reset
+```
+

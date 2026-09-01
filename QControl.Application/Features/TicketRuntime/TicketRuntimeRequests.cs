@@ -10,6 +10,7 @@ public sealed record CreateTicketCommand : ICommand<TicketDetailsResponse>
     public int BranchId { get; init; }
     public int ServiceId { get; init; }
     public int SegmentId { get; init; }
+    public string? Field { get; init; }
     public IReadOnlyCollection<CustomInputSubmission> CustomInputs { get; init; } = Array.Empty<CustomInputSubmission>();
 }
 
@@ -19,6 +20,7 @@ public sealed record CreateReservationCommand : ICommand<ReservationDetailsRespo
     public int ServiceId { get; init; }
     public int SegmentId { get; init; }
     public DateTime ScheduledOnUtc { get; init; }
+    public string? Field { get; init; }
     public IReadOnlyCollection<CustomInputSubmission> CustomInputs { get; init; } = Array.Empty<CustomInputSubmission>();
 }
 

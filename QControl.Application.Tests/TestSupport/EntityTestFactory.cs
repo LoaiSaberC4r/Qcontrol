@@ -8,6 +8,9 @@ internal static class EntityTestFactory
     public static readonly Guid CurrentUserId =
         Guid.Parse("11111111-1111-1111-1111-111111111111");
 
+    public static void AssignId<TEntity, TId>(TEntity entity, TId id)
+        where TEntity : class => SetId(entity, id);
+
     public static Branch Branch(
         int id,
         string? arabicName = null,

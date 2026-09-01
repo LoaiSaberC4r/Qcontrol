@@ -11,6 +11,7 @@ internal sealed class TicketArchive
     public int CurrentServiceId { get; set; }
     public int SegmentId { get; set; }
     public int? ReservationId { get; set; }
+    public string? LookupValue { get; set; }
     public string TicketNumber { get; set; } = string.Empty;
     public DateOnly BusinessDate { get; set; }
     public TicketStatus Status { get; set; }
@@ -107,6 +108,7 @@ internal sealed class ReservationArchive
     public int ServiceId { get; set; }
     public int SegmentId { get; set; }
     public int BranchServiceSegmentId { get; set; }
+    public string? LookupValue { get; set; }
     public DateTime ScheduledOnUtc { get; set; }
     public DateOnly BusinessDate { get; set; }
     public ReservationStatus Status { get; set; }
