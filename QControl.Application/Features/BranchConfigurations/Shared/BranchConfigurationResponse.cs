@@ -6,6 +6,10 @@ public sealed class BranchConfigurationResponse
 
     public TimeSpan AllowedTime { get; init; }
 
+    public int MaximumTicketCallAttempts { get; init; }
+    public int TicketNoShowAutoCancellationMinutes { get; init; }
+    public int TicketArchiveRetentionDays { get; init; }
+
     public bool IsConfigured { get; init; }
 
     public string? RowVersion { get; init; }

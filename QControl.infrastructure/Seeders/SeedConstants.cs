@@ -305,6 +305,22 @@ internal static class SeedConstants
 
         public const string BranchConfigurationsUpdate =
             "BranchConfigurations.Update";
+
+        public const string TicketsView = "Tickets.View";
+        public const string TicketsCreate = "Tickets.Create";
+        public const string TicketsCancel = "Tickets.Cancel";
+        public const string TicketsReturnNoShowToWaiting = "Tickets.ReturnNoShowToWaiting";
+        public const string TicketsStartService = "Tickets.StartService";
+        public const string TicketsCompleteService = "Tickets.CompleteService";
+        public const string TicketsManualTransfer = "Tickets.ManualTransfer";
+        public const string TicketsViewHistory = "Tickets.ViewHistory";
+        public const string TicketsViewArchive = "Tickets.ViewArchive";
+        public const string ReservationsView = "Reservations.View";
+        public const string ReservationsCreate = "Reservations.Create";
+        public const string ReservationsCancel = "Reservations.Cancel";
+        public const string ReservationsConvertToTicket = "Reservations.ConvertToTicket";
+        public const string ReservationsViewHistory = "Reservations.ViewHistory";
+        public const string ReservationsViewArchive = "Reservations.ViewArchive";
     }
 
     public static class SeedIds
@@ -666,6 +682,21 @@ internal static class SeedConstants
 
             public static readonly Guid BranchConfigurationsUpdate =
                 Guid.Parse("30000000-0000-0000-0000-000000000098");
+            public static readonly Guid TicketsView = Guid.Parse("30000000-0000-0000-0000-000000000099");
+            public static readonly Guid TicketsCreate = Guid.Parse("30000000-0000-0000-0000-000000000100");
+            public static readonly Guid TicketsCancel = Guid.Parse("30000000-0000-0000-0000-000000000101");
+            public static readonly Guid TicketsReturnNoShowToWaiting = Guid.Parse("30000000-0000-0000-0000-000000000102");
+            public static readonly Guid TicketsStartService = Guid.Parse("30000000-0000-0000-0000-000000000103");
+            public static readonly Guid TicketsCompleteService = Guid.Parse("30000000-0000-0000-0000-000000000104");
+            public static readonly Guid TicketsManualTransfer = Guid.Parse("30000000-0000-0000-0000-000000000105");
+            public static readonly Guid TicketsViewHistory = Guid.Parse("30000000-0000-0000-0000-000000000106");
+            public static readonly Guid TicketsViewArchive = Guid.Parse("30000000-0000-0000-0000-000000000107");
+            public static readonly Guid ReservationsView = Guid.Parse("30000000-0000-0000-0000-000000000108");
+            public static readonly Guid ReservationsCreate = Guid.Parse("30000000-0000-0000-0000-000000000109");
+            public static readonly Guid ReservationsCancel = Guid.Parse("30000000-0000-0000-0000-000000000110");
+            public static readonly Guid ReservationsConvertToTicket = Guid.Parse("30000000-0000-0000-0000-000000000111");
+            public static readonly Guid ReservationsViewHistory = Guid.Parse("30000000-0000-0000-0000-000000000112");
+            public static readonly Guid ReservationsViewArchive = Guid.Parse("30000000-0000-0000-0000-000000000113");
         }
     }
 
@@ -1053,6 +1084,21 @@ internal static class SeedConstants
                 new PermissionSeedItem(
                     SeedIds.Permissions.BranchConfigurationsUpdate,
                     PermissionNames.BranchConfigurationsUpdate),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsView, PermissionNames.TicketsView),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsCreate, PermissionNames.TicketsCreate),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsCancel, PermissionNames.TicketsCancel),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsReturnNoShowToWaiting, PermissionNames.TicketsReturnNoShowToWaiting),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsStartService, PermissionNames.TicketsStartService),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsCompleteService, PermissionNames.TicketsCompleteService),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsManualTransfer, PermissionNames.TicketsManualTransfer),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsViewHistory, PermissionNames.TicketsViewHistory),
+                new PermissionSeedItem(SeedIds.Permissions.TicketsViewArchive, PermissionNames.TicketsViewArchive),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsView, PermissionNames.ReservationsView),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsCreate, PermissionNames.ReservationsCreate),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsCancel, PermissionNames.ReservationsCancel),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsConvertToTicket, PermissionNames.ReservationsConvertToTicket),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsViewHistory, PermissionNames.ReservationsViewHistory),
+                new PermissionSeedItem(SeedIds.Permissions.ReservationsViewArchive, PermissionNames.ReservationsViewArchive),
             };
 
         public static IReadOnlyCollection<RolePermissionSeedItem>
@@ -1119,7 +1165,22 @@ internal static class SeedConstants
         SeedIds.Permissions.ServiceSchedulesUpdate,
         SeedIds.Permissions.BranchConfigurationsView,
         SeedIds.Permissions.BranchConfigurationsCreate,
-        SeedIds.Permissions.BranchConfigurationsUpdate
+        SeedIds.Permissions.BranchConfigurationsUpdate,
+        SeedIds.Permissions.TicketsView,
+        SeedIds.Permissions.TicketsCreate,
+        SeedIds.Permissions.TicketsCancel,
+        SeedIds.Permissions.TicketsReturnNoShowToWaiting,
+        SeedIds.Permissions.TicketsStartService,
+        SeedIds.Permissions.TicketsCompleteService,
+        SeedIds.Permissions.TicketsManualTransfer,
+        SeedIds.Permissions.TicketsViewHistory,
+        SeedIds.Permissions.TicketsViewArchive,
+        SeedIds.Permissions.ReservationsView,
+        SeedIds.Permissions.ReservationsCreate,
+        SeedIds.Permissions.ReservationsCancel,
+        SeedIds.Permissions.ReservationsConvertToTicket,
+        SeedIds.Permissions.ReservationsViewHistory,
+        SeedIds.Permissions.ReservationsViewArchive
     }
             .Select(permissionId =>
                 new RolePermissionSeedItem(

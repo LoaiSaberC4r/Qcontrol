@@ -97,7 +97,7 @@ public sealed class BranchConfigurationsControllerContractTests
     }
 
     [Fact]
-    public void Response_contract_remains_the_historical_shape()
+    public void Response_contract_includes_ticket_runtime_settings()
     {
         var properties = typeof(BranchConfigurationResponse)
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -111,8 +111,11 @@ public sealed class BranchConfigurationsControllerContractTests
                 "AllowedTime",
                 "BranchId",
                 "IsConfigured",
+                "MaximumTicketCallAttempts",
                 "Message",
-                "RowVersion"
+                "RowVersion",
+                "TicketArchiveRetentionDays",
+                "TicketNoShowAutoCancellationMinutes"
             },
             properties);
     }

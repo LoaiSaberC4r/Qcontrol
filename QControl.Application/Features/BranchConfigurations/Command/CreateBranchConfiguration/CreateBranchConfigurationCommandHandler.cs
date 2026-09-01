@@ -102,7 +102,10 @@ internal sealed class CreateBranchConfigurationCommandHandler
 
         var configuration = BranchConfiguration.Create(
             request.BranchId,
-            request.AllowedTime!.Value);
+            request.AllowedTime!.Value,
+            request.MaximumTicketCallAttempts,
+            request.TicketNoShowAutoCancellationMinutes,
+            request.TicketArchiveRetentionDays);
 
         await _configurationWriteRepository.AddAsync(
             configuration,

@@ -1656,4 +1656,26 @@
   <data name="BranchConfiguration_ConcurrencyConflict" xml:space="preserve">
     <value>The branch configuration was modified by another request.</value>
   </data>
+  <data name="TicketRuntime_AuthenticationRequired" xml:space="preserve"><value>Authentication is required.</value></data>
+  <data name="TicketRuntime_TicketNotFound" xml:space="preserve"><value>Ticket was not found.</value></data>
+  <data name="TicketRuntime_ReservationNotFound" xml:space="preserve"><value>Reservation was not found.</value></data>
+  <data name="TicketRuntime_WrongBranch" xml:space="preserve"><value>The record does not belong to this branch.</value></data>
+  <data name="TicketRuntime_InvalidTransition" xml:space="preserve"><value>The requested status transition is not allowed.</value></data>
+  <data name="TicketRuntime_TicketCannotCancelAfterStart" xml:space="preserve"><value>A ticket cannot be cancelled after service starts.</value></data>
+  <data name="TicketRuntime_TicketMustBeCalled" xml:space="preserve"><value>The ticket must be Called before service can start.</value></data>
+  <data name="TicketRuntime_TicketMustBeInProgress" xml:space="preserve"><value>The ticket must be InProgress for this operation.</value></data>
+  <data name="TicketRuntime_TicketMustBeNoShow" xml:space="preserve"><value>The ticket must be NoShow to return it to Waiting.</value></data>
+  <data name="TicketRuntime_WorkflowTransferForbidden" xml:space="preserve"><value>A workflow-bound ticket cannot be manually transferred.</value></data>
+  <data name="TicketRuntime_ServiceUnavailable" xml:space="preserve"><value>The service is not currently available in this branch.</value></data>
+  <data name="TicketRuntime_WorkflowServiceUnavailable" xml:space="preserve"><value>The next workflow service is not currently available.</value></data>
+  <data name="TicketRuntime_NumberRangeExhausted" xml:space="preserve"><value>The service ticket number range is exhausted for this business day.</value></data>
+  <data name="TicketRuntime_QuotaExceeded" xml:space="preserve"><value>The segment daily quota has been reached.</value></data>
+  <data name="TicketRuntime_ConcurrencyConflict" xml:space="preserve"><value>The record changed during this operation. Refresh and retry.</value></data>
+  <data name="TicketRuntime_AlreadyConverted" xml:space="preserve"><value>The reservation has already been converted to a ticket.</value></data>
+  <data name="TicketRuntime_ReasonRequired" xml:space="preserve"><value>A reason is required.</value></data>
+  <data name="TicketRuntime_CustomInputsInvalid" xml:space="preserve"><value>One or more service custom input values are invalid.</value></data>
+  <data name="TicketRuntime_ReservationTerminal" xml:space="preserve"><value>The reservation is in a terminal state.</value></data>
+  <data name="TicketRuntime_DifferentReservationDay" xml:space="preserve"><value>A NoShow reservation can only be converted on its reservation day.</value></data>
+  <data name="TicketRuntime_ReservationTimeInvalid" xml:space="preserve"><value>The reservation time must be in the future and within the service schedule.</value></data>
+  <data name="TicketRuntime_AutomaticNoShowCancellation" xml:space="preserve"><value>Cancelled automatically after the branch NoShow timeout.</value></data>
 </root>

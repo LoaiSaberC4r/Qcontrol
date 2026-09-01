@@ -197,6 +197,42 @@ namespace QControl.infrastructure.Persistence
                     (CurrentBranchId.HasValue &&
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
+
+            modelBuilder.Entity<Ticket>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.BranchId == CurrentBranchId));
+
+            modelBuilder.Entity<Reservation>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.BranchId == CurrentBranchId));
+
+            modelBuilder.Entity<TicketServiceJourney>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Ticket.BranchId == CurrentBranchId));
+            modelBuilder.Entity<TicketHistory>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Ticket.BranchId == CurrentBranchId));
+            modelBuilder.Entity<TicketCallAttempt>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Ticket.BranchId == CurrentBranchId));
+            modelBuilder.Entity<TicketCustomInputValue>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Ticket.BranchId == CurrentBranchId));
+            modelBuilder.Entity<TicketWorkflowStepSnapshot>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Ticket.BranchId == CurrentBranchId));
+            modelBuilder.Entity<ReservationHistory>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Reservation.BranchId == CurrentBranchId));
+            modelBuilder.Entity<ReservationCustomInputValue>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue && x.Reservation.BranchId == CurrentBranchId));
+            modelBuilder.Entity<BranchServiceSegmentDailyUsage>()
+                .HasQueryFilter(x => !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchServiceSegment.BranchService.BranchId == CurrentBranchId));
         }
     }
 }

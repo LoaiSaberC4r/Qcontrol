@@ -106,6 +106,8 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IServiceWorkflowDefaultRepository, ServiceWorkflowDefaultRepository>();
             services.AddScoped<IConcurrencyTokenManager, ConcurrencyTokenManager>();
             services.AddScoped<IServiceTicketUsageChecker, ServiceTicketUsageChecker>();
+            services.AddScoped<IBranchServiceAvailabilityChecker, BranchServiceAvailabilityChecker>();
+            services.AddScoped<ITicketRuntimeRepository, TicketRuntimeRepository>();
             services.AddScoped<ICurrentTokenContext, CurrentTokenContext>();
 
             // public survey related services
@@ -129,6 +131,7 @@ namespace QControl.infrastructure.Bootstrap
             services.AddSingleton<IBranchVideoProcessingCoordinator, BranchVideoProcessingCoordinator>();
             services.AddSingleton<IBranchVideoTranscoder, FfmpegBranchVideoTranscoder>();
             services.AddHostedService<BranchVideoProcessingWorker>();
+            services.AddHostedService<TicketRuntimeWorker>();
 
             return services;
         }

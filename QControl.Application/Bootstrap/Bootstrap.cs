@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Qcontrol.Application.Features.Auth.Shared;
 using QControl.Application.Abstraction.Security;
 using QControl.Application.Shared.Security;
+using QControl.Application.Features.TicketRuntime;
 
 namespace QControl.Application.Bootstrap
 {
@@ -49,6 +50,7 @@ namespace QControl.Application.Bootstrap
             services.AddScoped<IServiceVisibilityPolicy, ServiceVisibilityPolicy>();
             services.AddScoped<ISegmentVisibilityPolicy, SegmentVisibilityPolicy>();
             services.AddScoped<IPasswordPolicyValidator, PasswordPolicyValidator>();
+            services.AddScoped<TicketRuntimeRequestGuard>();
             services.AddScoped<UserTokenFactory>();
             services.AddMediatorInjection();
             return services;
