@@ -1678,4 +1678,11 @@
   <data name="TicketRuntime_DifferentReservationDay" xml:space="preserve"><value>A NoShow reservation can only be converted on its reservation day.</value></data>
   <data name="TicketRuntime_ReservationTimeInvalid" xml:space="preserve"><value>The reservation time must be in the future and within the service schedule.</value></data>
   <data name="TicketRuntime_AutomaticNoShowCancellation" xml:space="preserve"><value>Cancelled automatically after the branch NoShow timeout.</value></data>
+  <data name="TicketRuntime_CustomInputsNotAllowed" xml:space="preserve"><value>Custom inputs are not allowed for this service.</value></data>
+  <data name="TicketRuntime_CustomInputsRequiredForSearch" xml:space="preserve"><value>At least one custom input is required to search this service.</value></data>
+  <data name="TicketRuntime_DuplicateCustomInput" xml:space="preserve"><value>The same custom input cannot be submitted more than once.</value></data>
+  <data name="TicketRuntime_CustomInputNotApplicable" xml:space="preserve"><value>A submitted custom input does not belong to the selected service.</value></data>
+  <data name="TicketRuntime_FieldRequired" xml:space="preserve"><value>Field is required for this service.</value></data>
+  <data name="TicketRuntime_FieldInvalid" xml:space="preserve"><value>Field is invalid.</value></data>
+  <data name="TicketRuntime_FieldNotAllowed" xml:space="preserve"><value>Field is not allowed for a service that uses custom inputs.</value></data>
 </root>

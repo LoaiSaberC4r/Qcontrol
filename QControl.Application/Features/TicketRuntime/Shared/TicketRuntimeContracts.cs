@@ -37,7 +37,8 @@ public sealed record TicketDetailsResponse(
     string? RowVersion = null,
     bool IsArchived = false,
     IReadOnlyList<TicketHistoryResponse>? History = null,
-    IReadOnlyList<TicketCallAttemptResponse>? CallAttempts = null);
+    IReadOnlyList<TicketCallAttemptResponse>? CallAttempts = null,
+    string? Field = null);
 
 public sealed record TicketJourneyResponse(
     int ServiceId,
@@ -98,7 +99,16 @@ public sealed record ReservationDetailsResponse(
     IReadOnlyList<CustomInputValueResponse> CustomInputs,
     string? RowVersion = null,
     bool IsArchived = false,
-    IReadOnlyList<ReservationHistoryResponse>? History = null);
+    IReadOnlyList<ReservationHistoryResponse>? History = null,
+    string? Field = null);
+
+public sealed record KioskReservationSearchItemResponse(
+    int ReservationId,
+    int ServiceId,
+    int SegmentId,
+    DateTime ScheduledOnUtc,
+    DateOnly BusinessDate,
+    ReservationStatus Status);
 
 public sealed record ReservationHistoryResponse(
     long Id,

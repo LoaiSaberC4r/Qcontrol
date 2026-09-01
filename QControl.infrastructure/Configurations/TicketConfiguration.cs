@@ -19,6 +19,7 @@ internal sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>, IW
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.TicketNumber).HasMaxLength(50).IsUnicode(false).IsRequired();
+        builder.Property(x => x.LookupValue).HasMaxLength(3000);
         builder.Property(x => x.BusinessDate).HasColumnType("date").IsRequired();
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.Property(x => x.CurrentQueueEnteredOnUtc).HasColumnType("datetime2(3)").IsRequired();

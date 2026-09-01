@@ -6,4 +6,5 @@ public sealed record CreateReservationRequest(
     int ServiceId,
     int SegmentId,
     DateTime ScheduledOnUtc,
+    string? Field,
     IReadOnlyCollection<CustomInputRequest> CustomInputs);

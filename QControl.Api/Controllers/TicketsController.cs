@@ -20,7 +20,7 @@ public sealed class TicketsController : ControllerBase
 
     [HttpPost, Permission("Tickets.Create")]
     public async Task<IActionResult> Create(int branchId, CreateTicketRequest request, CancellationToken ct)
-        => (await _sender.Send(new CreateTicketCommand { BranchId = branchId, ServiceId = request.ServiceId, SegmentId = request.SegmentId, CustomInputs = Map(request.CustomInputs) }, ct)).ToIActionResult();
+        => (await _sender.Send(new CreateTicketCommand { BranchId = branchId, ServiceId = request.ServiceId, SegmentId = request.SegmentId, Field = request.Field, CustomInputs = Map(request.CustomInputs) }, ct)).ToIActionResult();
 
     [HttpGet, Permission("Tickets.View")]
     public async Task<IActionResult> Get(int branchId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20,

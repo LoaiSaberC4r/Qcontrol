@@ -4,11 +4,11 @@ namespace QControl.Application.Features.TicketRuntime;
 
 internal sealed class CreateTicketCommandValidator : AbstractValidator<CreateTicketCommand>
 {
-    public CreateTicketCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.ServiceId).GreaterThan(0); RuleFor(x => x.SegmentId).GreaterThan(0); RuleForEach(x => x.CustomInputs).ChildRules(x => { x.RuleFor(v => v.ServiceCustomInputId).GreaterThan(0); x.RuleFor(v => v.Value).NotNull().MaximumLength(3000); }); }
+    public CreateTicketCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.ServiceId).GreaterThan(0); RuleFor(x => x.SegmentId).GreaterThan(0); RuleFor(x => x.Field).MaximumLength(3000); RuleForEach(x => x.CustomInputs).ChildRules(x => { x.RuleFor(v => v.ServiceCustomInputId).GreaterThan(0); x.RuleFor(v => v.Value).NotNull().MaximumLength(3000); }); }
 }
 internal sealed class CreateReservationCommandValidator : AbstractValidator<CreateReservationCommand>
 {
-    public CreateReservationCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.ServiceId).GreaterThan(0); RuleFor(x => x.SegmentId).GreaterThan(0); RuleFor(x => x.ScheduledOnUtc).NotEmpty(); RuleForEach(x => x.CustomInputs).ChildRules(x => { x.RuleFor(v => v.ServiceCustomInputId).GreaterThan(0); x.RuleFor(v => v.Value).NotNull().MaximumLength(3000); }); }
+    public CreateReservationCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.ServiceId).GreaterThan(0); RuleFor(x => x.SegmentId).GreaterThan(0); RuleFor(x => x.ScheduledOnUtc).NotEmpty(); RuleFor(x => x.Field).MaximumLength(3000); RuleForEach(x => x.CustomInputs).ChildRules(x => { x.RuleFor(v => v.ServiceCustomInputId).GreaterThan(0); x.RuleFor(v => v.Value).NotNull().MaximumLength(3000); }); }
 }
 internal sealed class CancelTicketCommandValidator : AbstractValidator<CancelTicketCommand> { public CancelTicketCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.TicketId).GreaterThan(0); RuleFor(x => x.Reason).NotEmpty().MaximumLength(500); } }
 internal sealed class CancelReservationCommandValidator : AbstractValidator<CancelReservationCommand> { public CancelReservationCommandValidator() { RuleFor(x => x.BranchId).GreaterThan(0); RuleFor(x => x.ReservationId).GreaterThan(0); RuleFor(x => x.Reason).NotEmpty().MaximumLength(500); } }

@@ -17,6 +17,7 @@ public sealed class Reservation : AggregateRoot<int>
     public Segment Segment { get; private set; } = null!;
     public int BranchServiceSegmentId { get; private set; }
     public BranchServiceSegment BranchServiceSegment { get; private set; } = null!;
+    public string? LookupValue { get; private set; }
     public DateTime ScheduledOnUtc { get; private set; }
     public DateOnly BusinessDate { get; private set; }
     public ReservationStatus Status { get; private set; }
@@ -31,7 +32,7 @@ public sealed class Reservation : AggregateRoot<int>
 
     public static Reservation Create(int branchId, int serviceId, int segmentId,
         int branchServiceSegmentId, DateTime scheduledOnUtc, DateOnly businessDate,
-        DateTime createdOnUtc, Guid performerId)
+        DateTime createdOnUtc, Guid performerId, string? lookupValue = null)
     {
         var reservation = new Reservation
         {
@@ -39,6 +40,7 @@ public sealed class Reservation : AggregateRoot<int>
             ServiceId = serviceId,
             SegmentId = segmentId,
             BranchServiceSegmentId = branchServiceSegmentId,
+            LookupValue = string.IsNullOrWhiteSpace(lookupValue) ? null : lookupValue.Trim(),
             ScheduledOnUtc = scheduledOnUtc,
             BusinessDate = businessDate,
             Status = ReservationStatus.Active,

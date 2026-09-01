@@ -26,6 +26,13 @@ public static class TicketRuntimeMessages
     public static string AlreadyConverted => Get("TicketRuntime_AlreadyConverted", "The reservation has already been converted to a ticket.");
     public static string ReasonRequired => Get("TicketRuntime_ReasonRequired", "A reason is required.");
     public static string CustomInputsInvalid => Get("TicketRuntime_CustomInputsInvalid", "One or more service custom input values are invalid.");
+    public static string CustomInputsNotAllowed => Get("TicketRuntime_CustomInputsNotAllowed", "Custom inputs are not allowed for this service.");
+    public static string CustomInputsRequiredForSearch => Get("TicketRuntime_CustomInputsRequiredForSearch", "At least one custom input is required to search this service.");
+    public static string DuplicateCustomInput => Get("TicketRuntime_DuplicateCustomInput", "The same custom input cannot be submitted more than once.");
+    public static string CustomInputNotApplicable => Get("TicketRuntime_CustomInputNotApplicable", "A submitted custom input does not belong to the selected service.");
+    public static string FieldRequired => Get("TicketRuntime_FieldRequired", "Field is required for this service.");
+    public static string FieldInvalid => Get("TicketRuntime_FieldInvalid", "Field is invalid.");
+    public static string FieldNotAllowed => Get("TicketRuntime_FieldNotAllowed", "Field is not allowed for a service that uses custom inputs.");
     public static string ReservationTerminal => Get("TicketRuntime_ReservationTerminal", "The reservation is in a terminal state.");
     public static string DifferentReservationDay => Get("TicketRuntime_DifferentReservationDay", "A NoShow reservation can only be converted on its reservation day.");
     public static string ReservationTimeInvalid => Get("TicketRuntime_ReservationTimeInvalid", "The reservation time must be in the future and within the service schedule.");

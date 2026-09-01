@@ -14,6 +14,7 @@ internal sealed class ReservationConfiguration : IEntityTypeConfiguration<Reserv
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.ScheduledOnUtc).HasColumnType("datetime2(3)").IsRequired();
+        builder.Property(x => x.LookupValue).HasMaxLength(3000);
         builder.Property(x => x.BusinessDate).HasColumnType("date").IsRequired();
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.Property(x => x.CancellationReason).HasMaxLength(500);
@@ -72,5 +73,7 @@ internal sealed class ReservationCustomInputValueConfiguration : IEntityTypeConf
         builder.Property(x => x.CreatedOnUtc).HasColumnType("datetime2(3)").IsRequired();
         builder.HasOne<ServiceCustomInput>().WithMany().HasForeignKey(x => x.ServiceCustomInputId).OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(x => x.ReservationId);
+        builder.HasIndex(x => new { x.ReservationId, x.ServiceCustomInputId })
+            .HasDatabaseName("IX_ReservationCustomInputValue_Reservation_Input");
     }
 }

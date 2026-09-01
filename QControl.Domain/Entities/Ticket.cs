@@ -23,6 +23,7 @@ public sealed class Ticket : AggregateRoot<int>
     public Segment Segment { get; private set; } = null!;
     public int? ReservationId { get; private set; }
     public Reservation? Reservation { get; private set; }
+    public string? LookupValue { get; private set; }
     public string TicketNumber { get; private set; } = string.Empty;
     public DateOnly BusinessDate { get; private set; }
     public TicketStatus Status { get; private set; }
@@ -53,7 +54,8 @@ public sealed class Ticket : AggregateRoot<int>
         string ticketNumber,
         DateOnly businessDate,
         DateTime createdOnUtc,
-        Guid performerId)
+        Guid performerId,
+        string? lookupValue = null)
     {
         var ticket = new Ticket
         {
@@ -62,6 +64,7 @@ public sealed class Ticket : AggregateRoot<int>
             CurrentServiceId = serviceId,
             SegmentId = segmentId,
             ReservationId = reservationId,
+            LookupValue = string.IsNullOrWhiteSpace(lookupValue) ? null : lookupValue.Trim(),
             TicketNumber = ticketNumber.Trim(),
             BusinessDate = businessDate,
             Status = TicketStatus.Waiting,
