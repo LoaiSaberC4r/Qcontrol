@@ -33,6 +33,8 @@ public sealed class Branch : AggregateRoot<int>
 
     public BranchDisplayConfiguration? DisplayConfiguration { get; private set; }
 
+    public TicketPrintConfiguration? TicketPrintConfiguration { get; private set; }
+
     public Guid CreatedByApplicationUserId { get; private set; }
 
     public ApplicationUser CreatedByApplicationUser { get; private set; } = null!;

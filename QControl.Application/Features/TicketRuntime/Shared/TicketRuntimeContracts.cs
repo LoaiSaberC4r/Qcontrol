@@ -38,7 +38,28 @@ public sealed record TicketDetailsResponse(
     bool IsArchived = false,
     IReadOnlyList<TicketHistoryResponse>? History = null,
     IReadOnlyList<TicketCallAttemptResponse>? CallAttempts = null,
-    string? Field = null);
+    string? Field = null,
+    TicketPrintModelResponse? Print = null);
+
+public sealed record TicketPrintModelResponse(
+    decimal TicketWidthMm,
+    decimal TicketHeightMm,
+    IReadOnlyList<TicketPrintRuntimeElementResponse> Elements);
+
+public sealed record TicketPrintRuntimeElementResponse(
+    TicketPrintElementType ElementType,
+    bool IsVisible,
+    decimal? XMm,
+    decimal? YMm,
+    decimal? WidthMm,
+    decimal? HeightMm,
+    decimal? FontSizePt,
+    TicketFontWeight? FontWeight,
+    TicketTextAlign? TextAlign,
+    TicketPrintLanguage? Language,
+    string? Text,
+    string? ImageUrl,
+    TicketPrintOverflowBehavior? OverflowBehavior);
 
 public sealed record TicketJourneyResponse(
     int ServiceId,
@@ -75,7 +96,8 @@ public sealed record CustomInputValueResponse(
     string? LabelEn,
     string? LabelAr,
     ServiceCustomInputType Type,
-    string Value);
+    string Value,
+    int? OrderSnapshot = null);
 
 public sealed record ReservationListItemResponse(
     int Id,

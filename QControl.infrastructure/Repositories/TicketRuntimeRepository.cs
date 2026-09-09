@@ -19,15 +19,27 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
     private readonly IBranchServiceAvailabilityChecker _availability;
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<TicketRuntimeRepository> _logger;
+    private readonly ITicketPrintModelBuilder _printModelBuilder;
 
     public TicketRuntimeRepository(PlatformWriteDbContext db,
         IBranchServiceAvailabilityChecker availability, IDateTimeProvider clock,
-        ILogger<TicketRuntimeRepository> logger)
+        ILogger<TicketRuntimeRepository> logger,
+        ITicketPrintModelBuilder printModelBuilder)
     {
         _db = db;
         _availability = availability;
         _clock = clock;
         _logger = logger;
+        _printModelBuilder = printModelBuilder;
+    }
+
+    internal TicketRuntimeRepository(
+        PlatformWriteDbContext db,
+        IBranchServiceAvailabilityChecker availability,
+        IDateTimeProvider clock,
+        ILogger<TicketRuntimeRepository> logger)
+        : this(db, availability, clock, logger, NullTicketPrintModelBuilder.Instance)
+    {
     }
 
     public async Task<Result<TicketDetailsResponse>> CreateTicketAsync(int branchId,
@@ -72,8 +84,9 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             await BindDefaultWorkflowAsync(ticket, branchId, serviceId, cancellationToken);
             _db.Add(ticket);
             await _db.SaveChangesAsync(cancellationToken);
+            var print = await _printModelBuilder.BuildAsync(ticket.Id, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result<TicketDetailsResponse>.Ok(Map(ticket));
+            return Result<TicketDetailsResponse>.Ok(Map(ticket, print));
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -180,14 +193,15 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             foreach (var input in reservation.CustomInputValues)
                 ticket.AddCustomInput(TicketCustomInputValue.Create(input.ServiceCustomInputId,
                     input.NameSnapshot, input.LabelEnSnapshot, input.LabelArSnapshot,
-                    input.TypeSnapshot, input.Value, now));
+                    input.TypeSnapshot, input.Value, now, input.OrderSnapshot));
             await BindDefaultWorkflowAsync(ticket, branchId, reservation.ServiceId, cancellationToken);
             if (!reservation.TryConvert(now))
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.InvalidState", TicketRuntimeMessages.ReservationTerminal, ErrorType.Domain, cancellationToken);
             _db.Add(ticket);
             await _db.SaveChangesAsync(cancellationToken);
+            var print = await _printModelBuilder.BuildAsync(ticket.Id, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result<TicketDetailsResponse>.Ok(Map(ticket));
+            return Result<TicketDetailsResponse>.Ok(Map(ticket, print));
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -623,7 +637,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 definition.MinValue.HasValue && integer < definition.MinValue ||
                 definition.MaxValue.HasValue && integer > definition.MaxValue) return InvalidInputs();
             snapshots.Add(new(definition.Id, definition.Name, definition.LabelEn,
-                definition.LabelAr, definition.Type, value));
+                definition.LabelAr, definition.Type, value, definition.Order));
         }
         return Result<IReadOnlyList<InputSnapshot>>.Ok(snapshots);
     }
@@ -632,33 +646,38 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         Result<IReadOnlyList<InputSnapshot>>.Fail(new Error("TicketRuntime.CustomInputs.Invalid", TicketRuntimeMessages.CustomInputsInvalid, ErrorType.Validation));
 
     private sealed record InputSnapshot(int? Id, string Name, string? LabelEn,
-        string? LabelAr, ServiceCustomInputType Type, string Value)
+        string? LabelAr, ServiceCustomInputType Type, string Value, int? Order)
     {
-        public TicketCustomInputValue ToTicket(DateTime now) => TicketCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now);
-        public ReservationCustomInputValue ToReservation(DateTime now) => ReservationCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now);
+        public TicketCustomInputValue ToTicket(DateTime now) => TicketCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
+        public ReservationCustomInputValue ToReservation(DateTime now) => ReservationCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
     }
 
     private sealed record ValidatedCreateInputs(
         string? LookupValue,
         IReadOnlyList<InputSnapshot> Snapshots);
 
-    private static TicketDetailsResponse Map(Ticket x) => new(x.Id, x.BranchId,
+    private static TicketDetailsResponse Map(
+        Ticket x,
+        TicketPrintModelResponse? print = null) => new(x.Id, x.BranchId,
         x.TicketNumber, x.BusinessDate, x.Status, x.IssuingServiceId, x.CurrentServiceId,
         x.SegmentId, x.ReservationId, x.CurrentWindowId, x.CurrentQueueEnteredOnUtc,
         x.CurrentServiceStartedOnUtc, x.CompletedOnUtc, x.CancelledOnUtc,
         x.CancellationReason, x.BoundWorkflowId, x.CurrentWorkflowStepOrder,
         x.CustomInputValues.OrderBy(v => v.Id).Select(v => new CustomInputValueResponse(v.ServiceCustomInputId,
-            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
+            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value,
+            v.OrderSnapshot)).ToArray(),
         x.ServiceJourneys.OrderBy(v => v.Id).Select(v => new TicketJourneyResponse(v.ServiceId,
             v.EntryType, v.WorkflowStepOrder, v.EnteredWaitingOnUtc, v.ServiceStartedOnUtc,
             v.ServiceEndedOnUtc, v.Outcome)).ToArray(), Convert.ToBase64String(x.RowVersion),
-        Field: x.LookupValue);
+        Field: x.LookupValue,
+        Print: print);
 
     private static ReservationDetailsResponse Map(Reservation x) => new(x.Id, x.BranchId,
         x.ServiceId, x.SegmentId, x.ScheduledOnUtc, x.BusinessDate, x.Status,
         x.CancellationReason, x.CancelledOnUtc, x.ConvertedToTicketOnUtc, x.ExpiredOnUtc,
         x.CustomInputValues.OrderBy(v => v.Id).Select(v => new CustomInputValueResponse(v.ServiceCustomInputId,
-            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
+            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value,
+            v.OrderSnapshot)).ToArray(),
         Convert.ToBase64String(x.RowVersion), Field: x.LookupValue);
 
     private static Result<IReadOnlyList<KioskReservationSearchItemResponse>> FailKioskSearch(
@@ -679,4 +698,13 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction, string code,
         string message, ErrorType type, CancellationToken ct)
     { await transaction.RollbackAsync(ct); return FailReservation(code, message, type); }
+
+    private sealed class NullTicketPrintModelBuilder : ITicketPrintModelBuilder
+    {
+        public static readonly NullTicketPrintModelBuilder Instance = new();
+
+        public Task<TicketPrintModelResponse?> BuildAsync(
+            int ticketId,
+            CancellationToken cancellationToken) => Task.FromResult<TicketPrintModelResponse?>(null);
+    }
 }

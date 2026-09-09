@@ -143,6 +143,7 @@ internal sealed class TicketCustomInputValueConfiguration : IEntityTypeConfigura
         builder.Property(x => x.NameSnapshot).HasMaxLength(100).IsRequired();
         builder.Property(x => x.LabelEnSnapshot).HasMaxLength(200);
         builder.Property(x => x.LabelArSnapshot).HasMaxLength(200);
+        builder.Property(x => x.OrderSnapshot);
         builder.Property(x => x.TypeSnapshot).HasConversion<int>().IsRequired();
         builder.Property(x => x.Value).HasMaxLength(3000).IsRequired();
         builder.Property(x => x.CreatedOnUtc).HasColumnType("datetime2(3)").IsRequired();

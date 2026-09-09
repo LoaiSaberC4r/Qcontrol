@@ -105,6 +105,20 @@ namespace QControl.infrastructure.Persistence
                      x.BranchId == CurrentBranchId &&
                      x.Branch.IsActive));
 
+            modelBuilder.Entity<TicketPrintConfiguration>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.BranchId == CurrentBranchId &&
+                     x.Branch.IsActive));
+
+            modelBuilder.Entity<TicketPrintElement>()
+                .HasQueryFilter(x =>
+                    !IsBranchScopeEnabled ||
+                    (CurrentBranchId.HasValue &&
+                     x.TicketPrintConfiguration.BranchId == CurrentBranchId &&
+                     x.TicketPrintConfiguration.Branch.IsActive));
+
             modelBuilder.Entity<BranchDisplayMessage>()
                 .HasQueryFilter(x =>
                     !IsBranchScopeEnabled ||

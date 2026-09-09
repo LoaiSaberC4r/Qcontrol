@@ -1685,4 +1685,21 @@
   <data name="TicketRuntime_FieldRequired" xml:space="preserve"><value>Field is required for this service.</value></data>
   <data name="TicketRuntime_FieldInvalid" xml:space="preserve"><value>Field is invalid.</value></data>
   <data name="TicketRuntime_FieldNotAllowed" xml:space="preserve"><value>Field is not allowed for a service that uses custom inputs.</value></data>
+  <data name="TicketPrintConfiguration_NotFound" xml:space="preserve"><value>Ticket print configuration was not found.</value></data>
+  <data name="TicketPrintConfiguration_AlreadyExists" xml:space="preserve"><value>Ticket print configuration has already been initialized.</value></data>
+  <data name="TicketPrintConfiguration_InvalidDimensions" xml:space="preserve"><value>Ticket dimensions must be positive values with at most two decimal places.</value></data>
+  <data name="TicketPrintConfiguration_MissingElement" xml:space="preserve"><value>All eight fixed ticket elements are required.</value></data>
+  <data name="TicketPrintConfiguration_DuplicateElement" xml:space="preserve"><value>Each fixed ticket element must occur exactly once.</value></data>
+  <data name="TicketPrintConfiguration_UnknownElement" xml:space="preserve"><value>The ticket element type is invalid.</value></data>
+  <data name="TicketPrintConfiguration_InvalidLayout" xml:space="preserve"><value>A visible element requires non-negative coordinates and positive dimensions.</value></data>
+  <data name="TicketPrintConfiguration_OutsideBounds" xml:space="preserve"><value>A visible element must fit within the ticket bounds.</value></data>
+  <data name="TicketPrintConfiguration_Overlap" xml:space="preserve"><value>Visible ticket elements cannot overlap.</value></data>
+  <data name="TicketPrintConfiguration_InvalidTypography" xml:space="preserve"><value>A visible text element requires valid typography.</value></data>
+  <data name="TicketPrintConfiguration_LogoTypography" xml:space="preserve"><value>BranchLogo does not support typography or language values.</value></data>
+  <data name="TicketPrintConfiguration_InvalidPrecision" xml:space="preserve"><value>Layout values must fit the supported precision and scale.</value></data>
+  <data name="TicketPrintConfiguration_Create_Success" xml:space="preserve"><value>Ticket print configuration was created successfully.</value></data>
+  <data name="TicketPrintConfiguration_Update_Success" xml:space="preserve"><value>Ticket print configuration was updated successfully.</value></data>
+  <data name="TicketPrintConfiguration_ConcurrencyConflict" xml:space="preserve"><value>The ticket print configuration was changed by another user.</value></data>
+  <data name="TicketPrint_TicketNumber_Format" xml:space="preserve"><value>Ticket Number: {0}</value></data>
+  <data name="TicketPrint_EstimatedWaitingTime_Format" xml:space="preserve"><value>Estimated waiting time: {0} minutes</value></data>
 </root>

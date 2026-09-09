@@ -1685,4 +1685,21 @@
   <data name="TicketRuntime_FieldRequired" xml:space="preserve"><value>الحقل مطلوب لهذه الخدمة.</value></data>
   <data name="TicketRuntime_FieldInvalid" xml:space="preserve"><value>قيمة الحقل غير صالحة.</value></data>
   <data name="TicketRuntime_FieldNotAllowed" xml:space="preserve"><value>لا يُسمح بالحقل لخدمة تستخدم مدخلات مخصصة.</value></data>
+  <data name="TicketPrintConfiguration_NotFound" xml:space="preserve"><value>لم يتم العثور على إعداد طباعة التذكرة.</value></data>
+  <data name="TicketPrintConfiguration_AlreadyExists" xml:space="preserve"><value>تم إعداد طباعة التذكرة لهذا الفرع بالفعل.</value></data>
+  <data name="TicketPrintConfiguration_InvalidDimensions" xml:space="preserve"><value>يجب أن تكون أبعاد التذكرة موجبة وألا تتجاوز منزلتين عشريتين.</value></data>
+  <data name="TicketPrintConfiguration_MissingElement" xml:space="preserve"><value>يجب إرسال عناصر التذكرة الثابتة الثمانية كاملة.</value></data>
+  <data name="TicketPrintConfiguration_DuplicateElement" xml:space="preserve"><value>يجب أن يظهر كل عنصر ثابت مرة واحدة فقط.</value></data>
+  <data name="TicketPrintConfiguration_UnknownElement" xml:space="preserve"><value>نوع عنصر التذكرة غير صالح.</value></data>
+  <data name="TicketPrintConfiguration_InvalidLayout" xml:space="preserve"><value>يتطلب العنصر الظاهر إحداثيات غير سالبة وأبعاداً موجبة.</value></data>
+  <data name="TicketPrintConfiguration_OutsideBounds" xml:space="preserve"><value>يجب أن يقع العنصر الظاهر بالكامل داخل حدود التذكرة.</value></data>
+  <data name="TicketPrintConfiguration_Overlap" xml:space="preserve"><value>لا يمكن أن تتداخل عناصر التذكرة الظاهرة.</value></data>
+  <data name="TicketPrintConfiguration_InvalidTypography" xml:space="preserve"><value>يتطلب عنصر النص الظاهر إعدادات خط ومحاذاة ولغة صالحة.</value></data>
+  <data name="TicketPrintConfiguration_LogoTypography" xml:space="preserve"><value>لا يدعم شعار الفرع إعدادات الخط أو اللغة.</value></data>
+  <data name="TicketPrintConfiguration_InvalidPrecision" xml:space="preserve"><value>يجب أن تتوافق قيم التخطيط مع الدقة والمنازل العشرية المدعومة.</value></data>
+  <data name="TicketPrintConfiguration_Create_Success" xml:space="preserve"><value>تم إنشاء إعداد طباعة التذكرة بنجاح.</value></data>
+  <data name="TicketPrintConfiguration_Update_Success" xml:space="preserve"><value>تم تحديث إعداد طباعة التذكرة بنجاح.</value></data>
+  <data name="TicketPrintConfiguration_ConcurrencyConflict" xml:space="preserve"><value>تم تغيير إعداد طباعة التذكرة بواسطة مستخدم آخر.</value></data>
+  <data name="TicketPrint_TicketNumber_Format" xml:space="preserve"><value>رقم التذكرة: {0}</value></data>
+  <data name="TicketPrint_EstimatedWaitingTime_Format" xml:space="preserve"><value>مدة الانتظار المتوقعة: {0} دقيقة</value></data>
 </root>
