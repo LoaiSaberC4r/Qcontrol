@@ -34,7 +34,7 @@ internal sealed class CreateTicketCommandHandler : ICommandHandler<CreateTicketC
     private readonly ITicketRuntimeRepository _repository; private readonly TicketRuntimeRequestGuard _guard;
     public CreateTicketCommandHandler(ITicketRuntimeRepository repository, TicketRuntimeRequestGuard guard) { _repository = repository; _guard = guard; }
     public Task<Result<TicketDetailsResponse>> Handle(CreateTicketCommand request, CancellationToken ct)
-    { var g = _guard.Ensure(request.BranchId, "Tickets.Create"); return g.IsFailure ? Task.FromResult(Result<TicketDetailsResponse>.Fail(g.Errors)) : _repository.CreateTicketAsync(request.BranchId, request.ServiceId, request.SegmentId, request.Field, request.CustomInputs, requireLookupValueWhenNoCustomInputs: false, g.Value, ct); }
+    { var g = _guard.Ensure(request.BranchId, "Tickets.Create"); return g.IsFailure ? Task.FromResult(Result<TicketDetailsResponse>.Fail(g.Errors)) : _repository.CreateTicketAsync(request.BranchId, request.ServiceId, request.SegmentId, request.Field, request.CustomInputs, requireLookupValueWhenNoCustomInputs: true, g.Value, ct); }
 }
 
 internal sealed class CreateReservationCommandHandler : ICommandHandler<CreateReservationCommand, ReservationDetailsResponse>

@@ -108,6 +108,8 @@ namespace QControl.infrastructure.Bootstrap
             services.AddScoped<IServiceTicketUsageChecker, ServiceTicketUsageChecker>();
             services.AddScoped<IBranchServiceAvailabilityChecker, BranchServiceAvailabilityChecker>();
             services.AddScoped<ITicketRuntimeRepository, TicketRuntimeRepository>();
+            services.AddScoped<ITicketPrintModelBuilder, TicketPrintModelBuilder>();
+            services.AddScoped<ITicketsAheadCalculator, ExplicitTicketSelectionAheadCalculator>();
             services.AddScoped<ICurrentTokenContext, CurrentTokenContext>();
 
             // public survey related services
