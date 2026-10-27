@@ -58,13 +58,11 @@ internal sealed class CreateKioskTicketCommandHandler
         var access = _guard.Ensure(request.BranchId, "Tickets.Create");
         return access.IsFailure
             ? Task.FromResult(Result<TicketDetailsResponse>.Fail(access.Errors))
-            : _repository.CreateTicketAsync(
+            : _repository.CreateKioskTicketAsync(
                 request.BranchId,
                 request.ServiceId,
-                request.SegmentId,
                 request.Field,
                 request.CustomInputs,
-                requireLookupValueWhenNoCustomInputs: true,
                 access.Value,
                 cancellationToken);
     }

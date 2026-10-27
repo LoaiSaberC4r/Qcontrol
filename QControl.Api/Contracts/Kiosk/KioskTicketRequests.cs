@@ -9,6 +9,6 @@ public sealed record KioskReservationSearchRequest(
 
 public sealed record CreateKioskTicketRequest(
     int ServiceId,
-    int SegmentId,
+    int? SegmentId,
     string? Field,
     IReadOnlyCollection<CustomInputRequest> CustomInputs);

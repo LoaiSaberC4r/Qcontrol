@@ -1,8 +1,16 @@
+using BuildingBlock.Domain.Results;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Reflection;
+using System.Text.Json;
+using Qcontrol.Api.Controllers;
+using QControl.Api.Contracts.Kiosk;
 using QControl.Application.Abstraction.Services;
+using QControl.Application.Features.TicketRuntime;
 using QControl.Application.Features.TicketRuntime.Shared;
 using QControl.Application.Tests.TestSupport;
 using QControl.Domain.Entities;
@@ -217,21 +225,255 @@ public sealed class KioskTicketRuntimeRepositoryTests
         Assert.Equal("REF-42", (await db.Set<Ticket>().SingleAsync()).LookupValue);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(",\"segmentId\":null")]
+    [InlineData(",\"segmentId\":1")]
+    [InlineData(",\"segmentId\":3")]
+    [InlineData(",\"segmentId\":999")]
+    [InlineData(",\"segmentId\":-1")]
+    public async Task Kiosk_endpoint_uses_assigned_system_default_regardless_of_client_segment(
+        string segmentProperty)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        await AddDefaultSegmentAsync(db);
+        var repository = CreateRepository(db);
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<ITicketRuntimeRepository>(repository);
+        services.AddSingleton(new TicketRuntimeRequestGuard(
+            new TestCurrentUser(), new TestBranchAccessValidator()));
+        services.AddMediatR(config =>
+            config.RegisterServicesFromAssemblyContaining<CreateKioskTicketCommand>());
+        using var provider = services.BuildServiceProvider();
+        var controller = new KioskController(provider.GetRequiredService<ISender>());
+        var request = JsonSerializer.Deserialize<CreateKioskTicketRequest>(
+            "{\"serviceId\":10,\"field\":\"REF-42\",\"customInputs\":[]" + segmentProperty + "}",
+            new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+        var response = await controller.CreateTicket(1, request, CancellationToken.None);
+
+        var details = Assert.IsType<TicketDetailsResponse>(
+            Assert.IsType<OkObjectResult>(response).Value);
+        Assert.Equal(7, details.SegmentId);
+        db.ChangeTracker.Clear();
+        var ticket = await db.Set<Ticket>().SingleAsync();
+        Assert.Equal(7, ticket.SegmentId);
+        Assert.Equal(TicketStatus.Waiting, ticket.Status);
+        Assert.Equal(DateOnly.FromDateTime(Now), ticket.BusinessDate);
+        Assert.Equal("A1", ticket.TicketNumber);
+        var usage = await db.Set<BranchServiceSegmentDailyUsage>().SingleAsync();
+        Assert.Equal(1007, usage.BranchServiceSegmentId);
+        Assert.Equal(1, usage.ConsumedCount);
+        Assert.Equal(TicketHistoryEventType.Created,
+            (await db.Set<TicketHistory>().SingleAsync()).EventType);
+        Assert.Empty(await db.Set<Reservation>().ToListAsync());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Kiosk_without_default_assignment_does_not_fall_back_or_consume_quota(
+        bool hasUnassignedDefault)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        if (hasUnassignedDefault)
+        {
+            var segment = Segment.CreateSystemDefault("افتراضي", "Default", Performer);
+            EntityTestFactory.AssignId(segment, 7);
+            db.Add(segment);
+            await db.SaveChangesAsync();
+        }
+        db.ChangeTracker.Clear();
+
+        var result = await CreateRepository(db).CreateKioskTicketAsync(
+            1, 10, "REF-42", Array.Empty<CustomInputSubmission>(),
+            Performer, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Tickets.Create.SegmentInvalid", result.Errors[0].Code);
+        Assert.Equal(ErrorType.Domain, result.Errors[0].Type);
+        Assert.Empty(await db.Set<Ticket>().ToListAsync());
+        Assert.Empty(await db.Set<BranchServiceSegmentDailyUsage>().ToListAsync());
+        Assert.Empty(await db.Set<TicketNumberSequence>().ToListAsync());
+        Assert.Single(await db.Set<BranchServiceSegment>().ToListAsync());
+    }
+
+    [Theory]
+    [InlineData(2, 10)]
+    [InlineData(1, 20)]
+    [InlineData(2, 20)]
+    public async Task Kiosk_cannot_use_default_assignment_for_another_branch_or_service(
+        int branchId, int serviceId)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        if (branchId != 1) db.Add(EntityTestFactory.Branch(branchId));
+        var service = serviceId == 10
+            ? await db.Set<Service>().SingleAsync(x => x.Id == serviceId)
+            : EntityTestFactory.Service(serviceId, isTicketIssuable: true);
+        if (serviceId != 10) db.Add(service);
+        var branchService = BranchService.Create(branchId, service, Performer);
+        EntityTestFactory.AssignId(branchService, 200);
+        db.Add(branchService);
+        await db.SaveChangesAsync();
+        await AddDefaultSegmentAsync(db, branchServiceId: 200);
+
+        var result = await CreateRepository(db).CreateKioskTicketAsync(
+            1, 10, "REF-42", Array.Empty<CustomInputSubmission>(),
+            Performer, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Tickets.Create.SegmentInvalid", result.Errors[0].Code);
+        Assert.Empty(await db.Set<Ticket>().ToListAsync());
+        Assert.Empty(await db.Set<BranchServiceSegmentDailyUsage>().ToListAsync());
+        Assert.Empty(await db.Set<TicketNumberSequence>().ToListAsync());
+        Assert.Equal(2, await db.Set<BranchServiceSegment>().CountAsync());
+    }
+
+    [Fact]
+    public async Task Kiosk_rejects_ambiguous_default_assignments_without_consuming_quota()
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        await AddDefaultSegmentAsync(db);
+        await AddDefaultSegmentAsync(db, segmentId: 8);
+
+        var result = await CreateRepository(db).CreateKioskTicketAsync(
+            1, 10, "REF-42", Array.Empty<CustomInputSubmission>(),
+            Performer, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Tickets.Create.SegmentInvalid", result.Errors[0].Code);
+        Assert.Empty(await db.Set<Ticket>().ToListAsync());
+        Assert.Empty(await db.Set<BranchServiceSegmentDailyUsage>().ToListAsync());
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(2, 2)]
+    public async Task Kiosk_preserves_default_assignment_quota_validation(int quota, int consumed)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        var relationship = await AddDefaultSegmentAsync(db, quota: quota);
+        if (consumed > 0)
+        {
+            db.Add(BranchServiceSegmentDailyUsage.Create(
+                relationship.Id, DateOnly.FromDateTime(Now), consumed, Now));
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+        }
+
+        var result = await CreateRepository(db).CreateKioskTicketAsync(
+            1, 10, "REF-42", Array.Empty<CustomInputSubmission>(),
+            Performer, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Tickets.Create.QuotaExceeded", result.Errors[0].Code);
+        Assert.Equal(ErrorType.Conflict, result.Errors[0].Type);
+        db.ChangeTracker.Clear();
+        Assert.Empty(await db.Set<Ticket>().ToListAsync());
+        Assert.Empty(await db.Set<TicketNumberSequence>().ToListAsync());
+        Assert.Equal(consumed, await db.Set<BranchServiceSegmentDailyUsage>()
+            .SumAsync(x => x.ConsumedCount));
+    }
+
+    [Fact]
+    public async Task Reservation_conversion_preserves_non_default_segment_and_consumes_no_second_quota()
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        await AddDefaultSegmentAsync(db);
+        var repository = CreateRepository(db);
+        var reservation = await repository.CreateReservationAsync(
+            1, 10, 3, Now.AddHours(1), "REF-42",
+            Array.Empty<CustomInputSubmission>(), Performer, CancellationToken.None);
+        Assert.True(reservation.IsSuccess, FormatErrors(reservation.Errors));
+        db.ChangeTracker.Clear();
+
+        var ticket = await repository.CreateTicketFromReservationAsync(
+            1, reservation.Value.Id, Performer, CancellationToken.None);
+        var duplicate = await repository.CreateTicketFromReservationAsync(
+            1, reservation.Value.Id, Performer, CancellationToken.None);
+
+        Assert.True(ticket.IsSuccess, FormatErrors(ticket.Errors));
+        Assert.Equal(3, ticket.Value.SegmentId);
+        Assert.Equal("Reservations.Convert.AlreadyConverted", duplicate.Errors[0].Code);
+        db.ChangeTracker.Clear();
+        Assert.Equal(3, (await db.Set<Ticket>().SingleAsync()).SegmentId);
+        var storedReservation = await db.Set<Reservation>().SingleAsync();
+        Assert.Equal(3, storedReservation.SegmentId);
+        Assert.Equal(ReservationStatus.ConvertedToTicket, storedReservation.Status);
+        var usage = await db.Set<BranchServiceSegmentDailyUsage>().SingleAsync();
+        Assert.Equal(1000, usage.BranchServiceSegmentId);
+        Assert.Equal(1, usage.ConsumedCount);
+        Assert.Contains(await db.Set<ReservationHistory>().ToListAsync(),
+            x => x.EventType == ReservationHistoryEventType.ConvertedToTicket);
+    }
+
+    [Fact]
+    public async Task Administrative_ticket_creation_keeps_explicit_non_default_segment()
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        await AddDefaultSegmentAsync(db);
+
+        var result = await CreateRepository(db).CreateTicketAsync(
+            1, 10, 3, "REF-42", Array.Empty<CustomInputSubmission>(),
+            requireLookupValueWhenNoCustomInputs: true, Performer, CancellationToken.None);
+
+        Assert.True(result.IsSuccess, FormatErrors(result.Errors));
+        Assert.Equal(3, result.Value.SegmentId);
+        Assert.Equal(3, (await db.Set<Ticket>().SingleAsync()).SegmentId);
+        var usage = await db.Set<BranchServiceSegmentDailyUsage>().SingleAsync();
+        Assert.Equal(1000, usage.BranchServiceSegmentId);
+        Assert.Equal(1, usage.ConsumedCount);
+    }
+
+    [Theory]
+    [InlineData(0, 1000)]
+    [InlineData(7, 1000)]
+    [InlineData(3, 0)]
+    [InlineData(3, 1007)]
+    public async Task Reservation_conversion_rejects_invalid_segment_relationship_without_default_fallback(
+        int segmentId, int relationshipId)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, serviceId: 10);
+        await AddDefaultSegmentAsync(db);
+        var reservation = await AddReservationAsync(db, 1, 10, segmentId,
+            relationshipId, Now.AddHours(1), "REF-42");
+
+        var result = await CreateRepository(db).CreateTicketFromReservationAsync(
+            1, reservation.Id, Performer, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Reservations.Convert.SegmentInvalid", result.Errors[0].Code);
+        db.ChangeTracker.Clear();
+        var stored = await db.Set<Reservation>().SingleAsync();
+        Assert.Equal(segmentId, stored.SegmentId);
+        Assert.Equal(ReservationStatus.Active, stored.Status);
+        Assert.Empty(await db.Set<Ticket>().ToListAsync());
+        Assert.Empty(await db.Set<BranchServiceSegmentDailyUsage>().ToListAsync());
+        Assert.Empty(await db.Set<TicketNumberSequence>().ToListAsync());
+    }
+
     [Fact]
     public async Task Direct_kiosk_ticket_creates_ticket_without_reservation()
     {
         await using var db = CreateContext();
         await SeedServiceGraphAsync(db, serviceId: 10);
-        db.ChangeTracker.Clear();
+        await AddDefaultSegmentAsync(db);
         var repository = CreateRepository(db);
 
-        var missing = await repository.CreateTicketAsync(
-            1, 10, 3, null, Array.Empty<CustomInputSubmission>(),
-            requireLookupValueWhenNoCustomInputs: true, Performer,
+        var missing = await repository.CreateKioskTicketAsync(
+            1, 10, null, Array.Empty<CustomInputSubmission>(), Performer,
             CancellationToken.None);
-        var result = await repository.CreateTicketAsync(
-            1, 10, 3, "REF-42", Array.Empty<CustomInputSubmission>(),
-            requireLookupValueWhenNoCustomInputs: true, Performer,
+        var result = await repository.CreateKioskTicketAsync(
+            1, 10, "REF-42", Array.Empty<CustomInputSubmission>(), Performer,
             CancellationToken.None);
 
         Assert.Equal("Tickets.Create.FieldRequired", missing.Errors[0].Code);
@@ -248,7 +490,7 @@ public sealed class KioskTicketRuntimeRepositoryTests
     {
         await using var db = CreateContext();
         await SeedServiceGraphAsync(db, serviceId: 10);
-        db.ChangeTracker.Clear();
+        await AddDefaultSegmentAsync(db);
         var service = await db.Set<Service>().SingleAsync(x => x.Id == 10);
         var phone = EntityTestFactory.ServiceCustomInput(
             service, 101, "Phone", isRequired: true, minLength: 11,
@@ -260,14 +502,14 @@ public sealed class KioskTicketRuntimeRepositoryTests
         var repository = CreateRepository(db);
         var input = new[] { new CustomInputSubmission(phone.Id, "01012345678") };
 
-        var missing = await repository.CreateTicketAsync(
-            1, 10, 3, null, Array.Empty<CustomInputSubmission>(), true,
+        var missing = await repository.CreateKioskTicketAsync(
+            1, 10, null, Array.Empty<CustomInputSubmission>(),
             Performer, CancellationToken.None);
-        var fieldNotAllowed = await repository.CreateTicketAsync(
-            1, 10, 3, "REF-42", input, true,
+        var fieldNotAllowed = await repository.CreateKioskTicketAsync(
+            1, 10, "REF-42", input,
             Performer, CancellationToken.None);
-        var success = await repository.CreateTicketAsync(
-            1, 10, 3, null, input, true,
+        var success = await repository.CreateKioskTicketAsync(
+            1, 10, null, input,
             Performer, CancellationToken.None);
 
         Assert.True(missing.IsFailure);
@@ -335,6 +577,21 @@ public sealed class KioskTicketRuntimeRepositoryTests
         db.AddRange(branch, service, segment, branchService, relationship);
         await db.SaveChangesAsync();
         return service;
+    }
+
+    private static async Task<BranchServiceSegment> AddDefaultSegmentAsync(
+        PlatformWriteDbContext db, int branchServiceId = 100, int segmentId = 7,
+        int quota = 100)
+    {
+        var segment = Segment.CreateSystemDefault("افتراضي", "Default", Performer);
+        EntityTestFactory.AssignId(segment, segmentId);
+        var relationship = BranchServiceSegment.Create(
+            branchServiceId, segmentId, quota, Performer);
+        EntityTestFactory.AssignId(relationship, branchServiceId * 10 + segmentId);
+        db.AddRange(segment, relationship);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        return relationship;
     }
 
     private static async Task<Reservation> AddReservationAsync(

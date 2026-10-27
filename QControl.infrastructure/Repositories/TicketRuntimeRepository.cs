@@ -42,8 +42,23 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
     {
     }
 
-    public async Task<Result<TicketDetailsResponse>> CreateTicketAsync(int branchId,
+    public Task<Result<TicketDetailsResponse>> CreateTicketAsync(int branchId,
         int serviceId, int segmentId, string? lookupValue,
+        IReadOnlyCollection<CustomInputSubmission> inputs,
+        bool requireLookupValueWhenNoCustomInputs,
+        Guid performerId, CancellationToken cancellationToken) =>
+        CreateTicketCoreAsync(branchId, serviceId, segmentId, lookupValue, inputs,
+            requireLookupValueWhenNoCustomInputs, performerId, cancellationToken);
+
+    public Task<Result<TicketDetailsResponse>> CreateKioskTicketAsync(int branchId,
+        int serviceId, string? lookupValue,
+        IReadOnlyCollection<CustomInputSubmission> inputs,
+        Guid performerId, CancellationToken cancellationToken) =>
+        CreateTicketCoreAsync(branchId, serviceId, segmentId: null, lookupValue, inputs,
+            requireLookupValueWhenNoCustomInputs: true, performerId, cancellationToken);
+
+    private async Task<Result<TicketDetailsResponse>> CreateTicketCoreAsync(int branchId,
+        int serviceId, int? segmentId, string? lookupValue,
         IReadOnlyCollection<CustomInputSubmission> inputs,
         bool requireLookupValueWhenNoCustomInputs,
         Guid performerId, CancellationToken cancellationToken)
@@ -61,7 +76,9 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         try
         {
-            var relationship = await GetSegmentRelationshipAsync(branchId, serviceId, segmentId, cancellationToken);
+            var relationship = segmentId.HasValue
+                ? await GetSegmentRelationshipAsync(branchId, serviceId, segmentId.Value, cancellationToken)
+                : await GetDefaultSegmentRelationshipAsync(branchId, serviceId, cancellationToken);
             if (relationship is null)
                 return await RollbackTicketAsync(transaction, "Tickets.Create.SegmentInvalid", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain, cancellationToken);
 
@@ -77,7 +94,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 return Result<TicketDetailsResponse>.Fail(number.Errors);
             }
 
-            var ticket = Ticket.Create(branchId, serviceId, segmentId, null,
+            var ticket = Ticket.Create(branchId, serviceId, relationship.SegmentId, null,
                 number.Value, businessDate, now, performerId, validatedInputs.Value.LookupValue);
             foreach (var snapshot in validatedInputs.Value.Snapshots)
                 ticket.AddCustomInput(snapshot.ToTicket(now));
@@ -504,6 +521,17 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         await _db.Set<BranchServiceSegment>().AsNoTracking()
             .SingleOrDefaultAsync(x => x.BranchService.BranchId == branchId &&
                 x.BranchService.ServiceId == serviceId && x.SegmentId == segmentId, ct);
+
+    private async Task<BranchServiceSegment?> GetDefaultSegmentRelationshipAsync(int branchId,
+        int serviceId, CancellationToken ct)
+    {
+        var relationships = await _db.Set<BranchServiceSegment>().AsNoTracking()
+            .Where(x => x.BranchService.BranchId == branchId &&
+                x.BranchService.ServiceId == serviceId && x.Segment.IsSystemDefault)
+            .Take(2)
+            .ToListAsync(ct);
+        return relationships.Count == 1 ? relationships[0] : null;
+    }
 
     private async Task<bool> TryConsumeQuotaAsync(BranchServiceSegment relationship,
         DateOnly businessDate, DateTime now, CancellationToken ct)
