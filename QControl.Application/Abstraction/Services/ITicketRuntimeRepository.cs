@@ -11,6 +11,9 @@ public interface ITicketRuntimeRepository
         int segmentId, string? lookupValue, IReadOnlyCollection<CustomInputSubmission> inputs,
         bool requireLookupValueWhenNoCustomInputs, Guid performerId,
         CancellationToken cancellationToken);
+    Task<Result<TicketDetailsResponse>> CreateKioskTicketAsync(int branchId, int serviceId,
+        string? lookupValue, IReadOnlyCollection<CustomInputSubmission> inputs,
+        Guid performerId, CancellationToken cancellationToken);
     Task<Result<ReservationDetailsResponse>> CreateReservationAsync(int branchId, int serviceId,
         int segmentId, DateTime scheduledOnUtc, string? lookupValue, IReadOnlyCollection<CustomInputSubmission> inputs,
         Guid performerId, CancellationToken cancellationToken);

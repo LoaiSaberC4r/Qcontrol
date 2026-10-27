@@ -25,7 +25,6 @@ internal sealed class CreateKioskTicketCommandValidator
     {
         RuleFor(x => x.BranchId).GreaterThan(0);
         RuleFor(x => x.ServiceId).GreaterThan(0);
-        RuleFor(x => x.SegmentId).GreaterThan(0);
         RuleFor(x => x.Field).MaximumLength(3000);
         RuleForEach(x => x.CustomInputs).ChildRules(input =>
         {

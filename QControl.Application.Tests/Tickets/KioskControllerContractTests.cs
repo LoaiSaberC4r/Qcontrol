@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using BuildingBlock.Domain.Results;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -74,9 +75,32 @@ public sealed class KioskControllerContractTests
         var command = Assert.IsType<CreateKioskTicketCommand>(sender.Request);
         Assert.Equal(7, command.BranchId);
         Assert.Equal(15, command.ServiceId);
-        Assert.Equal(2, command.SegmentId);
         Assert.Equal("REF-42", command.Field);
         Assert.Empty(command.CustomInputs);
+        Assert.True(new CreateKioskTicketCommandValidator().Validate(command).IsValid);
+    }
+
+    [Theory]
+    [InlineData("{\"serviceId\":15,\"field\":\"REF-42\",\"customInputs\":[]}", null)]
+    [InlineData("{\"serviceId\":15,\"segmentId\":null,\"field\":\"REF-42\",\"customInputs\":[]}", null)]
+    [InlineData("{\"serviceId\":15,\"segmentId\":1,\"field\":\"REF-42\",\"customInputs\":[]}", 1)]
+    [InlineData("{\"serviceId\":15,\"segmentId\":-1,\"field\":\"REF-42\",\"customInputs\":[]}", -1)]
+    public async Task Direct_ticket_accepts_optional_legacy_segment_without_requiring_it_in_command(
+        string json, int? segmentId)
+    {
+        var request = JsonSerializer.Deserialize<CreateKioskTicketRequest>(json,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.NotNull(request);
+        Assert.Equal(segmentId, request!.SegmentId);
+        var sender = new CapturingSender();
+
+        await new KioskController(sender).CreateTicket(7, request, CancellationToken.None);
+
+        var command = Assert.IsType<CreateKioskTicketCommand>(sender.Request);
+        Assert.Equal(7, command.BranchId);
+        Assert.Equal(15, command.ServiceId);
+        Assert.Equal("REF-42", command.Field);
+        Assert.True(new CreateKioskTicketCommandValidator().Validate(command).IsValid);
     }
 
     private static void AssertAction(string methodName, string route, string permission)

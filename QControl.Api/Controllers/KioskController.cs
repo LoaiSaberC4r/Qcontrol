@@ -53,7 +53,6 @@ public sealed class KioskController : ControllerBase
         {
             BranchId = branchId,
             ServiceId = request.ServiceId,
-            SegmentId = request.SegmentId,
             Field = request.Field,
             CustomInputs = Map(request.CustomInputs)
         }, cancellationToken)).ToIActionResult();
