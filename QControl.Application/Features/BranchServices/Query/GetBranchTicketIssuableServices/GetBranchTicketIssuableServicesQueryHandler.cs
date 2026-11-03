@@ -136,7 +136,7 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
         var currentDateTime = _dateTimeProvider.UtcNow;
         var currentDay = currentDateTime.DayOfWeek;
         var currentTime = TimeOnly.FromDateTime(currentDateTime);
-        var allowedUntil = CalculateAllowedUntil(
+        var allowedUntil = ServiceScheduleAvailability.CalculateAllowedUntil(
             currentTime,
             branchState.AllowedTime);
         var assignedServiceIds = (await _branchServiceReadRepository.ListAsync(
@@ -185,23 +185,45 @@ internal sealed class GetBranchTicketIssuableServicesQueryHandler
             await LoadCustomInputsAsync(
                 eligibleLeafIds,
                 cancellationToken);
+        var includedIds = TicketIssuableServiceTreeBuilder.CollectRequiredServiceIds(
+            allItems.ToDictionary(x => x.Id), eligibleLeafIds);
+        var imagesByServiceId = await LoadImagesAsync(includedIds, cancellationToken);
         var services = TicketIssuableServiceTreeBuilder.Build(
             allItems,
             eligibleLeafIds,
-            customInputsByServiceId);
+            customInputsByServiceId,
+            imagesByServiceId);
 
         return Success(request.BranchId, branding, services);
     }
 
-    private static TimeOnly CalculateAllowedUntil(
-        TimeOnly currentTime,
-        TimeSpan allowedTime)
+    private async Task<IReadOnlyDictionary<int, ServiceImagesForResponse>> LoadImagesAsync(
+        IReadOnlySet<int> includedIds, CancellationToken cancellationToken)
     {
-        var calculatedEnd = currentTime.ToTimeSpan() + allowedTime;
+        if (includedIds.Count == 0)
+            return new Dictionary<int, ServiceImagesForResponse>();
 
-        return calculatedEnd >= TimeSpan.FromDays(1)
-            ? TimeOnly.MaxValue
-            : TimeOnly.FromTimeSpan(calculatedEnd);
+        var ids = includedIds.ToArray();
+        var images = await _serviceReadRepository.Query().AsNoTracking()
+            .Where(x => ids.Contains(x.Id))
+            .Select(x => new
+            {
+                x.Id,
+                LogoPath = x.Images.Where(image => image.IsActive &&
+                        image.ImageType == ServiceImageType.Logo)
+                    .OrderBy(image => image.DisplayOrder).ThenBy(image => image.Id)
+                    .Select(image => image.ImagePath).FirstOrDefault(),
+                IconPath = x.Images.Where(image => image.IsActive &&
+                        image.ImageType == ServiceImageType.Icon)
+                    .OrderBy(image => image.DisplayOrder).ThenBy(image => image.Id)
+                    .Select(image => image.ImagePath).FirstOrDefault()
+            }).ToListAsync(cancellationToken);
+
+        return images.ToDictionary(x => x.Id, x => new ServiceImagesForResponse
+        {
+            LogoUrl = ServiceMediaUrlMapper.ToMediaUrl(x.LogoPath),
+            IconUrl = ServiceMediaUrlMapper.ToMediaUrl(x.IconPath)
+        });
     }
 
     private async Task<IReadOnlyDictionary<

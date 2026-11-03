@@ -88,5 +88,5 @@ public sealed record BranchServiceAvailability(
 public interface IBranchServiceAvailabilityChecker
 {
     Task<BranchServiceAvailability> CheckAsync(int branchId, int serviceId,
-        DateTime atUtc, CancellationToken cancellationToken);
+        DateTime atUtc, CancellationToken cancellationToken, bool applyAllowedTime = false);
 }

@@ -9,7 +9,8 @@ internal static class TicketIssuableServiceTreeBuilder
         IReadOnlyCollection<ServiceHierarchyItem> allItems,
         IReadOnlySet<int> eligibleLeafIds,
         IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
-            customInputsByServiceId = null)
+            customInputsByServiceId = null,
+        IReadOnlyDictionary<int, ServiceImagesForResponse>? imagesByServiceId = null)
     {
         if (allItems.Count == 0 || eligibleLeafIds.Count == 0)
         {
@@ -54,6 +55,7 @@ internal static class TicketIssuableServiceTreeBuilder
                 childrenByParentId,
                 eligibleLeafIds,
                 customInputsByServiceId,
+                imagesByServiceId,
                 emittedServiceIds,
                 new HashSet<int>());
 
@@ -66,7 +68,7 @@ internal static class TicketIssuableServiceTreeBuilder
         return result;
     }
 
-    private static HashSet<int> CollectRequiredServiceIds(
+    internal static HashSet<int> CollectRequiredServiceIds(
         IReadOnlyDictionary<int, ServiceHierarchyItem> itemsById,
         IReadOnlySet<int> eligibleLeafIds)
     {
@@ -100,6 +102,7 @@ internal static class TicketIssuableServiceTreeBuilder
         IReadOnlySet<int> eligibleLeafIds,
         IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
             customInputsByServiceId,
+        IReadOnlyDictionary<int, ServiceImagesForResponse>? imagesByServiceId,
         ISet<int> emittedServiceIds,
         ISet<int> pathIds)
     {
@@ -119,6 +122,7 @@ internal static class TicketIssuableServiceTreeBuilder
                     childrenByParentId,
                     eligibleLeafIds,
                     customInputsByServiceId,
+                    imagesByServiceId,
                     emittedServiceIds,
                     pathIds);
 
@@ -131,6 +135,7 @@ internal static class TicketIssuableServiceTreeBuilder
 
         pathIds.Remove(item.Id);
         var isEligibleLeaf = eligibleLeafIds.Contains(item.Id);
+        var images = imagesByServiceId?.GetValueOrDefault(item.Id);
         var isClientInputRequired =
             isEligibleLeaf && item.IsClientInputRequired;
         IReadOnlyList<ServiceCustomInputResponse>? customInputs = null;
@@ -154,6 +159,9 @@ internal static class TicketIssuableServiceTreeBuilder
                 ? item.EnglishUserMessage
                 : null,
             IsTicketIssuable = isEligibleLeaf,
+            HasReservation = isEligibleLeaf && item.HasReservation,
+            LogoUrl = images?.LogoUrl,
+            IconUrl = images?.IconUrl,
             IsClientInputRequired = isClientInputRequired,
             CustomInputs = customInputs,
             RangePrefix = isEligibleLeaf ? item.RangePrefix : null,

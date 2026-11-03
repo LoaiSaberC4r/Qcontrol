@@ -98,6 +98,12 @@ public sealed record TicketIssuableServiceTreeNodeResponse
 
     public bool IsTicketIssuable { get; init; }
 
+    public bool HasReservation { get; init; }
+
+    public string? LogoUrl { get; init; }
+
+    public string? IconUrl { get; init; }
+
     public bool IsClientInputRequired { get; init; }
 
     public IReadOnlyList<ServiceCustomInputResponse>? CustomInputs { get; init; }

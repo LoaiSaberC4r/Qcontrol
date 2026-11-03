@@ -93,7 +93,7 @@ public sealed class TicketIssuableServiceCustomInputTests
             customInputs.Select(x => x.Name));
         Assert.Equal(14, customInputs[0].MaxLength);
         Assert.Equal(100, customInputs[1].MaxValue);
-        Assert.Equal(1, serviceRepository.QueryCallCount);
+        Assert.Equal(2, serviceRepository.QueryCallCount);
     }
 
     [Fact]

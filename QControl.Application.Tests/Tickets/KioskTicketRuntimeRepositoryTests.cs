@@ -20,7 +20,7 @@ using QControl.infrastructure.Repositories;
 
 namespace QControl.Application.Tests.Tickets;
 
-public sealed class KioskTicketRuntimeRepositoryTests
+public sealed partial class KioskTicketRuntimeRepositoryTests
 {
     private static readonly Guid Performer = EntityTestFactory.CurrentUserId;
     private static readonly DateTime Now =
@@ -643,7 +643,7 @@ public sealed class KioskTicketRuntimeRepositoryTests
     {
         public Task<BranchServiceAvailability> CheckAsync(
             int branchId, int serviceId, DateTime atUtc,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken, bool applyAllowedTime = false) =>
             Task.FromResult(new BranchServiceAvailability(
                 ServiceExists: true,
                 IsActive: true,

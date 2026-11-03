@@ -64,7 +64,8 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         Guid performerId, CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
-        var availability = await _availability.CheckAsync(branchId, serviceId, now, cancellationToken);
+        var availability = await _availability.CheckAsync(branchId, serviceId, now, cancellationToken,
+            applyAllowedTime: true);
         if (!availability.IsAvailable || !availability.IsTicketIssuable)
             return FailTicket("Tickets.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
 
@@ -128,7 +129,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         if (scheduledOnUtc <= now)
             return FailReservation("Reservations.Create.TimeInvalid", TicketRuntimeMessages.ReservationTimeInvalid, ErrorType.Validation);
         var availability = await _availability.CheckAsync(branchId, serviceId, scheduledOnUtc, cancellationToken);
-        if (!availability.IsAvailable || !availability.HasReservation)
+        if (!availability.IsAvailable || !availability.HasReservation || !availability.IsTicketIssuable)
             return FailReservation("Reservations.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
         var validatedInputs = await ValidateCreateInputsAsync(serviceId, lookupValue, inputs,
             "Reservations.Create", requireLookupValueWhenNoCustomInputs: true,
@@ -186,10 +187,11 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.AlreadyConverted", TicketRuntimeMessages.AlreadyConverted, ErrorType.Conflict, cancellationToken);
             if (reservation.Status is ReservationStatus.Cancelled or ReservationStatus.Expired)
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.Terminal", TicketRuntimeMessages.ReservationTerminal, ErrorType.Domain, cancellationToken);
-            if (reservation.Status == ReservationStatus.NoShow && reservation.BusinessDate != DateOnly.FromDateTime(now))
+            if (reservation.BusinessDate != DateOnly.FromDateTime(now))
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.DifferentDay", TicketRuntimeMessages.DifferentReservationDay, ErrorType.Domain, cancellationToken);
 
-            var availability = await _availability.CheckAsync(branchId, reservation.ServiceId, now, cancellationToken);
+            var availability = await _availability.CheckAsync(branchId, reservation.ServiceId, now, cancellationToken,
+                applyAllowedTime: true);
             if (!availability.IsAvailable || !availability.IsTicketIssuable)
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain, cancellationToken);
             var relationshipValid = await _db.Set<BranchServiceSegment>().AsNoTracking()
@@ -243,22 +245,22 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             return FailKioskSearch("Kiosk.Reservations.Search.ServiceUnavailable",
                 TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
 
-        var definitions = await _db.Set<ServiceCustomInput>().AsNoTracking()
+        var activeInputIds = await _db.Set<ServiceCustomInput>().AsNoTracking()
             .Where(x => x.ServiceId == serviceId && x.IsActive)
-            .OrderBy(x => x.Order)
+            .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 
         IQueryable<Reservation> query = _db.Set<Reservation>().AsNoTracking()
             .Where(x => x.BranchId == branchId && x.ServiceId == serviceId);
 
-        if (definitions.Count == 0)
+        if (inputs.Count == 0)
         {
-            if (inputs.Count != 0)
-                return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsNotAllowed",
-                    TicketRuntimeMessages.CustomInputsNotAllowed, ErrorType.Validation);
             if (string.IsNullOrWhiteSpace(lookupValue))
-                return FailKioskSearch("Kiosk.Reservations.Search.FieldRequired",
-                    TicketRuntimeMessages.FieldRequired, ErrorType.Validation);
+                return activeInputIds.Count == 0
+                    ? FailKioskSearch("Kiosk.Reservations.Search.FieldRequired",
+                        TicketRuntimeMessages.FieldRequired, ErrorType.Validation)
+                    : FailKioskSearch("Kiosk.Reservations.Search.CustomInputsRequired",
+                        TicketRuntimeMessages.CustomInputsRequiredForSearch, ErrorType.Validation);
             if (lookupValue.Trim().Length > 3000)
                 return FailKioskSearch("Kiosk.Reservations.Search.FieldInvalid",
                     TicketRuntimeMessages.FieldInvalid, ErrorType.Validation);
@@ -269,23 +271,38 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         else
         {
             if (!string.IsNullOrWhiteSpace(lookupValue))
-                return FailKioskSearch("Kiosk.Reservations.Search.FieldNotAllowed",
-                    TicketRuntimeMessages.FieldNotAllowed, ErrorType.Validation);
-            if (inputs.Count == 0)
-                return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsRequired",
-                    TicketRuntimeMessages.CustomInputsRequiredForSearch, ErrorType.Validation);
+                return activeInputIds.Count == 0
+                    ? FailKioskSearch("Kiosk.Reservations.Search.CustomInputsNotAllowed",
+                        TicketRuntimeMessages.CustomInputsNotAllowed, ErrorType.Validation)
+                    : FailKioskSearch("Kiosk.Reservations.Search.FieldNotAllowed",
+                        TicketRuntimeMessages.FieldNotAllowed, ErrorType.Validation);
             if (inputs.Any(x => string.IsNullOrWhiteSpace(x.Value)))
                 return FailKioskSearch("Kiosk.Reservations.Search.CustomInputsInvalid",
                     TicketRuntimeMessages.CustomInputsInvalid, ErrorType.Validation);
 
-            var validated = ValidateInputs(definitions, inputs, requireAllRequired: false);
-            if (validated.IsFailure)
-                return Result<IReadOnlyList<KioskReservationSearchItemResponse>>.Fail(
-                    validated.Errors);
+            if (inputs.GroupBy(x => x.ServiceCustomInputId).Any(x => x.Count() > 1))
+                return FailKioskSearch("TicketRuntime.CustomInputs.Duplicate",
+                    TicketRuntimeMessages.DuplicateCustomInput, ErrorType.Validation);
 
-            foreach (var input in validated.Value)
+            // Lookup validates identities against current definitions or scoped
+            // historical snapshots, never against today's value/type constraints.
+            var historicalIds = inputs.Select(x => x.ServiceCustomInputId)
+                .Except(activeInputIds).ToArray();
+            if (historicalIds.Length > 0)
             {
-                var inputId = input.Id;
+                var storedIds = await query.SelectMany(x => x.CustomInputValues)
+                    .Where(x => x.ServiceCustomInputId.HasValue &&
+                        historicalIds.Contains(x.ServiceCustomInputId.Value))
+                    .Select(x => x.ServiceCustomInputId!.Value)
+                    .Distinct().ToListAsync(cancellationToken);
+                if (historicalIds.Except(storedIds).Any())
+                    return FailKioskSearch("TicketRuntime.CustomInputs.NotApplicable",
+                        TicketRuntimeMessages.CustomInputNotApplicable, ErrorType.Validation);
+            }
+
+            foreach (var input in inputs)
+            {
+                var inputId = input.ServiceCustomInputId;
                 var value = input.Value;
                 query = query.Where(reservation => reservation.CustomInputValues.Any(
                     stored => stored.ServiceCustomInputId == inputId && stored.Value == value));
