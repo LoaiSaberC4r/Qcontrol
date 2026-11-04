@@ -19,6 +19,9 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
     [InlineData("valid-scoped", true)]
     [InlineData("inactive-service", false)]
     [InlineData("deleted-service", false)]
+    [InlineData("active-parent", true)]
+    [InlineData("missing-parent", true)]
+    [InlineData("ancestor-cycle", false)]
     [InlineData("inactive-parent", false)]
     [InlineData("deleted-parent", false)]
     [InlineData("inactive-grandparent", false)]
@@ -50,16 +53,21 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         }
         if (scenario == "inactive-service") EntityTestFactory.SetServiceActive(service, false);
         if (scenario == "deleted-service") service.IsDeleted = true;
-        if (scenario is "inactive-parent" or "deleted-parent" or "inactive-grandparent")
+        if (scenario == "missing-parent") service.ChangeParent(99, Performer);
+        if (scenario is "active-parent" or "inactive-parent" or "deleted-parent" or
+            "inactive-grandparent" or "ancestor-cycle")
         {
             var parent = EntityTestFactory.Service(20);
             service.ChangeParent(parent.Id, Performer);
             if (scenario == "inactive-parent") EntityTestFactory.SetServiceActive(parent, false);
             if (scenario == "deleted-parent") parent.IsDeleted = true;
-            if (scenario == "inactive-grandparent")
+            if (scenario is "inactive-grandparent" or "ancestor-cycle")
             {
                 var grandparent = EntityTestFactory.Service(30);
-                EntityTestFactory.SetServiceActive(grandparent, false);
+                if (scenario == "inactive-grandparent")
+                    EntityTestFactory.SetServiceActive(grandparent, false);
+                else
+                    grandparent.ChangeParent(parent.Id, Performer);
                 parent.ChangeParent(grandparent.Id, Performer);
                 db.Add(grandparent);
             }
@@ -125,7 +133,7 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
     [InlineData(30, 16, 1, false)]
     [InlineData(0, 15, 59, true)]
     [InlineData(30, 23, 50, false)]
-    public async Task Arrival_allowance_applies_to_walk_in_and_conversion_but_not_appointment_booking(
+    public async Task Arrival_allowance_applies_to_kiosk_operations_but_not_appointment_booking(
         int allowanceMinutes, int hour, int minute, bool allowed)
     {
         await using var db = CreateContext();
@@ -159,10 +167,16 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
 
         var ticket = await repository.CreateKioskTicketAsync(1, 10, "REF-42",
             Array.Empty<CustomInputSubmission>(), Performer, CancellationToken.None);
+        var search = await repository.SearchReservationsForKioskAsync(1, 10, "REF-42",
+            Array.Empty<CustomInputSubmission>(), CancellationToken.None);
         var conversion = await repository.CreateTicketFromReservationAsync(1,
             reservation.Id, Performer, CancellationToken.None);
 
         Assert.Equal(allowed, ticket.IsSuccess);
+        if (allowed)
+            Assert.Equal(reservation.Id, Assert.Single(search.Value).ReservationId);
+        else
+            Assert.Equal("Kiosk.Reservations.Search.ServiceUnavailable", Assert.Single(search.Errors).Code);
         Assert.Equal(allowed, conversion.IsSuccess);
 
         // Booking checks the requested appointment against the ordinary schedule,

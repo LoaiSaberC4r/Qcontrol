@@ -240,7 +240,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             CancellationToken cancellationToken)
     {
         var availability = await _availability.CheckAsync(branchId, serviceId, _clock.UtcNow,
-            cancellationToken);
+            cancellationToken, applyAllowedTime: true);
         if (!availability.IsAvailable || !availability.IsTicketIssuable)
             return FailKioskSearch("Kiosk.Reservations.Search.ServiceUnavailable",
                 TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);

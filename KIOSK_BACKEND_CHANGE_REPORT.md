@@ -20,7 +20,7 @@ Implemented the seven approved fixes. The existing HTTP search contract supports
 - `QControl.Application/Properties/AssemblyInfo.cs`
 - Regression files listed under KSK-08 in section D.
 
-**Change:** Load one compact, untracked service hierarchy projection, including deleted nodes, and reuse `ServiceHierarchyCalculator.ComputeStates`. Availability now requires an active existing branch, effective ancestor activity, no children, Global scope or matching BranchScoped ownership, and the existing branch assignment and schedule. Ticket issuance/conversion/search retain their explicit `IsTicketIssuable` checks. Reservation creation also checks that flag under KSK-11. The application assembly grants the infrastructure assembly internal access to reuse the existing calculator rather than copying its implementation.
+Runtime availability projects the requested service by ID, checks for children with an indexed existence predicate, and validates its ancestor chain with a parameterized recursive SQL Server query when needed. Availability requires an active existing branch, effective ancestor activity, no children, Global scope or matching BranchScoped ownership, and the existing branch assignment and schedule. Ticket issuance, conversion, and search retain their explicit `IsTicketIssuable` checks. Reservation creation also checks that flag under KSK-11.
 
 **Why it fixes the bug:** Direct runtime operations enforce the same hierarchy, scope, and assignment rules as discovery. Deleted children still make a node non-leaf, matching discovery's existing semantics. Existing filters on branch and assignment queries remain in place. Errors still use the operation's existing `ServiceUnavailable` domain result.
 
@@ -39,9 +39,9 @@ Implemented the seven approved fixes. The existing HTTP search contract supports
 - `QControl.infrastructure/Repositories/TicketRuntimeRepository.cs`
 - Relevant regression files in section D.
 
-**Change:** Extract discovery's existing same-day, midnight-clamped allowed-until calculation into a shared helper. Add optional `applyAllowedTime = false` to the internal availability dependency and opt in only for ticket creation and reservation conversion. Read the existing branch configuration; absent configuration uses zero. Keep the current UTC weekday and exclusive `time < EndTime` condition.
+Discovery and runtime share the existing same-day, midnight-clamped allowed-until calculation. Ticket creation, kiosk reservation search, and reservation conversion opt in through `applyAllowedTime: true`. The checker reads the existing branch configuration and uses zero when the configuration is absent. It uses the current UTC weekday and the exclusive `time < EndTime` condition.
 
-**Why it fixes the bug:** Arrival operations open at the schedule start minus the configured allowance, including the exact boundary. Future appointments, search, manual transfer, and workflow availability retain their ordinary timing mode. No appointment-relative arrival gate or timezone conversion was introduced.
+Kiosk arrival operations open at the schedule start minus the configured allowance, including the exact boundary. Future appointments, manual transfer, and workflow availability use the ordinary schedule window.
 
 **Status:** Complete.
 
@@ -90,7 +90,7 @@ Implemented the seven approved fixes. The existing HTTP search contract supports
 
 **Why it fixes the bug:** Historical identity and values remain usable after supported configuration edits without publishing historical customer values or guessing equivalent fields. Results remain scoped, ordered, and shaped as before; no status filter was changed.
 
-**Status:** Safe backend fix complete for retained IDs and generic Field records. Permanent-deletion and UI identifier availability dependencies remain, described in section F.
+**Partially complete — remaining contract dependency.** Rename, deactivation, replacement, and validation changes are supported when the original input ID is available. Generic Field records remain searchable after new Custom Inputs are added. Section H records the review cases and their results.
 
 ### KSK-01 — HasReservation in discovery
 
@@ -138,7 +138,7 @@ Paths below are relative to `E:\QControl`.
 | `QControl.Application/Features/BranchServices/Query/GetBranchTicketIssuableServices/GetBranchTicketIssuableServicesQueryHandler.cs` | Shared timing calculation and batched projected image read. |
 | `QControl.Application/Features/BranchServices/Query/GetBranchTicketIssuableServices/GetBranchTicketIssuableServicesResponse.cs` | Three additive tree-node properties. |
 | `QControl.Application/Features/BranchServices/Query/GetBranchTicketIssuableServices/TicketIssuableServiceTreeBuilder.cs` | Map reservation support and images; reuse included-node collection. |
-| `QControl.Application/Properties/AssemblyInfo.cs` | Allow infrastructure to reuse internal hierarchy/timing helpers. |
+| `QControl.Application/Properties/AssemblyInfo.cs` | Allow infrastructure to reuse the internal schedule timing helper. |
 | `QControl.infrastructure/Services/BranchServiceAvailabilityChecker.cs` | Branch, hierarchy, scope, leaf eligibility and operation-specific schedule allowance. |
 | `QControl.infrastructure/Repositories/TicketRuntimeRepository.cs` | Arrival timing opt-in, reservation issuance flag, same-day conversion, historical lookup. |
 | `QControl.Application.Tests/Tickets/KioskTicketRuntimeRepositoryTests.cs` | Share existing fixture through partial test class and adapt checker stub signature. Existing assertions remain unchanged. |
@@ -161,7 +161,7 @@ public string? IconUrl { get; init; }
 
 With the existing web JSON naming convention, these are `hasReservation`, `logoUrl`, and `iconUrl`. No existing response property was removed or renamed. No route, HTTP method, authorization policy, permission, or controller changed. The existing anonymous service-discovery behavior is preserved. Reservation search's request and response contracts are unchanged.
 
-## D. Tests and build
+## D. Initial tests and build
 
 Added **48 xUnit test cases**. Eligibility and timing tests execute the real availability checker and repository using the existing EF InMemory test infrastructure; SQL integration additionally executes production SQL queries and persistence constraints.
 
@@ -226,8 +226,8 @@ Each preserved behavior from section 4 of the brief was reviewed:
 
 1. **Historical search identifier dependency:** Renamed/deactivated/replaced definitions remain searchable when callers retain their original `ServiceCustomInputId`. Discovery continues to expose only current input configuration; it does not publish historical customer values or historical lookup metadata. A UI that discards the old identifier cannot construct that historical lookup request. No frontend changes were made.
 2. **Permanent deletion is a contract blocker:** The existing FK uses `DeleteBehavior.SetNull`. SQL integration verified that hard deletion preserves names/labels/types/values but nulls `ServiceCustomInputId`. The current request contains only an input ID and value, so it cannot safely identify such snapshots. No name/value guessing, generic Field fallback for custom snapshots, new endpoint, or schema change was introduced. Supporting this case requires separately approved identity/contract work.
-3. **Other checker consumers:** Search, reservation creation, manual transfer, and workflow continuation inherit the corrected hierarchy/branch/scope/leaf eligibility. Only issuance/conversion opt into early-arrival timing; all other callers keep the old ordinary schedule window. Their caller implementations were not refactored. Valid booking/search flows and the full existing suite pass; no new transfer/workflow behavior was designed.
-4. **Performance:** Hierarchy validation uses one compact all-service projection to preserve existing unlimited-depth and deleted-child semantics; there is no per-ancestor query or entity Include. It adds an explicit branch/configuration read. Discovery adds one projected image batch for included nodes. Historical input IDs outside the current configuration require one additional scoped identity projection. No production-size load benchmark was run.
+3. Kiosk issuance, search, and conversion use early-arrival timing. Reservation creation, manual transfer, and workflow continuation use the ordinary schedule window. These callers share the same scoped service eligibility checks.
+4. SQL Server availability reads the requested service and uses one recursive command for its ancestor chain when needed. The chain query returns a single eligibility flag. Discovery reads one projected image batch for included nodes. Historical input IDs outside the current configuration require one additional scoped identity projection.
 5. **Contracts:** HTTP changes are additive only. The .NET availability interface gains an optional timing argument; all in-repository implementations were updated. Any out-of-repository implementation of that interface would need the same parameter. No external implementations were available to verify.
 6. **Concurrency:** Serializable transactions, row versions, duplicate checks, and the unique Ticket.ReservationId index are unchanged. Real SQL tests verify duplicate checks across contexts and direct unique-index enforcement. A simultaneous-conversion stress/deadlock test was not performed.
 7. **Other unverified environments:** No browser/frontend exercise, deployment, production database execution, or HTTP JWT end-to-end test was performed. SQL verification used local SQL Server Express in a disposable database. Existing build dependency warnings remain outside this task's scope.
@@ -247,3 +247,26 @@ Each preserved behavior from section 4 of the brief was reviewed:
 | Modified any unrelated module? | **NO** |
 
 No entity, EF model, database schema definition, reservation lifecycle, calling algorithm, retention, or archiving implementation changed. No deployment was performed.
+
+## H. PR #35 review follow-up
+
+| Finding | Result | Verification |
+| --- | --- | --- |
+| KSK-02 | Complete. Kiosk reservation search uses the same early-arrival mode as discovery, issuance, and conversion. | The timing matrix checks all four paths at the allowance boundary, before it, at normal opening, and at or after closing. Strict appointment and conversion date/status regressions passed. SQL Server also found a saved reservation at 15:00 for a 15:30 service opening with a 30-minute allowance. |
+| KSK-08 | Complete. One parameterized lookup projects the target and its child-existence flag. One recursive command checks ancestors for an eligible leaf with a parent. | SQL Server command instrumentation observed exactly two Service reads for a leaf with 105 ancestors and 500 unrelated services. The target and ancestor anchor used ID parameters. A cycle and inactive/deleted ancestors were rejected, reactivation was observed on the next check, and a soft-deleted child still made the target a non-leaf. Repository tests covered a shallow chain, a missing parent, branch state, scope, and assignment. |
+| KSK-12 | **Partially complete — remaining contract dependency.** The existing search implementation covers cases A–E. | Historical search, current-definition booking, exact equality and AND matching, branch/service isolation, invalid input, and conversion snapshot regressions passed. SQL Server confirmed the FK clears the input ID and preserves the snapshot on hard deletion. |
+
+The infrastructure friend assembly access remains necessary for the internal `ServiceScheduleAvailability` helper shared by discovery and runtime. Runtime eligibility no longer calls the discovery hierarchy calculator. The SQL Server query follows parent IDs through the existing primary key, and the leaf check uses the existing parent index. The nonrelational test provider checks ancestors by ID without database round trips. A missing parent ends the walk, and a cycle invalidates the chain.
+
+| KSK-12 case | Result with the existing contract |
+| --- | --- |
+| A. Rename | The original input ID and saved value find the reservation. The snapshot keeps the original names and labels. |
+| B. Deactivation | The caller can use the retained original ID and saved value. |
+| C. Replacement | The retained original ID still works. A replacement ID identifies its own definition. |
+| D. Changed validation restrictions | Search compares the saved value. New reservations use the current validation rules. |
+| E. Custom Inputs added after a generic Field booking | The saved Field remains searchable in the same branch and service. |
+| F. Permanent deletion with a null input ID | The snapshot survives, but the request cannot identify the field. This requires a separately approved contract solution. |
+
+Discovery exposes current definitions, so callers need another existing source for an original ID that discovery no longer returns. Cases B and C work when callers already have that ID.
+
+The follow-up passed `dotnet restore Qcontrol.slnx` and `dotnet build Qcontrol.slnx --no-restore`. The focused kiosk run passed **147 tests**, and `dotnet test Qcontrol.slnx --no-restore` passed **634 tests** with zero failures or skips. Both runs included the two opt-in SQL Server tests using unique disposable databases.
