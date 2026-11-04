@@ -267,9 +267,10 @@ internal sealed partial class TicketRuntimeRepository
             AttemptNumber = a.AttemptNumber, WindowId = a.WindowId,
             PerformerApplicationUserId = a.PerformerApplicationUserId, CalledOnUtc = a.CalledOnUtc }));
         archive.CustomInputs.AddRange(x.CustomInputValues.Select(v => new TicketCustomInputValueArchive
-        { ServiceCustomInputId = v.ServiceCustomInputId, NameSnapshot = v.NameSnapshot,
+        { ServiceCustomInputId = v.ServiceCustomInputId,
+            OriginalServiceCustomInputId = v.OriginalServiceCustomInputId, NameSnapshot = v.NameSnapshot,
             LabelEnSnapshot = v.LabelEnSnapshot, LabelArSnapshot = v.LabelArSnapshot,
-            TypeSnapshot = v.TypeSnapshot, Value = v.Value }));
+            TypeSnapshot = v.TypeSnapshot, OrderSnapshot = v.OrderSnapshot, Value = v.Value }));
         archive.WorkflowSteps.AddRange(x.WorkflowSteps.Select(s => new TicketWorkflowStepSnapshotArchive
         { SourceWorkflowId = s.SourceWorkflowId, ServiceId = s.ServiceId, StepOrder = s.StepOrder }));
         return archive;
@@ -293,9 +294,10 @@ internal sealed partial class TicketRuntimeRepository
         archive.History.Add(new ReservationHistoryArchive { EventType = ReservationHistoryEventType.Archived,
             FromStatus = x.Status, ToStatus = x.Status, OccurredOnUtc = archivedOnUtc });
         archive.CustomInputs.AddRange(x.CustomInputValues.Select(v => new ReservationCustomInputValueArchive
-        { ServiceCustomInputId = v.ServiceCustomInputId, NameSnapshot = v.NameSnapshot,
+        { ServiceCustomInputId = v.ServiceCustomInputId,
+            OriginalServiceCustomInputId = v.OriginalServiceCustomInputId, NameSnapshot = v.NameSnapshot,
             LabelEnSnapshot = v.LabelEnSnapshot, LabelArSnapshot = v.LabelArSnapshot,
-            TypeSnapshot = v.TypeSnapshot, Value = v.Value }));
+            TypeSnapshot = v.TypeSnapshot, OrderSnapshot = v.OrderSnapshot, Value = v.Value }));
         return archive;
     }
 
@@ -305,7 +307,8 @@ internal sealed partial class TicketRuntimeRepository
         x.CurrentServiceStartedOnUtc, x.CompletedOnUtc, x.CancelledOnUtc,
         x.CancellationReason, x.BoundWorkflowId, x.CurrentWorkflowStepOrder,
         x.CustomInputs.OrderBy(v => v.Id).Select(v => new CustomInputValueResponse(v.ServiceCustomInputId,
-            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
+            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value,
+            v.OrderSnapshot)).ToArray(),
         x.Journeys.OrderBy(v => v.OriginalJourneyId).Select(v => new TicketJourneyResponse(v.ServiceId,
             v.EntryType, v.WorkflowStepOrder, v.EnteredWaitingOnUtc, v.ServiceStartedOnUtc,
             v.ServiceEndedOnUtc, v.Outcome)).ToArray(), null, true,
@@ -322,7 +325,8 @@ internal sealed partial class TicketRuntimeRepository
         x.BusinessDate, x.Status, x.CancellationReason, x.CancelledOnUtc,
         x.ConvertedToTicketOnUtc, x.ExpiredOnUtc,
         x.CustomInputs.OrderBy(v => v.Id).Select(v => new CustomInputValueResponse(v.ServiceCustomInputId,
-            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value)).ToArray(),
+            v.NameSnapshot, v.LabelEnSnapshot, v.LabelArSnapshot, v.TypeSnapshot, v.Value,
+            v.OrderSnapshot)).ToArray(),
         null, true, x.History.OrderBy(v => v.OccurredOnUtc).ThenBy(v => v.Id)
             .Select(v => new ReservationHistoryResponse(v.OriginalHistoryId ?? v.Id,
                 v.EventType, v.FromStatus, v.ToStatus, v.PerformerApplicationUserId,

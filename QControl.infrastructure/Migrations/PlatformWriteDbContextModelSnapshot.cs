@@ -1596,6 +1596,9 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<int?>("OrderSnapshot")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OriginalServiceCustomInputId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ReservationId")
                         .HasColumnType("int");
 
@@ -1615,6 +1618,9 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.HasIndex("ReservationId");
 
                     b.HasIndex("ServiceCustomInputId");
+
+                    b.HasIndex("ReservationId", "OriginalServiceCustomInputId")
+                        .HasDatabaseName("IX_ReservationCustomInputValue_Reservation_OriginalInput");
 
                     b.HasIndex("ReservationId", "ServiceCustomInputId")
                         .HasDatabaseName("IX_ReservationCustomInputValue_Reservation_Input");
@@ -2871,6 +2877,9 @@ namespace Qcontrol.Infrastructure.Migrations
                     b.Property<int?>("OrderSnapshot")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OriginalServiceCustomInputId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ServiceCustomInputId")
                         .HasColumnType("int");
 
@@ -3513,6 +3522,12 @@ namespace Qcontrol.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("OrderSnapshot")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OriginalServiceCustomInputId")
+                        .HasColumnType("int");
+
                     b.Property<long>("ReservationArchiveId")
                         .HasColumnType("bigint");
 
@@ -3721,6 +3736,12 @@ namespace Qcontrol.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("OrderSnapshot")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OriginalServiceCustomInputId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ServiceCustomInputId")
                         .HasColumnType("int");

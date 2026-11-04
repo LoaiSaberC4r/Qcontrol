@@ -517,6 +517,9 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         Assert.True(success.IsSuccess, FormatErrors(success.Errors));
         Assert.Null(success.Value.Field);
         Assert.Single(success.Value.CustomInputs);
+        var snapshot = await db.Set<TicketCustomInputValue>().AsNoTracking().SingleAsync();
+        Assert.Equal(phone.Id, snapshot.ServiceCustomInputId);
+        Assert.Equal(phone.Id, snapshot.OriginalServiceCustomInputId);
         Assert.Equal(0, await db.Set<Reservation>().CountAsync());
     }
 
@@ -609,7 +612,7 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         foreach (var (definition, value) in inputs)
         {
             reservation.AddCustomInput(ReservationCustomInputValue.Create(
-                definition.Id, definition.Name, definition.LabelEn,
+                definition.Id, definition.Id, definition.Name, definition.LabelEn,
                 definition.LabelAr, definition.Type, value, Now));
         }
         db.Add(reservation);

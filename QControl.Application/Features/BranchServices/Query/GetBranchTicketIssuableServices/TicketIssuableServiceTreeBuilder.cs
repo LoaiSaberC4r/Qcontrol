@@ -10,7 +10,9 @@ internal static class TicketIssuableServiceTreeBuilder
         IReadOnlySet<int> eligibleLeafIds,
         IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
             customInputsByServiceId = null,
-        IReadOnlyDictionary<int, ServiceImagesForResponse>? imagesByServiceId = null)
+        IReadOnlyDictionary<int, ServiceImagesForResponse>? imagesByServiceId = null,
+        IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
+            historicalInputsByServiceId = null)
     {
         if (allItems.Count == 0 || eligibleLeafIds.Count == 0)
         {
@@ -56,6 +58,7 @@ internal static class TicketIssuableServiceTreeBuilder
                 eligibleLeafIds,
                 customInputsByServiceId,
                 imagesByServiceId,
+                historicalInputsByServiceId,
                 emittedServiceIds,
                 new HashSet<int>());
 
@@ -103,6 +106,7 @@ internal static class TicketIssuableServiceTreeBuilder
         IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>?
             customInputsByServiceId,
         IReadOnlyDictionary<int, ServiceImagesForResponse>? imagesByServiceId,
+        IReadOnlyDictionary<int, IReadOnlyList<ServiceCustomInputResponse>>? historicalInputsByServiceId,
         ISet<int> emittedServiceIds,
         ISet<int> pathIds)
     {
@@ -123,6 +127,7 @@ internal static class TicketIssuableServiceTreeBuilder
                     eligibleLeafIds,
                     customInputsByServiceId,
                     imagesByServiceId,
+                    historicalInputsByServiceId,
                     emittedServiceIds,
                     pathIds);
 
@@ -147,6 +152,18 @@ internal static class TicketIssuableServiceTreeBuilder
             customInputs = configured;
         }
 
+        var hasReservation = isEligibleLeaf && item.HasReservation;
+        IReadOnlyList<ServiceCustomInputResponse>? historicalInputs = null;
+        if (hasReservation && historicalInputsByServiceId?.GetValueOrDefault(item.Id) is { } historical)
+        {
+            var currentIds = customInputs?.Select(input => input.CustomInputId).ToHashSet();
+            var searchOnly = historical
+                .Where(input => currentIds?.Contains(input.CustomInputId) != true)
+                .ToArray();
+            if (searchOnly.Length > 0)
+                historicalInputs = searchOnly;
+        }
+
         return new TicketIssuableServiceTreeNodeResponse
         {
             ServiceId = item.Id,
@@ -159,11 +176,12 @@ internal static class TicketIssuableServiceTreeBuilder
                 ? item.EnglishUserMessage
                 : null,
             IsTicketIssuable = isEligibleLeaf,
-            HasReservation = isEligibleLeaf && item.HasReservation,
+            HasReservation = hasReservation,
             LogoUrl = images?.LogoUrl,
             IconUrl = images?.IconUrl,
             IsClientInputRequired = isClientInputRequired,
             CustomInputs = customInputs,
+            HistoricalSearchInputs = historicalInputs,
             RangePrefix = isEligibleLeaf ? item.RangePrefix : null,
             RangeStartNumber = isEligibleLeaf
                 ? item.RangeStartNumber

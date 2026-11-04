@@ -108,6 +108,8 @@ public sealed record TicketIssuableServiceTreeNodeResponse
 
     public IReadOnlyList<ServiceCustomInputResponse>? CustomInputs { get; init; }
 
+    public IReadOnlyList<ServiceCustomInputResponse>? HistoricalSearchInputs { get; init; }
+
     public string? RangePrefix { get; init; }
 
     public int? RangeStartNumber { get; init; }

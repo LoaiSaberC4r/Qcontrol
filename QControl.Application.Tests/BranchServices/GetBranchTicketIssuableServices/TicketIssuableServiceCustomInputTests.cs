@@ -64,6 +64,7 @@ public sealed class TicketIssuableServiceCustomInputTests
                 }),
             new InMemoryWriteReadRepository<GeneralBrand>(
                 new List<GeneralBrand>()),
+            new InMemoryWriteReadRepository<Reservation>(new()),
             new TestCurrentUser(),
             new TestBranchAccessValidator(),
             new TestDateTimeProvider

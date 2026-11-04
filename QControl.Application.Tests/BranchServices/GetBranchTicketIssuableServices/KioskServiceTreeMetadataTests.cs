@@ -11,7 +11,7 @@ namespace QControl.Application.Tests.BranchServices.GetBranchTicketIssuableServi
 public sealed class KioskServiceTreeMetadataTests
 {
     [Fact]
-    public async Task Discovery_returns_reservation_support_and_batched_images_for_leaves_and_parents()
+    public async Task Discovery_batches_images_and_scoped_historical_inputs_for_eligible_reservation_leaves()
     {
         var parent = EntityTestFactory.Service(1);
         var leaves = Enumerable.Range(2, 4)
@@ -19,6 +19,23 @@ public sealed class KioskServiceTreeMetadataTests
             .ToArray();
         foreach (var service in new[] { parent, leaves[0], leaves[2] })
             typeof(Service).GetProperty(nameof(Service.HasReservation))!.SetValue(service, true);
+        var current = EntityTestFactory.ServiceCustomInput(leaves[0], 101, "Current", isRequired: true);
+        typeof(Service).GetProperty(nameof(Service.IsClientInputRequired))!.SetValue(leaves[0], true);
+        var now = new DateTime(2026, 8, 2, 10, 0, 0, DateTimeKind.Utc);
+        var reservationRepository = new InMemoryWriteReadRepository<Reservation>(new()
+        {
+            HistoricalReservation(1, 2, 102, 20, "Tie lost", now),
+            HistoricalReservation(1, 2, 102, 21, "Latest", now),
+            HistoricalReservation(1, 2, 102, 22, "Earlier", now.AddDays(-1)),
+            HistoricalReservation(1, 2, current.Id, 23, "Superseded by current", now),
+            HistoricalReservation(1, 2, null, 24, "Unknown", now),
+            HistoricalReservation(2, 2, 103, 25, "Other branch", now),
+            HistoricalReservation(1, 1, 104, 26, "Structural parent", now),
+            HistoricalReservation(1, 3, 105, 27, "No reservation support", now),
+            HistoricalReservation(1, 4, 106, 28, "Different eligible leaf", now),
+            HistoricalReservation(1, 99, 107, 29, "Outside eligible services", now)
+        });
+
         var images = new[]
         {
             EntityTestFactory.ServiceImage(1, 1, "Services/1/logo.png", ServiceImageType.Logo),
@@ -47,9 +64,10 @@ public sealed class KioskServiceTreeMetadataTests
             new InMemoryWriteReadRepository<ServiceSchedule>(leaves.Select(x =>
                 EntityTestFactory.ServiceSchedule(x.Id, 1, x.Id)).ToList()),
             new InMemoryWriteReadRepository<GeneralBrand>(new()),
+            reservationRepository,
             new TestCurrentUser { IsAuthenticated = false, UserId = null },
             new TestBranchAccessValidator(),
-            new TestDateTimeProvider { UtcNow = new DateTime(2026, 8, 2, 10, 0, 0, DateTimeKind.Utc) });
+            new TestDateTimeProvider { UtcNow = now });
 
         var result = await handler.Handle(new GetBranchTicketIssuableServicesQuery { BranchId = 1 },
             CancellationToken.None);
@@ -78,9 +96,46 @@ public sealed class KioskServiceTreeMetadataTests
                 images.Where(x => x.ServiceId == node.ServiceId), includeAds: false);
             Assert.Equal(detailsImages.LogoUrl, node.LogoUrl);
             Assert.Equal(detailsImages.IconUrl, node.IconUrl);
-            Assert.Null(node.CustomInputs);
         }
+        var currentField = Assert.Single(root.Children[0].CustomInputs!);
+        Assert.Equal(current.Id, currentField.CustomInputId);
+        Assert.True(currentField.IsRequired);
+        var historical = Assert.Single(root.Children[0].HistoricalSearchInputs!);
+        Assert.Equal(102, historical.CustomInputId);
+        Assert.Equal("Latest", historical.Name);
+        Assert.Equal("Historical label", historical.LabelEn);
+        Assert.Equal("التسمية", historical.LabelAr);
+        Assert.Equal(ServiceCustomInputType.Integer, historical.Type);
+        Assert.Equal(7, historical.Order);
+        Assert.False(historical.IsRequired);
+        Assert.Null(historical.MinLength);
+        Assert.Null(historical.MaxLength);
+        Assert.Null(historical.MinValue);
+        Assert.Null(historical.MaxValue);
+        Assert.Null(historical.StartWith);
+        Assert.Null(root.HistoricalSearchInputs);
+        Assert.Null(root.Children[1].HistoricalSearchInputs);
+        Assert.Equal(106, Assert.Single(root.Children[2].HistoricalSearchInputs!).CustomInputId);
+        Assert.Null(root.Children[3].HistoricalSearchInputs);
+        Assert.DoesNotContain("customer-value", JsonSerializer.Serialize(result.Value));
+        Assert.Equal(1, reservationRepository.QueryCallCount);
         Assert.Equal(2, repository.QueryCallCount); // custom inputs + one image batch
+    }
+
+    private static Reservation HistoricalReservation(
+        int branchId, int serviceId, int? originalId, int snapshotId, string name, DateTime createdOn)
+    {
+        var reservation = Reservation.Create(branchId, serviceId, 1, 1, createdOn.AddHours(1),
+            DateOnly.FromDateTime(createdOn), createdOn, EntityTestFactory.CurrentUserId);
+        var snapshot = ReservationCustomInputValue.Create(originalId ?? 1, originalId ?? 1, name,
+            "Historical label", "التسمية", ServiceCustomInputType.Integer, "customer-value", createdOn, 7);
+        EntityTestFactory.AssignId(snapshot, snapshotId);
+        typeof(ReservationCustomInputValue).GetProperty(nameof(snapshot.ServiceCustomInputId))!
+            .SetValue(snapshot, null);
+        typeof(ReservationCustomInputValue).GetProperty(nameof(snapshot.OriginalServiceCustomInputId))!
+            .SetValue(snapshot, originalId);
+        reservation.AddCustomInput(snapshot);
+        return reservation;
     }
 
     [Fact]
@@ -94,7 +149,7 @@ public sealed class KioskServiceTreeMetadataTests
         Assert.Equal(new[]
         {
             "arabicName", "arabicUserMessage", "children", "customInputs", "englishName",
-            "englishUserMessage", "hasReservation", "iconUrl", "isClientInputRequired",
+            "englishUserMessage", "hasReservation", "historicalSearchInputs", "iconUrl", "isClientInputRequired",
             "isTicketIssuable", "logoUrl", "rangeEndNumber", "rangePrefix", "rangeStartNumber", "serviceId"
         }, json.EnumerateObject().Select(x => x.Name).OrderBy(x => x, StringComparer.Ordinal));
     }

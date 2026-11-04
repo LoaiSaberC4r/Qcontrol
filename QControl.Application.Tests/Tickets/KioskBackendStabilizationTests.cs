@@ -162,6 +162,7 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
             new PlatformWriteReadRepository<Service>(resolver),
             new PlatformWriteReadRepository<ServiceSchedule>(resolver),
             new PlatformWriteReadRepository<GeneralBrand>(resolver),
+            new PlatformWriteReadRepository<Reservation>(resolver),
             new TestCurrentUser(), new TestBranchAccessValidator(),
             new TestDateTimeProvider { UtcNow = now })
             .Handle(new() { BranchId = 1 }, CancellationToken.None);
