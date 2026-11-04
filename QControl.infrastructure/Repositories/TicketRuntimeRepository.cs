@@ -212,7 +212,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 reservation.LookupValue);
             foreach (var input in reservation.CustomInputValues)
                 ticket.AddCustomInput(TicketCustomInputValue.Create(input.ServiceCustomInputId,
-                    input.NameSnapshot, input.LabelEnSnapshot, input.LabelArSnapshot,
+                    input.OriginalServiceCustomInputId, input.NameSnapshot, input.LabelEnSnapshot, input.LabelArSnapshot,
                     input.TypeSnapshot, input.Value, now, input.OrderSnapshot));
             await BindDefaultWorkflowAsync(ticket, branchId, reservation.ServiceId, cancellationToken);
             if (!reservation.TryConvert(now))
@@ -292,9 +292,9 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             if (historicalIds.Length > 0)
             {
                 var storedIds = await query.SelectMany(x => x.CustomInputValues)
-                    .Where(x => x.ServiceCustomInputId.HasValue &&
-                        historicalIds.Contains(x.ServiceCustomInputId.Value))
-                    .Select(x => x.ServiceCustomInputId!.Value)
+                    .Where(x => x.OriginalServiceCustomInputId.HasValue &&
+                        historicalIds.Contains(x.OriginalServiceCustomInputId.Value))
+                    .Select(x => x.OriginalServiceCustomInputId!.Value)
                     .Distinct().ToListAsync(cancellationToken);
                 if (historicalIds.Except(storedIds).Any())
                     return FailKioskSearch("TicketRuntime.CustomInputs.NotApplicable",
@@ -306,7 +306,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 var inputId = input.ServiceCustomInputId;
                 var value = input.Value;
                 query = query.Where(reservation => reservation.CustomInputValues.Any(
-                    stored => stored.ServiceCustomInputId == inputId && stored.Value == value));
+                    stored => stored.OriginalServiceCustomInputId == inputId && stored.Value == value));
             }
         }
 
@@ -691,11 +691,13 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
     private static Result<IReadOnlyList<InputSnapshot>> InvalidInputs() =>
         Result<IReadOnlyList<InputSnapshot>>.Fail(new Error("TicketRuntime.CustomInputs.Invalid", TicketRuntimeMessages.CustomInputsInvalid, ErrorType.Validation));
 
-    private sealed record InputSnapshot(int? Id, string Name, string? LabelEn,
+    private sealed record InputSnapshot(int Id, string Name, string? LabelEn,
         string? LabelAr, ServiceCustomInputType Type, string Value, int? Order)
     {
-        public TicketCustomInputValue ToTicket(DateTime now) => TicketCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
-        public ReservationCustomInputValue ToReservation(DateTime now) => ReservationCustomInputValue.Create(Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
+        public TicketCustomInputValue ToTicket(DateTime now) =>
+            TicketCustomInputValue.Create(Id, Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
+        public ReservationCustomInputValue ToReservation(DateTime now) =>
+            ReservationCustomInputValue.Create(Id, Id, Name, LabelEn, LabelAr, Type, Value, now, Order);
     }
 
     private sealed record ValidatedCreateInputs(

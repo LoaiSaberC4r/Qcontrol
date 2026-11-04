@@ -69,6 +69,7 @@ internal sealed class ReservationCustomInputValueConfiguration : IEntityTypeConf
         builder.Property(x => x.LabelEnSnapshot).HasMaxLength(200);
         builder.Property(x => x.LabelArSnapshot).HasMaxLength(200);
         builder.Property(x => x.OrderSnapshot);
+        builder.Property(x => x.OriginalServiceCustomInputId);
         builder.Property(x => x.TypeSnapshot).HasConversion<int>().IsRequired();
         builder.Property(x => x.Value).HasMaxLength(3000).IsRequired();
         builder.Property(x => x.CreatedOnUtc).HasColumnType("datetime2(3)").IsRequired();
@@ -76,5 +77,7 @@ internal sealed class ReservationCustomInputValueConfiguration : IEntityTypeConf
         builder.HasIndex(x => x.ReservationId);
         builder.HasIndex(x => new { x.ReservationId, x.ServiceCustomInputId })
             .HasDatabaseName("IX_ReservationCustomInputValue_Reservation_Input");
+        builder.HasIndex(x => new { x.ReservationId, x.OriginalServiceCustomInputId })
+            .HasDatabaseName("IX_ReservationCustomInputValue_Reservation_OriginalInput");
     }
 }

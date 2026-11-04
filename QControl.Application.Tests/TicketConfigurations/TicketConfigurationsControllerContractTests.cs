@@ -117,9 +117,9 @@ public sealed class TicketConfigurationsControllerContractTests
     {
         var now = DateTime.UtcNow;
         var reservation = QControl.Domain.Entities.ReservationCustomInputValue.Create(
-            5, "name", "label", "عنوان", ServiceCustomInputType.String, "value", now, 9);
+            5, 5, "name", "label", "عنوان", ServiceCustomInputType.String, "value", now, 9);
         var ticket = QControl.Domain.Entities.TicketCustomInputValue.Create(
-            reservation.ServiceCustomInputId, reservation.NameSnapshot,
+            reservation.ServiceCustomInputId, reservation.OriginalServiceCustomInputId, reservation.NameSnapshot,
             reservation.LabelEnSnapshot, reservation.LabelArSnapshot,
             reservation.TypeSnapshot, reservation.Value, now, reservation.OrderSnapshot);
 

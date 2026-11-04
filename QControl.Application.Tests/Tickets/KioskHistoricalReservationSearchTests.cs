@@ -71,6 +71,8 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         Assert.Null(conversion.Value.Field);
         db.ChangeTracker.Clear();
         var storedSnapshot = await db.Set<ReservationCustomInputValue>().SingleAsync();
+        Assert.Equal(101, storedSnapshot.ServiceCustomInputId);
+        Assert.Equal(101, storedSnapshot.OriginalServiceCustomInputId);
         Assert.Equal("OriginalName", storedSnapshot.NameSnapshot);
         Assert.Equal("old-value", storedSnapshot.Value);
         Assert.Equal(1, (await db.Set<BranchServiceSegmentDailyUsage>().SingleAsync()).ConsumedCount);
@@ -131,7 +133,9 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         var service = await SeedServiceGraphAsync(db, 10);
         var phone = EntityTestFactory.ServiceCustomInput(service, 101, "Phone", isActive: false);
         var reference = EntityTestFactory.ServiceCustomInput(service, 102, "Reference", isActive: false);
-        db.AddRange(phone, reference);
+        var otherBranch = EntityTestFactory.ServiceCustomInput(service, 103, "Branch", isActive: false);
+        var otherService = EntityTestFactory.ServiceCustomInput(service, 104, "Service", isActive: false);
+        db.AddRange(phone, reference, otherBranch, otherService);
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
         var target = await AddReservationAsync(db, 1, 10, 3, 1000, Now.AddHours(1),
@@ -139,16 +143,21 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         await AddReservationAsync(db, 1, 10, 3, 1000, Now.AddHours(2),
             (phone, "01012345678"), (reference, "other"));
         await AddReservationAsync(db, 2, 10, 3, 1000, Now.AddHours(3),
-            (phone, "01012345678"), (reference, "REF-42"));
+            (phone, "01012345678"), (reference, "REF-42"), (otherBranch, "branch"));
         await AddReservationAsync(db, 1, 20, 3, 1000, Now.AddHours(4),
-            (phone, "01012345678"), (reference, "REF-42"));
+            (phone, "01012345678"), (reference, "REF-42"), (otherService, "service"));
+        await db.Set<ReservationCustomInputValue>().ForEachAsync(snapshot =>
+            db.Entry(snapshot).Property(x => x.ServiceCustomInputId).CurrentValue = null);
+        await db.SaveChangesAsync();
         var repository = CreateRepository(db);
         var inputs = new[] { new CustomInputSubmission(101, "01012345678"),
             new CustomInputSubmission(102, "REF-42") };
 
         var result = await repository.SearchReservationsForKioskAsync(1, 10, null, inputs, CancellationToken.None);
-        var partial = await repository.SearchReservationsForKioskAsync(1, 10, null,
+        var substring = await repository.SearchReservationsForKioskAsync(1, 10, null,
             new[] { new CustomInputSubmission(101, "0101234567") }, CancellationToken.None);
+        var partial = await repository.SearchReservationsForKioskAsync(1, 10, null,
+            new[] { inputs[0] }, CancellationToken.None);
         var empty = await repository.SearchReservationsForKioskAsync(1, 10, null,
             Array.Empty<CustomInputSubmission>(), CancellationToken.None);
         var blank = await repository.SearchReservationsForKioskAsync(1, 10, null,
@@ -159,7 +168,14 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
             new[] { new CustomInputSubmission(999, "value") }, CancellationToken.None);
 
         Assert.Equal(target.Id, Assert.Single(result.Value).ReservationId);
-        Assert.Empty(partial.Value);
+        Assert.Empty(substring.Value);
+        Assert.Equal(2, partial.Value.Count);
+        foreach (var foreignInput in new CustomInputSubmission[] { new(103, "branch"), new(104, "service") })
+        {
+            var outsideScope = await repository.SearchReservationsForKioskAsync(
+                1, 10, null, [foreignInput], CancellationToken.None);
+            Assert.Equal("TicketRuntime.CustomInputs.NotApplicable", outsideScope.Errors[0].Code);
+        }
         Assert.Equal("Kiosk.Reservations.Search.FieldRequired", empty.Errors[0].Code);
         Assert.Equal("Kiosk.Reservations.Search.CustomInputsInvalid", blank.Errors[0].Code);
         Assert.Equal("TicketRuntime.CustomInputs.Duplicate", duplicate.Errors[0].Code);
@@ -173,9 +189,12 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         await SeedServiceGraphAsync(db, 10);
         var reservation = Reservation.Create(1, 10, 3, 1000, Now.AddHours(1),
             DateOnly.FromDateTime(Now), Now, Performer);
-        reservation.AddCustomInput(ReservationCustomInputValue.Create(null,
-            "Deleted input", "Original label", null, ServiceCustomInputType.String, "secret", Now));
+        var legacySnapshot = ReservationCustomInputValue.Create(101, 101,
+            "Deleted input", "Original label", null, ServiceCustomInputType.String, "secret", Now);
+        reservation.AddCustomInput(legacySnapshot);
         db.Add(reservation);
+        db.Entry(legacySnapshot).Property(x => x.ServiceCustomInputId).CurrentValue = null;
+        db.Entry(legacySnapshot).Property(x => x.OriginalServiceCustomInputId).CurrentValue = null;
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
         var repository = CreateRepository(db);
@@ -194,5 +213,8 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         Assert.Null(snapshot.ServiceCustomInputId);
         Assert.Equal("Deleted input", snapshot.Name);
         Assert.Equal("secret", snapshot.Value);
+        var convertedSnapshot = await db.Set<TicketCustomInputValue>().AsNoTracking().SingleAsync();
+        Assert.Null(convertedSnapshot.OriginalServiceCustomInputId);
+        Assert.Equal("Original label", convertedSnapshot.LabelEnSnapshot);
     }
 }

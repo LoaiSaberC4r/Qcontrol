@@ -141,6 +141,7 @@ public sealed class ReservationCustomInputValue : Entity<int>
     public int ReservationId { get; private set; }
     public Reservation Reservation { get; private set; } = null!;
     public int? ServiceCustomInputId { get; private set; }
+    public int? OriginalServiceCustomInputId { get; private set; }
     public string NameSnapshot { get; private set; } = string.Empty;
     public string? LabelEnSnapshot { get; private set; }
     public string? LabelArSnapshot { get; private set; }
@@ -148,11 +149,12 @@ public sealed class ReservationCustomInputValue : Entity<int>
     public ServiceCustomInputType TypeSnapshot { get; private set; }
     public string Value { get; private set; } = string.Empty;
 
-    public static ReservationCustomInputValue Create(int? inputId, string name,
+    public static ReservationCustomInputValue Create(int inputId, int originalInputId, string name,
         string? labelEn, string? labelAr, ServiceCustomInputType type, string value,
         DateTime createdOnUtc, int? orderSnapshot = null) => new()
         {
             ServiceCustomInputId = inputId,
+            OriginalServiceCustomInputId = originalInputId,
             NameSnapshot = name,
             LabelEnSnapshot = labelEn,
             LabelArSnapshot = labelAr,

@@ -119,6 +119,7 @@ public sealed class TicketCustomInputValue : Entity<int>
     public int TicketId { get; private set; }
     public Ticket Ticket { get; private set; } = null!;
     public int? ServiceCustomInputId { get; private set; }
+    public int? OriginalServiceCustomInputId { get; private set; }
     public string NameSnapshot { get; private set; } = string.Empty;
     public string? LabelEnSnapshot { get; private set; }
     public string? LabelArSnapshot { get; private set; }
@@ -126,11 +127,12 @@ public sealed class TicketCustomInputValue : Entity<int>
     public ServiceCustomInputType TypeSnapshot { get; private set; }
     public string Value { get; private set; } = string.Empty;
 
-    public static TicketCustomInputValue Create(int? inputId, string name, string? labelEn,
+    public static TicketCustomInputValue Create(int? inputId, int? originalInputId, string name, string? labelEn,
         string? labelAr, ServiceCustomInputType type, string value, DateTime createdOnUtc,
         int? orderSnapshot = null) => new()
         {
             ServiceCustomInputId = inputId,
+            OriginalServiceCustomInputId = originalInputId,
             NameSnapshot = name,
             LabelEnSnapshot = labelEn,
             LabelArSnapshot = labelAr,

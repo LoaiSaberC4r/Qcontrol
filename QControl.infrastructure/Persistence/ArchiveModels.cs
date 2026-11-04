@@ -83,6 +83,8 @@ internal sealed class TicketCustomInputValueArchive
     public long TicketArchiveId { get; set; }
     public TicketArchive TicketArchive { get; set; } = null!;
     public int? ServiceCustomInputId { get; set; }
+    public int? OriginalServiceCustomInputId { get; set; }
+    public int? OrderSnapshot { get; set; }
     public string NameSnapshot { get; set; } = string.Empty;
     public string? LabelEnSnapshot { get; set; }
     public string? LabelArSnapshot { get; set; }
@@ -142,6 +144,8 @@ internal sealed class ReservationCustomInputValueArchive
     public long ReservationArchiveId { get; set; }
     public ReservationArchive ReservationArchive { get; set; } = null!;
     public int? ServiceCustomInputId { get; set; }
+    public int? OriginalServiceCustomInputId { get; set; }
+    public int? OrderSnapshot { get; set; }
     public string NameSnapshot { get; set; } = string.Empty;
     public string? LabelEnSnapshot { get; set; }
     public string? LabelArSnapshot { get; set; }

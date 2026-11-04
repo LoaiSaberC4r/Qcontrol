@@ -830,6 +830,7 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
             scheduleRepository,
             new InMemoryWriteReadRepository<GeneralBrand>(
                 fixture.GeneralBrands),
+            new InMemoryWriteReadRepository<Reservation>(new()),
             new TestCurrentUser(),
             new TestBranchAccessValidator(),
             new CountingDateTimeProvider(SundayAtTen));
@@ -862,6 +863,7 @@ public sealed class GetBranchTicketIssuableServicesQueryHandlerTests
             generalBrandRepository ??
                 new InMemoryWriteReadRepository<GeneralBrand>(
                     fixture.GeneralBrands),
+            new InMemoryWriteReadRepository<Reservation>(new()),
             currentUser ?? new TestCurrentUser(),
             accessValidator ?? new TestBranchAccessValidator(),
             dateTimeProvider ?? new CountingDateTimeProvider(SundayAtTen));
