@@ -13,10 +13,16 @@ internal sealed class BranchServiceAvailabilityChecker : IBranchServiceAvailabil
     public BranchServiceAvailabilityChecker(PlatformWriteDbContext db) => _db = db;
 
     public async Task<BranchServiceAvailability> CheckAsync(int branchId, int serviceId,
-        DateTime atUtc, CancellationToken cancellationToken, bool applyAllowedTime = false)
+        DateTime atUtc, CancellationToken cancellationToken, bool applyAllowedTime = false,
+        bool requireKioskEligibility = false)
     {
-        // Discovery counts soft-deleted children when deciding whether a service is a leaf.
-        var services = _db.Set<Service>().IgnoreQueryFilters().AsNoTracking();
+        var services = _db.Set<Service>().AsNoTracking();
+        if (requireKioskEligibility)
+        {
+            // Discovery counts soft-deleted children when deciding whether a service is a leaf.
+            services = services.IgnoreQueryFilters();
+        }
+
         var service = await services
             .Where(x => x.Id == serviceId)
             .Select(x => new
@@ -24,29 +30,40 @@ internal sealed class BranchServiceAvailabilityChecker : IBranchServiceAvailabil
                 x.ParentServiceId, x.Scope, x.OwnerBranchId, x.IsActive, x.IsDeleted,
                 x.IsTicketIssuable, x.HasReservation, x.RangePrefix, x.RangeStartNumber,
                 x.RangeEndNumber,
-                HasChildren = services.Any(child => child.ParentServiceId == x.Id)
+                HasChildren = requireKioskEligibility && services.Any(child => child.ParentServiceId == x.Id)
             })
             .SingleOrDefaultAsync(cancellationToken);
         if (service is null)
             return new(false, false, false, false, false, false, null, null, null);
 
-        var branch = await _db.Set<Branch>().AsNoTracking()
-            .Where(x => x.Id == branchId)
-            .Select(x => new { x.IsActive, AllowedTime = x.Configuration == null
-                ? TimeSpan.Zero : x.Configuration.AllowedTime })
-            .SingleOrDefaultAsync(cancellationToken);
-        var eligible = branch is { IsActive: true } &&
-            service.IsActive && !service.IsDeleted && !service.HasChildren &&
-            (service.Scope == ServiceScope.Global ||
-             service.Scope == ServiceScope.BranchScoped && service.OwnerBranchId == branchId) &&
-            (service.ParentServiceId is not int parentId ||
-             await AreAncestorsActiveAsync(parentId, cancellationToken));
+        var eligible = service.IsActive;
+        var allowedTime = TimeSpan.Zero;
+        if (requireKioskEligibility || applyAllowedTime)
+        {
+            var branch = await _db.Set<Branch>().AsNoTracking()
+                .Where(x => x.Id == branchId)
+                .Select(x => new { x.IsActive, AllowedTime = x.Configuration == null
+                    ? TimeSpan.Zero : x.Configuration.AllowedTime })
+                .SingleOrDefaultAsync(cancellationToken);
+            if (requireKioskEligibility)
+            {
+                eligible = eligible && branch is { IsActive: true } &&
+                    !service.IsDeleted && !service.HasChildren &&
+                    (service.Scope == ServiceScope.Global ||
+                     service.Scope == ServiceScope.BranchScoped && service.OwnerBranchId == branchId) &&
+                    (service.ParentServiceId is not int parentId ||
+                     await AreAncestorsActiveAsync(parentId, cancellationToken));
+            }
+
+            if (applyAllowedTime)
+                allowedTime = branch?.AllowedTime ?? TimeSpan.Zero;
+        }
+
         var assigned = await _db.Set<BranchService>().AsNoTracking()
             .AnyAsync(x => x.BranchId == branchId && x.ServiceId == serviceId, cancellationToken);
         var day = atUtc.DayOfWeek;
         var time = TimeOnly.FromDateTime(atUtc);
-        var allowedUntil = ServiceScheduleAvailability.CalculateAllowedUntil(time,
-            applyAllowedTime ? branch?.AllowedTime ?? TimeSpan.Zero : TimeSpan.Zero);
+        var allowedUntil = ServiceScheduleAvailability.CalculateAllowedUntil(time, allowedTime);
         var scheduled = await _db.Set<ServiceScheduleTimeSlot>().AsNoTracking()
             .AnyAsync(x => x.ServiceSchedule.BranchId == branchId &&
                            x.ServiceSchedule.ServiceId == serviceId &&

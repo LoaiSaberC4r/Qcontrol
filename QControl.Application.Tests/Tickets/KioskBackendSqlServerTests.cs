@@ -179,7 +179,8 @@ public sealed class KioskBackendSqlServerTests
 
             var checker = new BranchServiceAvailabilityChecker(db);
             async Task<bool> CheckAsync() =>
-                (await checker.CheckAsync(branch.Id, leaf.Id, now, CancellationToken.None)).IsAvailable;
+                (await checker.CheckAsync(branch.Id, leaf.Id, now, CancellationToken.None,
+                    requireKioskEligibility: true)).IsAvailable;
 
             reads.Commands.Clear();
             Assert.True(await CheckAsync());
@@ -220,6 +221,11 @@ public sealed class KioskBackendSqlServerTests
             db.Add(deletedChild);
             await db.SaveChangesAsync();
             Assert.False(await CheckAsync());
+
+            reads.Commands.Clear();
+            var standard = await checker.CheckAsync(branch.Id, leaf.Id, now, CancellationToken.None);
+            Assert.True(standard.IsAvailable);
+            Assert.Single(reads.Commands);
         }
         finally
         {

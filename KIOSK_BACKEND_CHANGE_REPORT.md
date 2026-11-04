@@ -20,7 +20,7 @@ Implemented the seven approved fixes. The existing HTTP search contract supports
 - `QControl.Application/Properties/AssemblyInfo.cs`
 - Regression files listed under KSK-08 in section D.
 
-Runtime availability projects the requested service by ID, checks for children with an indexed existence predicate, and validates its ancestor chain with a parameterized recursive SQL Server query when needed. Availability requires an active existing branch, effective ancestor activity, no children, Global scope or matching BranchScoped ownership, and the existing branch assignment and schedule. Ticket issuance, conversion, and search retain their explicit `IsTicketIssuable` checks. Reservation creation also checks that flag under KSK-11.
+Kiosk and reservation availability project the requested service by ID, check for children with an indexed existence predicate, and validate its ancestor chain with a parameterized recursive SQL Server query when needed. Strict eligibility requires an active existing branch, effective ancestor activity, no children, Global scope or matching BranchScoped ownership, and the existing branch assignment and schedule. Kiosk issuance, conversion, and search retain their explicit `IsTicketIssuable` checks. Reservation creation also checks that flag under KSK-11.
 
 **Why it fixes the bug:** Direct runtime operations enforce the same hierarchy, scope, and assignment rules as discovery. Deleted children still make a node non-leaf, matching discovery's existing semantics. Existing filters on branch and assignment queries remain in place. Errors still use the operation's existing `ServiceUnavailable` domain result.
 
@@ -39,7 +39,7 @@ Runtime availability projects the requested service by ID, checks for children w
 - `QControl.infrastructure/Repositories/TicketRuntimeRepository.cs`
 - Relevant regression files in section D.
 
-Discovery and runtime share the existing same-day, midnight-clamped allowed-until calculation. Ticket creation, kiosk reservation search, and reservation conversion opt in through `applyAllowedTime: true`. The checker reads the existing branch configuration and uses zero when the configuration is absent. It uses the current UTC weekday and the exclusive `time < EndTime` condition.
+Discovery and runtime share the existing same-day, midnight-clamped allowed-until calculation. Direct kiosk issuance, kiosk reservation search, and reservation conversion opt into `applyAllowedTime`. The checker reads the existing branch configuration and uses zero when the configuration is absent. It uses the current UTC weekday and the exclusive `time < EndTime` condition.
 
 Kiosk arrival operations open at the schedule start minus the configured allowance, including the exact boundary. Future appointments, manual transfer, and workflow availability use the ordinary schedule window.
 
@@ -226,9 +226,9 @@ Each preserved behavior from section 4 of the brief was reviewed:
 
 1. **Historical search identifier dependency:** Renamed/deactivated/replaced definitions remain searchable when callers retain their original `ServiceCustomInputId`. Discovery continues to expose only current input configuration; it does not publish historical customer values or historical lookup metadata. A UI that discards the old identifier cannot construct that historical lookup request. No frontend changes were made.
 2. **Permanent deletion is a contract blocker:** The existing FK uses `DeleteBehavior.SetNull`. SQL integration verified that hard deletion preserves names/labels/types/values but nulls `ServiceCustomInputId`. The current request contains only an input ID and value, so it cannot safely identify such snapshots. No name/value guessing, generic Field fallback for custom snapshots, new endpoint, or schema change was introduced. Supporting this case requires separately approved identity/contract work.
-3. Kiosk issuance, search, and conversion use early-arrival timing. Reservation creation, manual transfer, and workflow continuation use the ordinary schedule window. These callers share the same scoped service eligibility checks.
+3. Kiosk issuance, search, and conversion use early-arrival timing and strict eligibility. Reservation creation uses strict eligibility at the requested appointment time. Normal issuance, transfer, and workflow continuation use the original availability rules and ordinary schedule window.
 4. SQL Server availability reads the requested service and uses one recursive command for its ancestor chain when needed. The chain query returns a single eligibility flag. Discovery reads one projected image batch for included nodes. Historical input IDs outside the current configuration require one additional scoped identity projection.
-5. **Contracts:** HTTP changes are additive only. The .NET availability interface gains an optional timing argument; all in-repository implementations were updated. Any out-of-repository implementation of that interface would need the same parameter. No external implementations were available to verify.
+5. The HTTP changes are additive. The .NET availability interface uses optional timing and kiosk eligibility flags. All in-repository implementations use the updated signature. External implementations would need to adopt that signature.
 6. **Concurrency:** Serializable transactions, row versions, duplicate checks, and the unique Ticket.ReservationId index are unchanged. Real SQL tests verify duplicate checks across contexts and direct unique-index enforcement. A simultaneous-conversion stress/deadlock test was not performed.
 7. **Other unverified environments:** No browser/frontend exercise, deployment, production database execution, or HTTP JWT end-to-end test was performed. SQL verification used local SQL Server Express in a disposable database. Existing build dependency warnings remain outside this task's scope.
 
@@ -270,3 +270,26 @@ The infrastructure friend assembly access remains necessary for the internal `Se
 Discovery exposes current definitions, so callers need another existing source for an original ID that discovery no longer returns. Cases B and C work when callers already have that ID.
 
 The follow-up passed `dotnet restore Qcontrol.slnx` and `dotnet build Qcontrol.slnx --no-restore`. The focused kiosk run passed **147 tests**, and `dotnet test Qcontrol.slnx --no-restore` passed **634 tests** with zero failures or skips. Both runs included the two opt-in SQL Server tests using unique disposable databases.
+
+## I. Final regression pass
+
+The final pass compared every availability call site with `master`. The shared creation method applied `AllowedTime` to normal issuance, and the shared checker imposed kiosk leaf, ancestor, and scope restrictions on manual transfer and workflow continuation. Completion without a next workflow step had no availability check.
+
+| Checker consumer | Schedule | Eligibility |
+| --- | --- | --- |
+| Normal direct issuance | Ordinary schedule at current UTC time | Original availability plus the existing ticket-issuable requirement |
+| Kiosk direct issuance | Early-arrival window at current UTC time | Strict kiosk eligibility |
+| Reservation creation | Ordinary schedule at requested appointment time | Strict kiosk eligibility plus ticket and reservation flags |
+| Reservation conversion via either handler | Early-arrival window at current UTC time | Strict kiosk eligibility and existing conversion guards |
+| Kiosk reservation search | Early-arrival window at current UTC time | Strict kiosk eligibility and existing search filters |
+| Manual transfer | Ordinary schedule at current UTC time | Original destination checks |
+| Complete service with a next workflow step | Ordinary schedule at current UTC time | Original destination checks for the next step |
+| Complete service without a next workflow step | No availability check | Existing ticket completion guards |
+
+Normal issuance, transfer, and workflow continuation use the original active-service, assignment, and schedule checks, including the existing EF filters for deletion and branch access. The request handlers continue to enforce their existing branch and permission rules. Strict callers opt into `requireKioskEligibility` and still use the scoped SQL Server ancestor query.
+
+The expanded timing matrix covers kiosk and normal issuance independently, including arrival at 15:00 with a 15:30 opening and a 30-minute allowance. New transfer and workflow cases accept scheduled non-leaf destinations and destinations with inactive ancestors, and reject inactive, deleted, unassigned, and out-of-schedule destinations. Completion and transfer tests exercise the branch guards through the real repository and request handlers. SQL Server verification checks that standard availability uses a single Service read even when kiosk eligibility requires an ancestor check.
+
+Restore and build passed. The focused kiosk suite passed **160 tests**. The full solution passed **647 tests** with **0 failures and 0 skips**, including both SQL Server integration tests against disposable databases.
+
+KSK-12 retains the approved search behavior. Permanent deletion still clears the historical input ID, so lookup of that snapshot requires a separately approved contract solution.

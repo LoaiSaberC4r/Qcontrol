@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Qcontrol.Application.Features.BranchServices.Query.GetBranchTicketIssuableServices;
 using QControl.Application.Abstraction.Services;
+using QControl.Application.Features.TicketRuntime;
 using QControl.Application.Features.TicketRuntime.Shared;
+using QControl.Application.Shared.Security;
 using QControl.Application.Tests.TestSupport;
 using QControl.Domain.Entities;
 using QControl.Domain.Enums;
@@ -167,12 +169,26 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
 
         var ticket = await repository.CreateKioskTicketAsync(1, 10, "REF-42",
             Array.Empty<CustomInputSubmission>(), Performer, CancellationToken.None);
+        var normalTicket = await repository.CreateTicketAsync(1, 10, 3, "REF-42",
+            Array.Empty<CustomInputSubmission>(), requireLookupValueWhenNoCustomInputs: true,
+            Performer, CancellationToken.None);
         var search = await repository.SearchReservationsForKioskAsync(1, 10, "REF-42",
             Array.Empty<CustomInputSubmission>(), CancellationToken.None);
         var conversion = await repository.CreateTicketFromReservationAsync(1,
             reservation.Id, Performer, CancellationToken.None);
 
         Assert.Equal(allowed, ticket.IsSuccess);
+        var normalScheduleOpen = now.TimeOfDay >= TimeSpan.FromHours(15.5) &&
+            now.TimeOfDay < TimeSpan.FromHours(16);
+        if (normalScheduleOpen)
+        {
+            Assert.True(normalTicket.IsSuccess, FormatErrors(normalTicket.Errors));
+            Assert.Equal(3, normalTicket.Value.SegmentId);
+        }
+        else
+        {
+            Assert.Equal("Tickets.Create.ServiceUnavailable", Assert.Single(normalTicket.Errors).Code);
+        }
         if (allowed)
             Assert.Equal(reservation.Id, Assert.Single(search.Value).ReservationId);
         else
@@ -195,6 +211,126 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
         Assert.True(valid.IsSuccess, FormatErrors(valid.Errors));
         Assert.True(end.IsFailure);
         Assert.Equal(3, valid.Value.SegmentId);
+    }
+
+    [Theory]
+    [InlineData(false, "non-leaf", true)]
+    [InlineData(true, "non-leaf", true)]
+    [InlineData(false, "inactive-ancestor", true)]
+    [InlineData(true, "inactive-ancestor", true)]
+    [InlineData(false, "unassigned", false)]
+    [InlineData(true, "unassigned", false)]
+    [InlineData(false, "inactive", false)]
+    [InlineData(true, "inactive", false)]
+    [InlineData(false, "deleted", false)]
+    [InlineData(true, "deleted", false)]
+    [InlineData(false, "early", false)]
+    [InlineData(true, "early", false)]
+    public async Task Transfer_and_workflow_continuation_use_original_destination_rules(
+        bool workflow, string destination, bool expected)
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, 10);
+        var target = EntityTestFactory.Service(20);
+        if (destination == "non-leaf")
+            db.Add(EntityTestFactory.Service(30, parentServiceId: target.Id));
+        if (destination == "inactive-ancestor")
+        {
+            var parent = EntityTestFactory.Service(30);
+            EntityTestFactory.SetServiceActive(parent, false);
+            target.ChangeParent(parent.Id, Performer);
+            db.Add(parent);
+        }
+        if (destination == "inactive")
+            EntityTestFactory.SetServiceActive(target, false);
+        if (destination == "deleted")
+            target.IsDeleted = true;
+        db.Add(target);
+        if (destination != "unassigned")
+            db.Add(BranchService.Create(1, target, Performer));
+
+        var now = Now.Date.AddHours(15).AddMinutes(destination == "early" ? 0 : 30);
+        db.AddRange(BranchConfiguration.Create(1, TimeSpan.FromMinutes(30)),
+            EntityTestFactory.ServiceSchedule(1, 1, target.Id, timeSlots: new[]
+            {
+                new ServiceScheduleTimeSlotDefinition(now.DayOfWeek,
+                    new TimeOnly(15, 30), new TimeOnly(16, 0))
+            }));
+        var ticket = CreateInProgressTicket(now, workflow ? target.Id : null);
+        db.Add(ticket);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        var repository = CreateRealRepository(db, now);
+
+        var result = workflow
+            ? await repository.CompleteServiceAsync(1, ticket.Id, Performer, CancellationToken.None)
+            : await repository.ManualTransferAsync(1, ticket.Id, target.Id,
+                "Specialist", Performer, CancellationToken.None);
+
+        if (expected)
+        {
+            Assert.True(result.IsSuccess, FormatErrors(result.Errors));
+            Assert.Equal(TicketStatus.Waiting, result.Value.Status);
+            Assert.Equal(target.Id, result.Value.CurrentServiceId);
+            Assert.Equal(ticket.TicketNumber, result.Value.TicketNumber);
+            Assert.Equal(ticket.SegmentId, result.Value.SegmentId);
+            Assert.Equal(workflow ? TicketJourneyEntryType.WorkflowTransition :
+                TicketJourneyEntryType.ManualTransfer, result.Value.Journeys.Last().EntryType);
+        }
+        else
+        {
+            Assert.Equal(workflow ? "Tickets.Complete.NextUnavailable" : "Tickets.Transfer.TargetUnavailable",
+                Assert.Single(result.Errors).Code);
+            db.ChangeTracker.Clear();
+            var stored = await db.Set<Ticket>().Include(x => x.ServiceJourneys).SingleAsync();
+            Assert.Equal(TicketStatus.InProgress, stored.Status);
+            Assert.Equal(ticket.IssuingServiceId, stored.CurrentServiceId);
+            Assert.Single(stored.ServiceJourneys);
+        }
+    }
+
+    [Fact]
+    public async Task Completion_without_next_service_preserves_branch_guards_and_finishes_ticket()
+    {
+        await using var db = CreateContext();
+        await SeedServiceGraphAsync(db, 10);
+        var ticket = CreateInProgressTicket(Now);
+        db.Add(ticket);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        var repository = CreateRealRepository(db);
+        var wrongBranch = await repository.CompleteServiceAsync(2, ticket.Id, Performer, CancellationToken.None);
+        Assert.Equal("Tickets.Complete.WrongBranch", Assert.Single(wrongBranch.Errors).Code);
+        var wrongTransferBranch = await repository.ManualTransferAsync(2, ticket.Id, 20,
+            "Specialist", Performer, CancellationToken.None);
+        Assert.Equal("Tickets.Transfer.WrongBranch", Assert.Single(wrongTransferBranch.Errors).Code);
+
+        var branchContext = new TestCurrentBranchContext { UserType = UserType.BranchAdmin, ActiveBranchId = 2 };
+        var guard = new TicketRuntimeRequestGuard(new TestCurrentUser(), new BranchAccessValidator(branchContext));
+        var forbiddenCompletion = await new CompleteTicketServiceCommandHandler(repository, guard)
+            .Handle(new() { BranchId = 1, TicketId = ticket.Id }, CancellationToken.None);
+        Assert.Equal("Tickets.CompleteService.BranchScopeForbidden", Assert.Single(forbiddenCompletion.Errors).Code);
+        var forbiddenTransfer = await new ManualTransferTicketCommandHandler(repository, guard)
+            .Handle(new() { BranchId = 1, TicketId = ticket.Id, TargetServiceId = 20, Reason = "Specialist" },
+                CancellationToken.None);
+        Assert.Equal("Tickets.ManualTransfer.BranchScopeForbidden", Assert.Single(forbiddenTransfer.Errors).Code);
+
+        var completion = await repository.CompleteServiceAsync(1, ticket.Id, Performer, CancellationToken.None);
+        Assert.True(completion.IsSuccess, FormatErrors(completion.Errors));
+        Assert.Equal(TicketStatus.Completed, completion.Value.Status);
+        Assert.Equal(Now, completion.Value.CompletedOnUtc);
+        Assert.Equal(TicketJourneyOutcome.Completed, Assert.Single(completion.Value.Journeys).Outcome);
+    }
+
+    private static Ticket CreateInProgressTicket(DateTime now, int? nextServiceId = null)
+    {
+        var ticket = Ticket.Create(1, 10, 3, null, "S101", DateOnly.FromDateTime(now),
+            now.AddMinutes(-5), Performer);
+        if (nextServiceId is int next)
+            ticket.BindWorkflow(7, new[] { (10, 1), (next, 2) }, now.AddMinutes(-5));
+        Assert.True(ticket.TryRecordCallAttempt(4, Performer, 3, now.AddMinutes(-4)));
+        Assert.True(ticket.TryStartService(Performer, now.AddMinutes(-3)));
+        return ticket;
     }
 
     [Fact]

@@ -643,7 +643,8 @@ public sealed partial class KioskTicketRuntimeRepositoryTests
     {
         public Task<BranchServiceAvailability> CheckAsync(
             int branchId, int serviceId, DateTime atUtc,
-            CancellationToken cancellationToken, bool applyAllowedTime = false) =>
+            CancellationToken cancellationToken, bool applyAllowedTime = false,
+            bool requireKioskEligibility = false) =>
             Task.FromResult(new BranchServiceAvailability(
                 ServiceExists: true,
                 IsActive: true,

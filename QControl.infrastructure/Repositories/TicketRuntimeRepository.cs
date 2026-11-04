@@ -48,24 +48,24 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         bool requireLookupValueWhenNoCustomInputs,
         Guid performerId, CancellationToken cancellationToken) =>
         CreateTicketCoreAsync(branchId, serviceId, segmentId, lookupValue, inputs,
-            requireLookupValueWhenNoCustomInputs, performerId, cancellationToken);
+            requireLookupValueWhenNoCustomInputs, isKiosk: false, performerId, cancellationToken);
 
     public Task<Result<TicketDetailsResponse>> CreateKioskTicketAsync(int branchId,
         int serviceId, string? lookupValue,
         IReadOnlyCollection<CustomInputSubmission> inputs,
         Guid performerId, CancellationToken cancellationToken) =>
         CreateTicketCoreAsync(branchId, serviceId, segmentId: null, lookupValue, inputs,
-            requireLookupValueWhenNoCustomInputs: true, performerId, cancellationToken);
+            requireLookupValueWhenNoCustomInputs: true, isKiosk: true, performerId, cancellationToken);
 
     private async Task<Result<TicketDetailsResponse>> CreateTicketCoreAsync(int branchId,
         int serviceId, int? segmentId, string? lookupValue,
         IReadOnlyCollection<CustomInputSubmission> inputs,
-        bool requireLookupValueWhenNoCustomInputs,
+        bool requireLookupValueWhenNoCustomInputs, bool isKiosk,
         Guid performerId, CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
         var availability = await _availability.CheckAsync(branchId, serviceId, now, cancellationToken,
-            applyAllowedTime: true);
+            applyAllowedTime: isKiosk, requireKioskEligibility: isKiosk);
         if (!availability.IsAvailable || !availability.IsTicketIssuable)
             return FailTicket("Tickets.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
 
@@ -128,7 +128,8 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
         var now = _clock.UtcNow;
         if (scheduledOnUtc <= now)
             return FailReservation("Reservations.Create.TimeInvalid", TicketRuntimeMessages.ReservationTimeInvalid, ErrorType.Validation);
-        var availability = await _availability.CheckAsync(branchId, serviceId, scheduledOnUtc, cancellationToken);
+        var availability = await _availability.CheckAsync(branchId, serviceId, scheduledOnUtc,
+            cancellationToken, requireKioskEligibility: true);
         if (!availability.IsAvailable || !availability.HasReservation || !availability.IsTicketIssuable)
             return FailReservation("Reservations.Create.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
         var validatedInputs = await ValidateCreateInputsAsync(serviceId, lookupValue, inputs,
@@ -191,7 +192,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.DifferentDay", TicketRuntimeMessages.DifferentReservationDay, ErrorType.Domain, cancellationToken);
 
             var availability = await _availability.CheckAsync(branchId, reservation.ServiceId, now, cancellationToken,
-                applyAllowedTime: true);
+                applyAllowedTime: true, requireKioskEligibility: true);
             if (!availability.IsAvailable || !availability.IsTicketIssuable)
                 return await RollbackTicketAsync(transaction, "Reservations.Convert.ServiceUnavailable", TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain, cancellationToken);
             var relationshipValid = await _db.Set<BranchServiceSegment>().AsNoTracking()
@@ -240,7 +241,7 @@ internal sealed partial class TicketRuntimeRepository : ITicketRuntimeRepository
             CancellationToken cancellationToken)
     {
         var availability = await _availability.CheckAsync(branchId, serviceId, _clock.UtcNow,
-            cancellationToken, applyAllowedTime: true);
+            cancellationToken, applyAllowedTime: true, requireKioskEligibility: true);
         if (!availability.IsAvailable || !availability.IsTicketIssuable)
             return FailKioskSearch("Kiosk.Reservations.Search.ServiceUnavailable",
                 TicketRuntimeMessages.ServiceUnavailable, ErrorType.Domain);
